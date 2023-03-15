@@ -6,24 +6,30 @@ import "./proxy/BaseProxy.sol";
 
 contract SeigManagerV2Proxy is BaseProxy, SeigManagerV2Storage {
 
+    /* ========== onlyOwner ========== */
+
     function initialize(
         address _ton,
         address _wton,
         address _tot,
         address _seigManagerV1,
         address _layer2Manager,
+        address _stakingLayer2,
         uint256 _seigPerBlock,
-        uint32 _minimumBlocksforUpdateSeig
+        uint32 _minimumBlocksForUpdateSeig
     )
         external onlyOwner
-        nonZeroAddress(_ton)
-        nonZeroAddress(_wton)
-        nonZeroAddress(_tot)
-        nonZeroAddress(_seigManagerV1)
-        nonZeroAddress(_layer2Manager)
-        nonZero(_seigPerBlock)
     {
-        require(_minimumBlocksforUpdateSeig != 0, "P1");
+        require(
+            _ton != address(0) &&
+            _wton != address(0) &&
+            _tot != address(0) &&
+            _seigManagerV1 != address(0) &&
+            _stakingLayer2 != address(0) &&
+            _layer2Manager != address(0) &&
+            _seigPerBlock != 0
+            , "P1");
+
         require(address(ton) == address(0), "already initialize");
 
         seigManagerV1 = _seigManagerV1;
@@ -31,9 +37,9 @@ contract SeigManagerV2Proxy is BaseProxy, SeigManagerV2Storage {
         wton = _wton;
         tot = _tot;
         layer2Manager =_layer2Manager;
-
+        stakingLayer2 = _stakingLayer2;
         seigPerBlock = _seigPerBlock;
-        minimumBlocksforUpdateSeig = _minimumBlocksforUpdateSeig;
+        minimumBlocksForUpdateSeig = _minimumBlocksForUpdateSeig;
 
         indexSton = 1 ether;
         indexLton = 1 ether;

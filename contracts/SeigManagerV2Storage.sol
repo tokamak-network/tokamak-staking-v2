@@ -12,18 +12,20 @@ contract SeigManagerV2Storage {
     address public seigManagerV1;
     address public tot;
     address public layer2Manager;
+    address public stakingLayer2;
 
     uint16 public ratesDao;   // divided ratesUnits
     uint16 public ratesStosHolders; // divided ratesUnits
     uint16 public ratesTonStakers; // divided ratesUnits
     uint16 public ratesUnits; // divided uint. 10000
-    uint32 public minimumBlocksforUpdateSeig; // the number of block
+    uint32 public minimumBlocksForUpdateSeig; // the number of block
     bool internal free = true;
 
     uint256 public indexSton; // for sequencer
     uint256 public indexLton; // for staker or bonder
+
     uint256 public totalSton;
-    uint256 public totalLton;
+
     uint256 public seigPerBlock;
     uint256 public lastSeigBlock;
     uint256 public startBlock;

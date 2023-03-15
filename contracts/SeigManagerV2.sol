@@ -6,7 +6,7 @@ import "./proxy/BaseProxyStorage.sol";
 import "./common/AccessibleCommon.sol";
 import "./libraries/SafeERC20.sol";
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 interface AutoRefactorCoinageI {
     function totalSupply() external view returns (uint256);
@@ -17,9 +17,14 @@ interface Layer2ManagerI {
 
     function totalSecurityDeposit() external view returns (uint256 amount);
     function totalLayer2Deposits() external view returns (uint256 amount);
+    function curTotalLayer2Deposits() external view returns (uint256 amount);
 
     function securityDeposit(bytes32 _key) external view returns (uint256 amount);
     function layer2Deposits(bytes32 _key) external view returns (uint256 amount);
+}
+
+interface StakingLayer2I {
+    function getTotalLton() external view returns (uint256) ;
 }
 
 contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Storage {
@@ -41,26 +46,67 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
 
     /* ========== onlyOwner ========== */
 
-    function setLastSeigBlock(uint256 _lastSeigBlock) external onlyOwner nonZero(_lastSeigBlock){
-        require(lastSeigBlock == 0, "already setLastSeigBlock");
+    function setSeigPerBlock(uint256 _seigPerBlock) external onlyOwner {
+        require(seigPerBlock != _seigPerBlock, "same");
+        seigPerBlock = _seigPerBlock;
+    }
+
+    function setMinimumBlocksForUpdateSeig(uint32 _minimumBlocksForUpdateSeig) external onlyOwner {
+        require(minimumBlocksForUpdateSeig != _minimumBlocksForUpdateSeig, "same");
+        minimumBlocksForUpdateSeig = _minimumBlocksForUpdateSeig;
+    }
+
+    function setLastSeigBlock(uint256 _lastSeigBlock) external onlyOwner nonZero(_lastSeigBlock) {
+        require(lastSeigBlock != _lastSeigBlock, "same");
         lastSeigBlock = _lastSeigBlock;
-        startBlock = _lastSeigBlock;
+        if (startBlock == 0) startBlock = _lastSeigBlock;
+    }
+
+    function setDividendRates(uint16 _ratesDao, uint16 _ratesStosHolders, uint16 _ratesTonStakers, uint16 _ratesUnits) external onlyOwner {
+        require(
+            !(ratesDao == _ratesDao  &&
+            ratesStosHolders == _ratesStosHolders &&
+            ratesTonStakers == _ratesTonStakers &&
+            ratesUnits == _ratesUnits), "same");
+
+        ratesDao = _ratesDao;
+        ratesStosHolders = _ratesStosHolders;
+        ratesTonStakers = _ratesTonStakers;
+        ratesUnits = _ratesUnits;
+    }
+
+    function setAddress(address _dao, address _stosDistribute) external onlyOwner {
+        require(
+            !(dao == _dao  &&
+            stosDistribute == _stosDistribute), "same");
+
+        dao = _dao;
+        stosDistribute = _stosDistribute;
     }
 
     /* ========== Anyone can execute ========== */
 
+    function updateSeigniorage() public returns (bool res) {
+        if (lastSeigBlock + uint256(minimumBlocksForUpdateSeig) < getCurrentBlockNumber()) {
+            res = runUpdateSeigniorage();
+        }
+        return true;
+    }
 
-    function updateSeigniorage() public ifFree nonZero(startBlock) returns (bool res) {
+    function runUpdateSeigniorage() public ifFree nonZero(startBlock) returns (bool res) {
+        // console.log('-------------------');
+        // console.log('lastSeigBlock %s',lastSeigBlock);
+        // console.log('getCurrentBlockNumber() %s',getCurrentBlockNumber());
 
-        // 최근 이자 적용 이후, minimumBlocksforUpdateSeig 블록이 지나면 이자가 적용될 수 있다.
-        if (lastSeigBlock + uint256(minimumBlocksforUpdateSeig) < getCurrentBlockNumber()) {
-
+        if (lastSeigBlock <  getCurrentBlockNumber()) {
             // 총 증가량  increaseSeig
             uint256 increaseSeig = (getCurrentBlockNumber() - lastSeigBlock) * seigPerBlock;
 
             // update L2 TVL
-            (, uint256 curTvlTon) = Layer2ManagerI(layer2Manager).updateLayer2Deposits();
-            totalSton = getTonToSton(curTvlTon);
+            // Layer2ManagerI(layer2Manager).updateLayer2Deposits();
+
+            uint256 totalLton = getTotalLton();
+            // console.log('totalLton %s',totalLton);
 
             // calculate the increase amount of seig
             (
@@ -69,22 +115,37 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
                 uint256 amountOfston,
                 uint256 amountOfDao,
                 uint256 amountOfStosHolders
-            ) = _distribute(increaseSeig);
+            ) = _distribute(increaseSeig, totalLton);
+
+            // console.log('increaseSeig %s',increaseSeig);
+            // console.log('totalSupplyOfTon %s',totalSupplyOfTon);
+            // console.log('amountOflton %s',amountOflton);
+            // console.log('amountOfston %s',amountOfston);
+            // console.log('amountOfDao %s',amountOfDao);
+            // console.log('amountOfStosHolders %s',amountOfStosHolders);
 
             uint256[2] memory prevIndex = [indexLton, indexSton];
 
             // 1. update indexLton, indexSton
-            indexLton = calculateIndex(indexLton, getLtonToTon(totalLton), amountOflton);
-            indexSton = calculateIndex(indexSton, curTvlTon, amountOfston);
+            if (totalLton != 0 && amountOflton != 0)
+                indexLton = calculateIndex(indexLton, getLtonToTon(totalLton), amountOflton);
+            if (indexSton == 1 ether && totalSton == 0) {
+                totalSton = amountOfston;
+            } else if (amountOfston != 0) indexSton = calculateIndex(indexSton, getStonToTon(totalSton), amountOfston);
 
+            // console.log('indexLton %s',indexLton);
             // 2. mint increaseSeig of ton in address(this)
-            ton.mint(address(this), increaseSeig);
+            if (increaseSeig != 0) ton.mint(address(this), increaseSeig);
 
             // 3. transfer amountOfDao,amountOfStosHolders  (to dao, powerTON for tosHolders)
-            ton.safeTransfer(dao, amountOfDao);
-            ton.safeTransfer(stosDistribute, amountOfStosHolders);
+            if (amountOfDao != 0 && dao != address(0)) ton.safeTransfer(dao, amountOfDao);
+            if (amountOfStosHolders != 0 && stosDistribute != address(0)) ton.safeTransfer(stosDistribute, amountOfStosHolders);
 
             lastSeigBlock = getCurrentBlockNumber();
+            // console.log('lastSeigBlock %s',lastSeigBlock);
+
+            // console.log('indexLton %s',indexLton);
+            // console.log('indexSton %s',indexSton);
 
             emit UpdatedSeigniorage(
                 lastSeigBlock,
@@ -95,7 +156,6 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
                 [indexLton, indexSton]
                 );
         }
-
         return true;
     }
 
@@ -123,11 +183,16 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
     function calculateIndex(uint256 curIndex, uint256 curTotal, uint256 increaseAmount)
         public pure returns (uint256 nextIndex)
     {
-        nextIndex = curIndex * (curTotal + increaseAmount) / (curTotal * 1e18);
+        if (curTotal != 0 && increaseAmount !=0) nextIndex = curIndex * (curTotal + increaseAmount) / curTotal;
+        else nextIndex = curIndex;
     }
 
     function totalSecurityDeposit() public view returns (uint256 amount) {
         amount = Layer2ManagerI(layer2Manager).totalSecurityDeposit();
+    }
+
+    function curTotalLayer2Deposits() public view returns (uint256 amount) {
+        amount = Layer2ManagerI(layer2Manager).curTotalLayer2Deposits();
     }
 
     function totalSupplyTON() public view returns (uint256 amount) {
@@ -136,12 +201,15 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
         amount = ton.totalSupply() + ton.balanceOf(wton) + AutoRefactorCoinageI(tot).totalSupply();
 
         // l2로 들어간것과 스테이킹 되는 것이 ton으로 이루어진다면 위의 총공급량으로만 집계 해도 된다.
+    }
 
+    function getTotalLton() public view returns (uint256 amount) {
+        amount = StakingLayer2I(stakingLayer2).getTotalLton();
     }
 
     /* ========== internal ========== */
 
-    function _distribute(uint256 amount) internal view returns (
+    function _distribute(uint256 amount, uint256 totalLton) internal view returns (
         uint256 totalSupplyOfTon,
         uint256 amountOflton,
         uint256 amountOfston,
@@ -149,34 +217,35 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
         uint256 amountOfStosHolders
     ){
         totalSupplyOfTon = totalSupplyTON();
+        if (totalSupplyOfTon != 0) {
+            // console.log('amount %s', amount);
+            // console.log('getLtonToTon(totalLton) %s', getLtonToTon(totalLton));
 
-        // 1. (S/T) * TON seigniorage
-        //    TON stakers
-        //    스테이킹과 본더유동성 총량에 제공하는 시뇨리지
-        //    스테이킹과 본더유동성이 점유하고 있는 비율  = getLtonToTon(totalLton) / totalSupplyTON()
-        //    lton에 부여되는 시뇨리지 = 전체 톤 발행량에서 lton이 보유하고 있는 비율만큼의 시뇨리지를 부여한다.
-        amountOflton = amount * ( getLtonToTon(totalLton) / totalSupplyOfTon );
-
-        // 2. ((D+C)/T) * TON seigniorage
-        //    시퀀서에게 할당되는 비율 , D 레이어2 적립금, C 시퀀서 예치금 -> 아래 시퀀서 예치금 반영해야 함
-        //    톤 총 공급량에서 레이어2안에 예치된 금액의 비율  = getStonToTon(totalSton) / totalSupplyTON()
-        //    ston에 부여되는 시뇨리지 = 전체 톤 발행량에서 ston이 보유하고 있는 비율만큼의 시뇨리지를 부여한다.
-        amountOfston = amount * ( (getLtonToTon(totalSton) + totalSecurityDeposit()) / totalSupplyOfTon  );
-
-        uint256 amount1 = amount - amountOflton - amountOfston;
-
-        if (amount1 > 0) {
-            // 3. 0.4 * ((T-S-D-C)/T) * TON seigniorage
+            // 1. (S/T) * TON seigniorage
             //    TON stakers
-            amountOflton += amount1 * ratesTonStakers / ratesUnits;
+            if (totalLton != 0) amountOflton = amount *  getLtonToTon(totalLton) / totalSupplyOfTon  ;
 
-            // 4. 0.5 * ((T-S-D-C)/T) * TON seigniorage
-            //    TON DAO
-            amountOfDao = amount1 * ratesDao / ratesUnits;
+            // 2. ((D+C)/T) * TON seigniorage
+            //    to sequencer, D layer 2 reserve, C sequencer deposit
+            uint256 amountOfCD = curTotalLayer2Deposits() + totalSecurityDeposit();
 
-            // 5. 0.1 * ((T-S-D-C)/T) * TON seigniorage
-            //    sTOS holders
-            amountOfStosHolders = amount1 * ratesDao / ratesUnits;
+            if (amountOfCD != 0) amountOfston = amount * amountOfCD / totalSupplyOfTon ;
+
+            uint256 amount1 = amount - amountOflton - amountOfston;
+
+            if (amount1 > 0 && ratesUnits != 0) {
+                // 3. 0.4 * ((T-S-D-C)/T) * TON seigniorage
+                //    TON stakers
+                if (ratesTonStakers != 0) amountOflton += amount1 * ratesTonStakers / ratesUnits;
+
+                // 4. 0.5 * ((T-S-D-C)/T) * TON seigniorage
+                //    TON DAO
+                if (ratesDao != 0) amountOfDao = amount1 * ratesDao / ratesUnits;
+
+                // 5. 0.1 * ((T-S-D-C)/T) * TON seigniorage
+                //    sTOS holders
+                if (ratesStosHolders != 0) amountOfStosHolders = amount1 * ratesStosHolders / ratesUnits;
+            }
         }
     }
 

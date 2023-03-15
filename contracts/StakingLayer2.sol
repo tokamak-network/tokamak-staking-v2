@@ -14,14 +14,13 @@ interface SeigManagerV2I {
     function getTonToSton(uint256 amount) external view returns (uint256);
     function getStonToTon(uint256 ston) external view returns (uint256);
     function updateSeigniorage() external returns (bool);
-
-
 }
 
 interface Layer2ManagerI {
     function delayBlocksForWithdraw() external view returns (uint256 amount);
     function totalSecurityDeposit() external view returns (uint256 amount);
     function totalLayer2Deposits() external view returns (uint256 amount);
+    function registeredLayerKeys(bytes32 layerKey_) external view returns (bool exist_);
 
     function securityDeposit(bytes32 _key) external view returns (uint256 amount);
     function layer2Deposits(bytes32 _key) external view returns (uint256 amount);
@@ -32,9 +31,8 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
     /* ========== DEPENDENCIES ========== */
     using SafeERC20 for IERC20;
 
-
-    event Staked(bytes32 layerKey, address sender, uint256 amount);
-    event Unstaked(bytes32 layerKey, address sender, uint256 amount);
+    event Staked(bytes32 layerKey, address sender, uint256 amount, uint256 lton);
+    event Unstaked(bytes32 layerKey, address sender, uint256 amount, uint256 lton);
     event Withdrawal(bytes32 layerKey, address sender, uint256 amount);
 
     /* ========== CONSTRUCTOR ========== */
@@ -49,6 +47,8 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
     function stake(bytes32 layerKey, uint256 amount)
         public ifFree nonZero(amount)
     {
+        require(Layer2ManagerI(layer2Manager).registeredLayerKeys(layerKey), 'non-registered layer');
+
         require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
         address sender = msg.sender;
         IERC20(ton).safeTransferFrom(sender, address(this), amount);
@@ -65,9 +65,9 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
         info_.stakelton += lton_;
 
         totalStakedLton += lton_;
-        totalStakedPrincipal += amount;
+        // totalStakedPrincipal += amount;
 
-        emit Staked(layerKey, sender, amount);
+        emit Staked(layerKey, sender, amount, lton_);
     }
 
     function unstake(bytes32 layerKey, uint256 amount)
@@ -85,8 +85,8 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
         else info_.stakePrincipal -= amount;
 
         totalStakedLton -= lton_;
-        if (totalStakedPrincipal < amount) totalStakedPrincipal = 0;
-        else totalStakedPrincipal -= amount;
+        // if (totalStakedPrincipal < amount) totalStakedPrincipal = 0;
+        // else totalStakedPrincipal -= amount;
 
         //-----------------------
         uint256 delay = Layer2ManagerI(layer2Manager).delayBlocksForWithdraw();
@@ -101,7 +101,7 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
         _pendingUnstakedLayer2[layerKey] += amount;
         _pendingUnstakedAccount[sender] += amount;
 
-        emit Unstaked(layerKey, sender, amount);
+        emit Unstaked(layerKey, sender, amount, lton_);
     }
 
     function withdraw(bytes32 layerKey) public ifFree returns (bool) {
@@ -125,6 +125,8 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
         emit Withdrawal(layerKey, sender, amount);
         return true;
     }
+
+    /* ========== VIEW ========== */
 
     function numberOfPendings(bytes32 layerKey, address account)
         public view returns (uint256 totalRequests, uint256 curIndex)
@@ -151,8 +153,6 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
         }
     }
 
-    /* ========== VIEW ========== */
-
     function balanceOfLton(bytes32 layerKey, address account) public view returns (uint256 amount) {
         LibStake.StakeInfo memory info = layerStakes[layerKey][account];
         amount = info.stakelton;
@@ -178,6 +178,19 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
     function layer2Deposits(bytes32 layerKey) public view returns (uint256 amount) {
         amount = Layer2ManagerI(layer2Manager).layer2Deposits(layerKey);
     }
+
+    function totalStakeAccountList() public view returns (uint256) {
+        return stakeAccountList.length;
+    }
+
+    function totalBondAccountList() public view returns (uint256) {
+        return bondAccountList.length;
+    }
+
+    function getTotalLton() public view returns (uint256) {
+        return (totalStakedLton + totalBondedLton);
+    }
+
 
     /* ========== internal ========== */
 

@@ -6,10 +6,10 @@ library LibStake
     struct StakeInfo {
         uint256 stakePrincipal;
         uint256 bondPrincipal;
-        uint256 fwPrincipal;
+        // uint256 fwPrincipal;
         uint256 stakelton;
         uint256 bondlton;
-        uint256 fwlton;
+        // uint256 fwlton;
         bool staker;
         bool bonder;
     }

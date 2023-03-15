@@ -14,15 +14,10 @@ contract StakingLayer2Storage {
     address public layer2Manager;
     uint256 public totalStakedLton;
     uint256 public totalBondedLton;
-    uint256 public totalStakedPrincipal;
-    uint256 public totalBondedPrincipal;
+    // uint256 public totalStakedPrincipal;
+    // uint256 public totalBondedPrincipal;
 
-    // mapping (bytes32 => Layer2.Info) public layers;
     mapping (bytes32 => mapping(address => LibStake.StakeInfo)) public layerStakes; // ltos uint
-    // mapping (bytes32 => mapping(address => uint256)) public bonds; // ltos uint
-    // mapping (bytes32 => mapping(address => uint256)) public fws; // ltos uint
-    mapping (bytes32 => uint256) public layerTotalStakedAmount;
-    mapping (bytes32 => uint256) public layerTotalBondedAmount;
 
     // layer2Key => msg.sender => withdrawal requests (언스테이크시 등록 )
     mapping (bytes32 => mapping (address => LibStake.WithdrawalReqeust[])) public withdrawalRequests;

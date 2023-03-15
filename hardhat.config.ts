@@ -1,9 +1,20 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import '@typechain/hardhat'
+import '@nomiclabs/hardhat-ethers'
+import "@nomicfoundation/hardhat-chai-matchers";
+import "hardhat-gas-reporter";
+import dotenv from "dotenv" ;
+
+dotenv.config();
 
 const config: HardhatUserConfig = {
   networks: {
     hardhat: {
+      forking: {
+        url: `${process.env.ETH_NODE_URI_MAINNET}`,
+        blockNumber: 16823556
+      },
       allowUnlimitedContractSize: false,
     },
     local: {
@@ -20,6 +31,12 @@ const config: HardhatUserConfig = {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
     apiKey: process.env.ETHERSCAN_API_KEY,
+  },
+  gasReporter: {
+    enabled: true,
+    currency: 'EUR',
+    gasPrice: 21,
+    coinmarketcap: `${process.env.COINMARKETCAP_API_KEY}`
   },
   solidity: {
     version: '0.8.18',
