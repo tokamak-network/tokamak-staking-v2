@@ -292,12 +292,12 @@ describe('SeigManagerV2', () => {
             }
         });
 
-        it('If the TVL and deposit of L2 are 0, indexSton is not changed.', async () => {
-            expect(await deployed.seigManagerV2.curTotalLayer2Deposits()).to.eq(ethers.constants.Zero)
-            expect(await deployed.seigManagerV2.totalSecurityDeposit()).to.eq(ethers.constants.Zero)
-            const indexSton = await deployed.seigManagerV2.indexSton();
+        it('If the TVL and deposit of L2 are 0, totalSeigs for sequencer is not increased.', async () => {
+            expect(await deployed.layer2Manager.curTotalLayer2Deposits()).to.eq(ethers.constants.Zero)
+            expect(await deployed.layer2Manager.totalSecurityDeposit()).to.eq(ethers.constants.Zero)
+            const totalSeigs = await deployed.layer2Manager.totalSeigs();
             await deployed.seigManagerV2.connect(addr1).updateSeigniorage()
-            expect(await deployed.seigManagerV2.indexSton()).to.eq(indexSton)
+            expect(await deployed.layer2Manager.totalSeigs()).to.eq(totalSeigs)
         });
 
     });

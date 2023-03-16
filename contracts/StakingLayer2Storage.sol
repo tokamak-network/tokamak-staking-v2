@@ -14,8 +14,6 @@ contract StakingLayer2Storage {
     address public layer2Manager;
     uint256 public totalStakedLton;
     uint256 public totalBondedLton;
-    // uint256 public totalStakedPrincipal;
-    // uint256 public totalBondedPrincipal;
 
     mapping (bytes32 => mapping(address => LibStake.StakeInfo)) public layerStakes; // ltos uint
 

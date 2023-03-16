@@ -12,22 +12,12 @@ library Layer2
         address l2ton;
     }
 
-    struct StakeInfo {
-        uint256 stakePrincipal;
-        uint256 bondPrincipal;
-        uint256 fwPrincipal;
-        uint256 stakelton;
-        uint256 bondlton;
-        uint256 fwlton;
-        bool staker;
-        bool bonder;
+    struct Holdings {
+        uint256 securityDeposit;
+        uint256 deposits;
+        uint256 seigs;
     }
 
-  struct WithdrawalReqeust {
-    uint128 withdrawableBlockNumber;
-    uint128 amount;
-    bool processed;
-  }
     function get(
         mapping(bytes32 => Info) storage self,
         address addressManage,

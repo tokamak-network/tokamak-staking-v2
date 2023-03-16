@@ -16,11 +16,21 @@ interface AddressManagerI {
     function getAddress(string memory _name) external view returns (address);
 }
 
+interface SeigManagerV2I {
+    // function getLtonToTon(uint256 lton) external view returns (uint256);
+    // function getTonToLton(uint256 amount) external view returns (uint256);
+    // function getTonToSton(uint256 amount) external view returns (uint256);
+    // function getStonToTon(uint256 ston) external view returns (uint256);
+    // function updateSeigniorage() external returns (bool);
+    function claim(address to, uint256 amount) external;
+}
 contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStorage {
     /* ========== DEPENDENCIES ========== */
     using SafeERC20 for IERC20;
     using Layer2 for mapping(bytes32 => Layer2.Info);
     using Layer2 for Layer2.Info;
+
+    event Claimed(bytes32 layerKey_, address to, uint256 amount);
 
     /* ========== CONSTRUCTOR ========== */
     constructor() {
@@ -50,6 +60,14 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
     {
         require(delayBlocksForWithdraw != _delayBlocksForWithdraw, "same");
         delayBlocksForWithdraw = _delayBlocksForWithdraw;
+    }
+
+    /* ========== only SeigManagerV2 ========== */
+    function addSeigs(uint256 amount) external returns (bool)
+    {
+        require(msg.sender == seigManagerV2, "caller is not SeigManagerV2");
+        if (amount > 0) totalSeigs += amount;
+        return true;
     }
 
     /* ========== Sequncer can execute ========== */
@@ -86,7 +104,10 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         layer.l2Bridge = l2Bridge;
         layer.l2ton = l2ton;
 
-        securityDeposit[_key] = minimumDepositForSequencer;
+        // securityDeposit[_key] = minimumDepositForSequencer;
+
+        Layer2.Holdings storage holding = holdings[_key];
+        holding.securityDeposit = minimumDepositForSequencer;
         totalSecurityDeposit += minimumDepositForSequencer;
 
         layerKeys.push(_key);
@@ -94,8 +115,51 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
 
     /* ========== Anyone can execute ========== */
 
+    function distribute() public {
+        require (totalSeigs != 0, 'no distributable amount');
+        uint256 len = layerKeys.length;
+        uint256 sum = 0;
+
+        for(uint256 i = 0; i < len; i++){
+            bytes32 _key = layerKeys[i];
+            Layer2.Holdings storage holding = holdings[_key];
+            if (holding.securityDeposit >= minimumDepositForSequencer) {
+                holding.deposits = depositsOf(layers[_key].l1Bridge, layers[_key].l2ton);
+                sum += holding.deposits;
+            } else {
+                holding.deposits = 0;
+            }
+        }
+
+        if (sum > 0) {
+            for(uint256 i = 0; i < len; i++){
+                bytes32 _key = layerKeys[i];
+                Layer2.Holdings storage holding = holdings[_key];
+                if (holding.deposits > 0) {
+                    uint256 amount = totalSeigs * holding.deposits / sum;
+                    holding.seigs += amount;
+                    totalSeigs -= amount;
+                }
+            }
+        }
+    }
+
+    function claim(bytes32 layerKey_) public {
+        require(holdings[layerKey_].seigs != 0, 'no amount to claim');
+        address sequencer_ = sequencer(layerKey_);
+        require(sequencer_ != address(0), 'zero sequencer');
+        uint256 amount = holdings[layerKey_].seigs;
+        holdings[layerKey_].seigs = 0;
+        SeigManagerV2I(seigManagerV2).claim(sequencer_, amount);
+
+        emit Claimed(layerKey_, sequencer_, amount);
+    }
 
     /* ========== VIEW ========== */
+    function curTotalAmountsLayer2() public view returns (uint256 amount) {
+        amount = curTotalLayer2Deposits() + totalSecurityDeposit;
+    }
+
     function registeredLayerKeys(bytes32 layerKey_) public view returns (bool exist_) {
 
         Layer2.Info memory layer = layers[layerKey_];
@@ -175,9 +239,16 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
             )));
     }
 
-    function sequncer(bytes32 _key) public view returns (address sequncer_) {
+    function sequencer(bytes32 _key) public view returns (address sequencer_) {
             Layer2.Info memory layer = getLayerWithKey(_key);
-            if (layer.addressManager != address(0)) sequncer_ = AddressManagerI(layer.addressManager).getAddress('OVM_Sequencer');
+            if (layer.addressManager != address(0)) {
+                try
+                    AddressManagerI(layer.addressManager).getAddress('OVM_Sequencer') returns (address a) {
+                        sequencer_ = a;
+                } catch (bytes memory ) {
+                    sequencer_ = address(0);
+                }
+            }
     }
 
     /* ========== internal ========== */

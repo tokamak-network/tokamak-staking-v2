@@ -41,7 +41,6 @@ contract SeigManagerV2Proxy is BaseProxy, SeigManagerV2Storage {
         seigPerBlock = _seigPerBlock;
         minimumBlocksForUpdateSeig = _minimumBlocksForUpdateSeig;
 
-        indexSton = 1 ether;
         indexLton = 1 ether;
     }
 }

@@ -3,7 +3,7 @@ import { ethers, network } from 'hardhat'
 
 import { Signer } from 'ethers'
 import {stakingV2Fixtures} from './shared/fixtures'
-import {TonStakingV2Fixture } from './shared/fixtureInterfaces'
+import { TonStakingV2Fixture } from './shared/fixtureInterfaces'
 /*
 import { SeigManagerV2Proxy } from '../typechain-types/contracts/SeigManagerV2Proxy'
 import { SeigManagerV2 } from '../typechain-types/contracts/SeigManagerV2.sol'

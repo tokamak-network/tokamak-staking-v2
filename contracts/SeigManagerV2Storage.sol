@@ -21,7 +21,6 @@ contract SeigManagerV2Storage {
     uint32 public minimumBlocksForUpdateSeig; // the number of block
     bool internal free = true;
 
-    uint256 public indexSton; // for sequencer
     uint256 public indexLton; // for staker or bonder
 
     uint256 public totalSton;

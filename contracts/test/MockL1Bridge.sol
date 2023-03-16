@@ -94,7 +94,8 @@ contract MockL1Bridge is Ownable {
         address _to,
         uint256 _amount,
         bytes calldata _data
-    ) external onlyFromCrossDomainAccount(l2TokenBridge) {
+    // ) external onlyFromCrossDomainAccount(l2TokenBridge) {
+    ) external {
         deposits[_l1Token][_l2Token] = deposits[_l1Token][_l2Token] - _amount;
 
         // When a withdrawal is finalized on L1, the L1 Bridge transfers the funds to the withdrawer

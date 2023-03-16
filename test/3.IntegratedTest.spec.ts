@@ -389,10 +389,11 @@ describe('Integrated Test', () => {
         });
     });
 
-    /*
     describe('# unstake', () => {
+        let pendings ;
+        let availableWithdraw;
+
         it('You can unstake when you have the staked amount.', async () => {
-            let amount = ethers.utils.parseEther("5000");
 
             let layerOne = {
                 addressManager: deployed.addressManager.address,
@@ -405,25 +406,275 @@ describe('Integrated Test', () => {
 
             let layerKey = await getLayerKey(layerOne);
 
-            // let totalStakedPrincipal = await deployed.stakingLayer2.totalStakedPrincipal()
+            const balanceOfStaker = await deployed.ton.balanceOf(addr1.address)
+            const availableWithdrawOfStaker = await deployed.stakingLayer2.availableWithdraw(layerKey, addr1.address)
+            const amountOfPendings = await deployed.stakingLayer2.amountOfPendings(layerKey, addr1.address)
+
+            let amountLton = await deployed.stakingLayer2.balanceOfLton(layerKey, addr1.address)
+            let amount = await deployed.seigManagerV2.getLtonToTon(amountLton)
+
             let totalStakedLton = await deployed.stakingLayer2.totalStakedLton()
             let totalStakeAccountList = await deployed.stakingLayer2.totalStakeAccountList()
 
-            await (await deployed.stakingLayer2.connect(addr1).unstake(
+            const block = await ethers.provider.getBlock('latest')
+            const delay = await deployed.layer2Manager.delayBlocksForWithdraw();
+
+            const topic = deployed.stakingLayer2.interface.getEventTopic('Unstaked');
+            const receipt = await (await deployed.stakingLayer2.connect(addr1).unstake(
                     layerKey,
-                    amount
+                    amountLton
                 )).wait();
 
-            // expect(await deployed.stakingLayer2.totalStakedPrincipal()).to.eq(totalStakedPrincipal.add(amount))
-            expect(await deployed.stakingLayer2.totalStakedLton()).to.gt(totalStakedLton)
-            expect(await deployed.stakingLayer2.totalStakeAccountList()).to.eq(totalStakeAccountList.add(1))
-            expect(await deployed.stakingLayer2.stakeAccountList(totalStakeAccountList)).to.eq(addr1.address)
+            const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
+            const deployedEvent = deployed.stakingLayer2.interface.parseLog(log);
+            expect(deployedEvent.args.lton).to.eq(amountLton)
+            expect(deployedEvent.args.amount).to.gte(amount)
 
-            let lton = await deployed.seigManagerV2.getTonToLton(amount);
-            expect(await deployed.stakingLayer2.balanceOfLton(layerKey, addr1.address)).to.eq(lton)
-            expect(await deployed.stakingLayer2.balanceOf(layerKey, addr1.address)).to.eq(amount)
+            expect(await deployed.stakingLayer2.totalStakedLton()).to.eq(totalStakedLton.sub(amountLton))
+
+            expect(await deployed.stakingLayer2.balanceOfLton(layerKey, addr1.address)).to.eq(0)
+            expect(await deployed.stakingLayer2.balanceOf(layerKey, addr1.address)).to.eq(0)
+
+            expect(await deployed.ton.balanceOf(addr1.address)).to.eq(balanceOfStaker)
+
+            pendings = await deployed.stakingLayer2.amountOfPendings(layerKey, addr1.address)
+            availableWithdraw = await deployed.stakingLayer2.availableWithdraw(layerKey, addr1.address)
+
+            expect(availableWithdraw.amount).to.eq(availableWithdrawOfStaker.amount)
+            expect(pendings.amount).to.eq(amountOfPendings.amount.add(deployedEvent.args.amount))
+            expect(pendings.len).to.eq(amountOfPendings.len + 1)
+            expect(pendings.nextWithdrawableBlockNumber).to.gte(block.number + delay.toNumber())
         })
     });
-    */
+
+    describe('# withdraw', () => {
+
+        it('You cannot withdraw if there is no amount available for withdrawal.', async () => {
+
+            let layerOne = {
+                addressManager: deployed.addressManager.address,
+                l1Messenger: deployed.l1Messenger.address,
+                l2Messenger: deployed.l2Messenger.address,
+                l1Bridge: deployed.l1Bridge.address,
+                l2Bridge:deployed.l2Bridge.address,
+                l2ton: deployed.l2ton.address
+            }
+
+            let layerKey = await getLayerKey(layerOne);
+
+            const availableWithdrawOfStaker = await deployed.stakingLayer2.availableWithdraw(layerKey, addr1.address)
+
+            expect(availableWithdrawOfStaker.amount).to.eq(ethers.constants.Zero)
+
+            await expect(deployed.stakingLayer2.connect(addr1).withdraw(layerKey)).to.be.revertedWith("zero available withdrawal amount")
+
+        })
+
+        it("      pass blocks", async function () {
+            const delay = await deployed.layer2Manager.delayBlocksForWithdraw();
+            let i
+            for (i = 0; i < delay.toNumber(); i++){
+                await ethers.provider.send('evm_mine');
+            }
+        });
+
+        it('You can withdraw if there is amount available for withdrawal.', async () => {
+
+            let layerOne = {
+                addressManager: deployed.addressManager.address,
+                l1Messenger: deployed.l1Messenger.address,
+                l2Messenger: deployed.l2Messenger.address,
+                l1Bridge: deployed.l1Bridge.address,
+                l2Bridge:deployed.l2Bridge.address,
+                l2ton: deployed.l2ton.address
+            }
+
+            let layerKey = await getLayerKey(layerOne);
+
+            const balanceOfStaker = await deployed.ton.balanceOf(addr1.address)
+            const availableWithdrawOfStaker = await deployed.stakingLayer2.availableWithdraw(layerKey, addr1.address)
+
+            expect(availableWithdrawOfStaker.amount).to.gt(ethers.constants.Zero)
+
+            const topic = deployed.stakingLayer2.interface.getEventTopic('Withdrawal');
+            const receipt = await (await deployed.stakingLayer2.connect(addr1).withdraw(layerKey)).wait();
+
+            const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
+            const deployedEvent = deployed.stakingLayer2.interface.parseLog(log);
+            expect(deployedEvent.args.amount).to.gte(availableWithdrawOfStaker.amount)
+
+            const availableWithdraw = await deployed.stakingLayer2.availableWithdraw(layerKey, addr1.address)
+            expect(availableWithdraw.amount).to.eq(ethers.constants.Zero)
+            expect(await deployed.ton.balanceOf(addr1.address)).to.eq(balanceOfStaker.add(availableWithdrawOfStaker.amount))
+        })
+
+    });
+
+    describe('# curTotalLayer2Deposits', () => {
+
+        it('Depositing in layer2 increases the total amount of deposit in the layer.', async () => {
+
+            let layerOne = {
+                addressManager: deployed.addressManager.address,
+                l1Messenger: deployed.l1Messenger.address,
+                l2Messenger: deployed.l2Messenger.address,
+                l1Bridge: deployed.l1Bridge.address,
+                l2Bridge:deployed.l2Bridge.address,
+                l2ton: deployed.l2ton.address
+            }
+
+            let amount = ethers.utils.parseEther("300");
+            let curTotalLayer2Deposits = await deployed.layer2Manager.curTotalLayer2Deposits()
+
+            if (amount.gt(await deployed.ton.balanceOf(addr1.address)))
+            await (await deployed.ton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
+
+            if (amount.gte(await deployed.ton.allowance(addr1.address, deployed.l1Bridge.address)))
+                await (await deployed.ton.connect(addr1).approve(deployed.l1Bridge.address, amount)).wait();
+
+            await (await deployed.l1Bridge.connect(addr1).depositERC20To(
+                    deployed.ton.address,
+                    deployed.l2ton.address,
+                    addr1.address,
+                    amount,
+                    20000,
+                    '0x'
+                )).wait();
+
+            expect(await deployed.layer2Manager.curTotalLayer2Deposits()).to.eq(curTotalLayer2Deposits.add(amount))
+
+        })
+
+        it('If you withdraw from layer 2, the deposit amount of the total layer will be reduced.', async () => {
+
+            let layerOne = {
+                addressManager: deployed.addressManager.address,
+                l1Messenger: deployed.l1Messenger.address,
+                l2Messenger: deployed.l2Messenger.address,
+                l1Bridge: deployed.l1Bridge.address,
+                l2Bridge:deployed.l2Bridge.address,
+                l2ton: deployed.l2ton.address
+            }
+
+            let amount = ethers.utils.parseEther("100");
+            let curTotalLayer2Deposits = await deployed.layer2Manager.curTotalLayer2Deposits()
+            let balanceOfUser = await deployed.ton.balanceOf(addr1.address)
+
+            await (await deployed.l1Bridge.connect(addr1).finalizeERC20Withdrawal(
+                    deployed.ton.address,
+                    deployed.l2ton.address,
+                    addr1.address,
+                    addr1.address,
+                    amount,
+                    '0x'
+                )).wait();
+
+            expect(await deployed.layer2Manager.curTotalLayer2Deposits()).to.eq(curTotalLayer2Deposits.sub(amount))
+            expect(await deployed.ton.balanceOf(addr1.address)).to.eq(balanceOfUser.add(amount))
+
+        })
+
+    });
+
+    describe('# claim of sequencer', () => {
+
+        it('Depositing in L2 will increase L2 holdings.', async () => {
+
+            let amount = ethers.utils.parseEther("300");
+            let curTotalLayer2Deposits = await deployed.layer2Manager.curTotalLayer2Deposits()
+
+            if (amount.gt(await deployed.ton.balanceOf(addr1.address)))
+            await (await deployed.ton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
+
+            if (amount.gte(await deployed.ton.allowance(addr1.address, deployed.l1Bridge.address)))
+                await (await deployed.ton.connect(addr1).approve(deployed.l1Bridge.address, amount)).wait();
+
+            await (await deployed.l1Bridge.connect(addr1).depositERC20To(
+                    deployed.ton.address,
+                    deployed.l2ton.address,
+                    addr1.address,
+                    amount,
+                    20000,
+                    '0x'
+                )).wait();
+
+            expect(await deployed.layer2Manager.curTotalLayer2Deposits()).to.eq(curTotalLayer2Deposits.add(amount))
+        })
+
+        it("      pass blocks", async function () {
+            const minimumBlocksForUpdateSeig = await deployed.seigManagerV2.minimumBlocksForUpdateSeig()
+            let i
+            for (i = 0; i < minimumBlocksForUpdateSeig; i++){
+                await ethers.provider.send('evm_mine');
+            }
+        });
+
+        it('When seignorage is updated, totalSeigs(the seignorage distributed to the sequencers) is increases.', async () => {
+
+            let totalSeigs = await deployed.layer2Manager.totalSeigs()
+            await deployed.seigManagerV2.connect(addr1).updateSeigniorage()
+            expect(await deployed.layer2Manager.totalSeigs()).to.gt(totalSeigs)
+
+        })
+        it('The sequencer cannot claim when there is no claimable amount.', async () => {
+            let layerOne = {
+                addressManager: deployed.addressManager.address,
+                l1Messenger: deployed.l1Messenger.address,
+                l2Messenger: deployed.l2Messenger.address,
+                l1Bridge: deployed.l1Bridge.address,
+                l2Bridge:deployed.l2Bridge.address,
+                l2ton: deployed.l2ton.address
+            }
+            let layerKey = await getLayerKey(layerOne);
+            let holdings = await deployed.layer2Manager.holdings(layerKey)
+            expect(holdings.seigs).to.eq(ethers.constants.Zero)
+
+            await expect(
+                deployed.layer2Manager.connect(addr1).claim(layerKey)
+                ).to.be.revertedWith("no amount to claim")
+        });
+
+        it('When totalSeigs is not 0, seigniorage can be distributed to the sequencer.', async () => {
+            let layerOne = {
+                addressManager: deployed.addressManager.address,
+                l1Messenger: deployed.l1Messenger.address,
+                l2Messenger: deployed.l2Messenger.address,
+                l1Bridge: deployed.l1Bridge.address,
+                l2Bridge:deployed.l2Bridge.address,
+                l2ton: deployed.l2ton.address
+            }
+            let layerKey = await getLayerKey(layerOne);
+
+            expect((await deployed.layer2Manager.holdings(layerKey)).seigs).to.eq(ethers.constants.Zero)
+            expect(await deployed.layer2Manager.totalSeigs()).to.gt(ethers.constants.Zero)
+
+            await deployed.layer2Manager.connect(addr1).distribute()
+
+            expect(await deployed.layer2Manager.totalSeigs()).to.eq(ethers.constants.Zero)
+            expect((await deployed.layer2Manager.holdings(layerKey)).seigs).to.gt(ethers.constants.Zero)
+        });
+
+        it('the sequencers can claim ', async () => {
+
+            let layerOne = {
+                addressManager: deployed.addressManager.address,
+                l1Messenger: deployed.l1Messenger.address,
+                l2Messenger: deployed.l2Messenger.address,
+                l1Bridge: deployed.l1Bridge.address,
+                l2Bridge:deployed.l2Bridge.address,
+                l2ton: deployed.l2ton.address
+            }
+            let layerKey = await getLayerKey(layerOne);
+
+            expect(await deployed.layer2Manager.sequencer(layerKey)).to.eq(sequencer1.address);
+            let balanceOfTon = await deployed.ton.balanceOf(sequencer1.address);
+            let seig = (await deployed.layer2Manager.holdings(layerKey)).seigs;
+            expect(seig).to.gt(ethers.constants.Zero)
+
+            await deployed.layer2Manager.connect(addr1).claim(layerKey)
+            expect((await deployed.layer2Manager.holdings(layerKey)).seigs).to.eq(ethers.constants.Zero)
+            expect(await deployed.ton.balanceOf(sequencer1.address)).to.eq(balanceOfTon.add(seig))
+        })
+    });
 });
 

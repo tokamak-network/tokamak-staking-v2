@@ -6,7 +6,7 @@ import "./proxy/BaseProxyStorage.sol";
 import "./common/AccessibleCommon.sol";
 import "./libraries/SafeERC20.sol";
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 interface SeigManagerV2I {
     function getLtonToTon(uint256 lton) external view returns (uint256);
@@ -14,6 +14,7 @@ interface SeigManagerV2I {
     function getTonToSton(uint256 amount) external view returns (uint256);
     function getStonToTon(uint256 ston) external view returns (uint256);
     function updateSeigniorage() external returns (bool);
+    function claim(address to, uint256 amount) external;
 }
 
 interface Layer2ManagerI {
@@ -70,13 +71,13 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
         emit Staked(layerKey, sender, amount, lton_);
     }
 
-    function unstake(bytes32 layerKey, uint256 amount)
-        public ifFree nonZero(amount)
+    function unstake(bytes32 layerKey, uint256 lton_)
+        public ifFree nonZero(lton_)
     {
         require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
         address sender = msg.sender;
 
-        uint256 lton_ = SeigManagerV2I(seigManagerV2).getTonToLton(amount);
+        uint256 amount = SeigManagerV2I(seigManagerV2).getLtonToTon(lton_);
         LibStake.StakeInfo storage info_ = layerStakes[layerKey][sender];
         require(lton_ <= info_.stakelton,'SL_1');
 
@@ -85,10 +86,7 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
         else info_.stakePrincipal -= amount;
 
         totalStakedLton -= lton_;
-        // if (totalStakedPrincipal < amount) totalStakedPrincipal = 0;
-        // else totalStakedPrincipal -= amount;
 
-        //-----------------------
         uint256 delay = Layer2ManagerI(layer2Manager).delayBlocksForWithdraw();
 
         withdrawalRequests[layerKey][sender].push(LibStake.WithdrawalReqeust({
@@ -106,45 +104,77 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
 
     function withdraw(bytes32 layerKey) public ifFree returns (bool) {
         address sender = msg.sender;
-        (uint32 startIndex, uint32 len, uint256 amount) = availableWithdraw(layerKey, sender);
 
-        require(withdrawalRequests[layerKey][sender].length > startIndex, "SL_2");
+        uint256 totalRequests = withdrawalRequests[layerKey][sender].length;
+        uint256 len = 0;
+        uint256 amount = 0;
 
-        for(uint256 i = startIndex; i < (startIndex+len) ; i++){
+        for(uint256 i = withdrawalRequestIndex[layerKey][sender]; i < totalRequests ; i++){
             LibStake.WithdrawalReqeust storage r = withdrawalRequests[layerKey][sender][i];
-            require(r.withdrawableBlockNumber < block.number, "SL_3");
-            r.processed = true;
+            if (r.withdrawableBlockNumber < block.number && r.processed == false) {
+                r.processed = true;
+                amount += uint256(r.amount);
+                len++;
+            } else {
+                break;
+            }
         }
+        require (amount > 0, 'zero available withdrawal amount');
 
         withdrawalRequestIndex[layerKey][sender] += len;
         _pendingUnstaked[layerKey][sender] -= amount;
         _pendingUnstakedLayer2[layerKey] -= amount;
         _pendingUnstakedAccount[sender] -= amount;
 
-        IERC20(ton).safeTransfer(sender, amount);
+        uint256 bal = IERC20(ton).balanceOf(address(this));
+
+        if (bal < amount) {
+            if (bal > 0) IERC20(ton).safeTransfer(sender, bal);
+            SeigManagerV2I(seigManagerV2).claim(sender, (amount - bal));
+        } else {
+            IERC20(ton).safeTransfer(sender, amount);
+        }
+
         emit Withdrawal(layerKey, sender, amount);
+
         return true;
     }
 
     /* ========== VIEW ========== */
 
     function numberOfPendings(bytes32 layerKey, address account)
-        public view returns (uint256 totalRequests, uint256 curIndex)
+        public view returns (uint256 totalRequests, uint256 withdrawIndex, uint256 pendingLength)
     {
         totalRequests = withdrawalRequests[layerKey][account].length;
-        uint256 index = withdrawalRequestIndex[layerKey][account];
-        if (totalRequests >= index) curIndex = totalRequests - index;
+        withdrawIndex = withdrawalRequestIndex[layerKey][account];
+        if (totalRequests >= withdrawIndex) pendingLength = totalRequests - withdrawIndex;
+    }
+
+    function amountOfPendings(bytes32 layerKey, address account)
+        public view returns (uint256 amount, uint32 startIndex, uint32 len, uint32 nextWithdrawableBlockNumber)
+    {
+        uint256 totalRequests = withdrawalRequests[layerKey][account].length;
+        startIndex = uint32(withdrawalRequestIndex[layerKey][account]);
+
+        for (uint256 i = startIndex; i < totalRequests; i++) {
+            LibStake.WithdrawalReqeust memory r = withdrawalRequests[layerKey][account][i];
+            if (r.processed == false) {
+                if (nextWithdrawableBlockNumber == 0) nextWithdrawableBlockNumber = r.withdrawableBlockNumber;
+                amount += uint256(r.amount);
+                len += 1;
+            }
+        }
     }
 
     function availableWithdraw(bytes32 layerKey, address account)
-        public view returns (uint32 startIndex, uint32 len, uint256 amount)
+        public view returns (uint256 amount, uint32 startIndex, uint32 len)
     {
-        (uint256 totalRequests, uint256 curIndex) = numberOfPendings(layerKey, account);
+        uint256 totalRequests = withdrawalRequests[layerKey][account].length;
+        startIndex = uint32(withdrawalRequestIndex[layerKey][account]);
 
-        for (uint256 i = curIndex; i < totalRequests; i++) {
+        for (uint256 i = startIndex; i < totalRequests; i++) {
             LibStake.WithdrawalReqeust memory r = withdrawalRequests[layerKey][account][i];
             if (r.withdrawableBlockNumber < block.number && r.processed == false) {
-                if (startIndex == 0) startIndex = uint32(i);
                 amount += uint256(r.amount);
                 len += 1;
             } else {

@@ -14,14 +14,11 @@ contract Layer2ManagerStorage {
     uint256 public maxLayer2Count;
 
     uint256 public totalSecurityDeposit; //시퀀서의 담보금
-    // uint256 public totalLayer2Deposits; // L1브릿지를 거처간 모든 L2의 톤 보유량 총액
+    uint256 public totalSeigs; //아직 배분되지 않은 시뇨리지
 
     // 레이어2의 담보금(시퀀서가 입금한다.)
     mapping (bytes32 => uint256) public securityDeposit;
-
-    // L1브릿지를 거처간 L2의 톤 보유량
-    mapping (bytes32 => uint256) public layer2Deposits;
-
+    mapping (bytes32 => Layer2.Holdings) public holdings;
     mapping (bytes32 => Layer2.Info) public layers;
 
     bytes32[] public layerKeys;
