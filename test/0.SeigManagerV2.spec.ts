@@ -4,6 +4,7 @@ import { ethers, network } from 'hardhat'
 import { Signer } from 'ethers'
 import {stakingV2Fixtures} from './shared/fixtures'
 import {TonStakingV2Fixture } from './shared/fixtureInterfaces'
+import snapshotGasCost from './shared/snapshotGasCost'
 
 describe('SeigManagerV2', () => {
     let deployer: Signer, addr1: Signer, sequencer1:Signer
@@ -48,16 +49,18 @@ describe('SeigManagerV2', () => {
         })
 
         it('initialize can be executed by only owner', async () => {
-            await deployed.seigManagerV2Proxy.connect(deployer).initialize(
-                    seigManagerInfo.ton,
-                    seigManagerInfo.wton,
-                    seigManagerInfo.tot,
-                    seigManagerInfo.seigManagerV1,
-                    deployed.layer2ManagerProxy.address,
-                    deployed.stakingLayer2Proxy.address,
-                    seigManagerInfo.seigPerBlock,
-                    seigManagerInfo.minimumBlocksForUpdateSeig
-                );
+            await snapshotGasCost(
+                deployed.seigManagerV2Proxy.connect(deployer).initialize(
+                        seigManagerInfo.ton,
+                        seigManagerInfo.wton,
+                        seigManagerInfo.tot,
+                        seigManagerInfo.seigManagerV1,
+                        deployed.layer2ManagerProxy.address,
+                        deployed.stakingLayer2Proxy.address,
+                        seigManagerInfo.seigPerBlock,
+                        seigManagerInfo.minimumBlocksForUpdateSeig
+                    )
+            );
 
             expect(await deployed.seigManagerV2Proxy.ton()).to.eq(seigManagerInfo.ton)
             expect(await deployed.seigManagerV2Proxy.wton()).to.eq(seigManagerInfo.wton)
@@ -71,7 +74,6 @@ describe('SeigManagerV2', () => {
         })
 
         it('can execute only once.', async () => {
-            const minBlocks = 10;
             await expect(
                 deployed.seigManagerV2Proxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
@@ -98,7 +100,10 @@ describe('SeigManagerV2', () => {
 
         it('setSeigPerBlock can be executed by only owner ', async () => {
             const seigPerBlock = ethers.BigNumber.from("3920000000000000001");
-            await deployed.seigManagerV2.connect(deployer).setSeigPerBlock(seigPerBlock)
+
+            await snapshotGasCost(
+                deployed.seigManagerV2.connect(deployer).setSeigPerBlock(seigPerBlock)
+            );
             expect(await deployed.seigManagerV2.seigPerBlock()).to.eq(seigPerBlock)
 
             await deployed.seigManagerV2.connect(deployer).setSeigPerBlock(seigManagerInfo.seigPerBlock)
@@ -124,7 +129,9 @@ describe('SeigManagerV2', () => {
 
         it('setMinimumBlocksForUpdateSeig can be executed by only owner ', async () => {
             const minimumBlocksForUpdateSeig = 100;
-            await deployed.seigManagerV2.connect(deployer).setMinimumBlocksForUpdateSeig(minimumBlocksForUpdateSeig)
+            await snapshotGasCost(
+                    deployed.seigManagerV2.connect(deployer).setMinimumBlocksForUpdateSeig(minimumBlocksForUpdateSeig)
+            )
             expect(await deployed.seigManagerV2.minimumBlocksForUpdateSeig()).to.eq(minimumBlocksForUpdateSeig)
         })
 
@@ -185,12 +192,14 @@ describe('SeigManagerV2', () => {
                 ratesUnits: 10000
             }
 
-            await deployed.seigManagerV2.connect(deployer).setDividendRates(
+            await snapshotGasCost(
+                deployed.seigManagerV2.connect(deployer).setDividendRates(
                     rates.ratesDao,
                     rates.ratesStosHolders,
                     rates.ratesTonStakers,
                     rates.ratesUnits
                 )
+            )
             expect(await deployed.seigManagerV2.ratesDao()).to.eq(rates.ratesDao)
             expect(await deployed.seigManagerV2.ratesStosHolders()).to.eq(rates.ratesStosHolders)
             expect(await deployed.seigManagerV2.ratesTonStakers()).to.eq(rates.ratesTonStakers)
@@ -227,10 +236,13 @@ describe('SeigManagerV2', () => {
         })
 
         it('setAddress can be executed by only owner ', async () => {
-            await deployed.seigManagerV2.connect(deployer).setAddress(
+
+            await snapshotGasCost(
+                deployed.seigManagerV2.connect(deployer).setAddress(
                     deployed.dao.address,
                     deployed.stosDistribute.address
                 )
+            )
             expect(await deployed.seigManagerV2.dao()).to.eq(deployed.dao.address)
             expect(await deployed.seigManagerV2.stosDistribute()).to.eq(deployed.stosDistribute.address)
 
@@ -260,7 +272,9 @@ describe('SeigManagerV2', () => {
             const minimumBlocksForUpdateSeig = await deployed.seigManagerV2.minimumBlocksForUpdateSeig()
             const block = await ethers.provider.getBlock('latest')
 
-            await deployed.seigManagerV2.connect(addr1).updateSeigniorage()
+            await snapshotGasCost(
+                deployed.seigManagerV2.connect(addr1).updateSeigniorage()
+            )
 
             if (block.number - lastSeigBlock.toNumber() < minimumBlocksForUpdateSeig ) {
                 expect(await deployed.seigManagerV2.lastSeigBlock()).to.eq(lastSeigBlock)
@@ -280,7 +294,7 @@ describe('SeigManagerV2', () => {
         it('If the sum of the staking amount and the bonding liquidity amount is 0, indexLton does not change.', async () => {
             expect(await deployed.seigManagerV2.getTotalLton()).to.eq(ethers.constants.Zero)
             const indexLton = await deployed.seigManagerV2.indexLton();
-            await deployed.seigManagerV2.connect(addr1).updateSeigniorage()
+            await snapshotGasCost(deployed.seigManagerV2.connect(addr1).updateSeigniorage())
             expect(await deployed.seigManagerV2.indexLton()).to.eq(indexLton)
         });
 
@@ -296,7 +310,7 @@ describe('SeigManagerV2', () => {
             expect(await deployed.layer2Manager.curTotalLayer2Deposits()).to.eq(ethers.constants.Zero)
             expect(await deployed.layer2Manager.totalSecurityDeposit()).to.eq(ethers.constants.Zero)
             const totalSeigs = await deployed.layer2Manager.totalSeigs();
-            await deployed.seigManagerV2.connect(addr1).updateSeigniorage()
+            await snapshotGasCost(deployed.seigManagerV2.connect(addr1).updateSeigniorage())
             expect(await deployed.layer2Manager.totalSeigs()).to.eq(totalSeigs)
         });
 

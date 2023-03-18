@@ -13,7 +13,7 @@ export default async function snapshotGasCost(
     | BigNumber
     | Contract
     | Promise<Contract>
-): Promise<void> {
+): Promise<any> {
   const resolved = await x
   if ('deployTransaction' in resolved) {
     const receipt = await resolved.deployTransaction.wait()
@@ -24,4 +24,5 @@ export default async function snapshotGasCost(
   } else if (BigNumber.isBigNumber(resolved)) {
     expect(resolved.toNumber()).toMatchSnapshot()
   }
+  return resolved;
 }

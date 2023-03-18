@@ -4,6 +4,7 @@ import { ethers, network } from 'hardhat'
 import { Signer } from 'ethers'
 import {stakingV2Fixtures} from './shared/fixtures'
 import { TonStakingV2Fixture } from './shared/fixtureInterfaces'
+import snapshotGasCost from './shared/snapshotGasCost'
 
 describe('Layer2Manager', () => {
     let deployer: Signer, addr1: Signer, sequencer1:Signer
@@ -50,13 +51,13 @@ describe('Layer2Manager', () => {
         })
 
         it('initialize can be executed by only owner', async () => {
-            await deployed.layer2ManagerProxy.connect(deployer).initialize(
+            await snapshotGasCost(deployed.layer2ManagerProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2Proxy.address,
                     deployed.stakingLayer2Proxy.address,
                     layer2ManagerInfo.minimumDepositForSequencer,
                     layer2ManagerInfo.delayBlocksForWithdraw
-                );
+                ))
 
             expect(await deployed.layer2ManagerProxy.ton()).to.eq(seigManagerInfo.ton)
             expect(await deployed.layer2ManagerProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
@@ -89,7 +90,7 @@ describe('Layer2Manager', () => {
 
         it('setMaxLayer2Count can be executed by only owner ', async () => {
             const maxLayer2Count = ethers.BigNumber.from("2");
-            await deployed.layer2Manager.connect(deployer).setMaxLayer2Count(maxLayer2Count)
+            await snapshotGasCost(deployed.layer2Manager.connect(deployer).setMaxLayer2Count(maxLayer2Count))
             expect(await deployed.layer2Manager.maxLayer2Count()).to.eq(maxLayer2Count)
 
             await deployed.layer2Manager.connect(deployer).setMaxLayer2Count(ethers.constants.One)
@@ -115,7 +116,7 @@ describe('Layer2Manager', () => {
 
         it('setMinimumDepositForSequencer can be executed by only owner ', async () => {
             const minimumDepositForSequencer = ethers.utils.parseEther("200");
-            await deployed.layer2Manager.connect(deployer).setMinimumDepositForSequencer(minimumDepositForSequencer)
+            await snapshotGasCost(deployed.layer2Manager.connect(deployer).setMinimumDepositForSequencer(minimumDepositForSequencer))
             expect(await deployed.layer2Manager.minimumDepositForSequencer()).to.eq(minimumDepositForSequencer)
 
             await deployed.layer2Manager.connect(deployer).setMinimumDepositForSequencer(layer2ManagerInfo.minimumDepositForSequencer)
@@ -140,7 +141,7 @@ describe('Layer2Manager', () => {
 
         it('setDelayBlocksForWithdraw can be executed by only owner ', async () => {
             const delayBlocksForWithdraw = ethers.BigNumber.from("100");
-            await deployed.layer2Manager.connect(deployer).setDelayBlocksForWithdraw(delayBlocksForWithdraw)
+            await snapshotGasCost(deployed.layer2Manager.connect(deployer).setDelayBlocksForWithdraw(delayBlocksForWithdraw))
             expect(await deployed.layer2Manager.delayBlocksForWithdraw()).to.eq(delayBlocksForWithdraw)
 
 
@@ -155,7 +156,7 @@ describe('Layer2Manager', () => {
         })
     });
 
-    describe('#create', () => {
+    describe('# create', () => {
 
         it('Cannot be created unless the caller is the layer\'s sequencer.', async () => {
             expect(await deployed.addressManager.getAddress("OVM_Sequencer")).to.not.eq(addr1.address)
@@ -194,12 +195,12 @@ describe('Layer2Manager', () => {
             if (amount.gte(await deployed.ton.allowance(sequencer1.address, deployed.layer2Manager.address)))
                 await (await deployed.ton.connect(sequencer1).approve(deployed.layer2Manager.address, amount)).wait();
 
-            await deployed.layer2Manager.connect(sequencer1).create(
+            await snapshotGasCost(deployed.layer2Manager.connect(sequencer1).create(
                     deployed.addressManager.address,
                     deployed.l1Messenger.address,
                     deployed.l1Bridge.address,
                     deployed.l2ton.address
-                );
+                ))
 
             expect(await deployed.layer2Manager.totalSecurityDeposit()).to.eq(totalSecurityDeposit.add(amount))
         })

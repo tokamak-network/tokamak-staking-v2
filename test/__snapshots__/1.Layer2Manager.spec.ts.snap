@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Layer2Manager # create Approve the minimum security deposit and create. 1`] = `279560`;
+
+exports[`Layer2Manager # initialize initialize can be executed by only owner 1`] = `158559`;
+
+exports[`Layer2Manager # setDelayBlocksForWithdraw setDelayBlocksForWithdraw can be executed by only owner  1`] = `38332`;
+
+exports[`Layer2Manager # setMaxLayer2Count setMaxLayer2Count can be executed by only owner  1`] = `38335`;
+
+exports[`Layer2Manager # setMinimumDepositForSequencer setMinimumDepositForSequencer can be executed by only owner  1`] = `38359`;

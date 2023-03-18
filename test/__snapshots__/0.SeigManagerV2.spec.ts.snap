@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SeigManagerV2 # initialize initialize can be executed by only owner 1`] = `209436`;
+
+exports[`SeigManagerV2 # setAddress setAddress can be executed by only owner  1`] = `78501`;
+
+exports[`SeigManagerV2 # setDividendRates setDividendRates can be executed by only owner  1`] = `39494`;
+
+exports[`SeigManagerV2 # setMinimumBlocksForUpdateSeig setMinimumBlocksForUpdateSeig can be executed by only owner  1`] = `38529`;
+
+exports[`SeigManagerV2 # setSeigPerBlock setSeigPerBlock can be executed by only owner  1`] = `38400`;
+
+exports[`SeigManagerV2 # updateSeigniorage After the recent seignorage issuance, seignorage will not be issued unless the minimum block has passed. 1`] = `35196`;
+
+exports[`SeigManagerV2 # updateSeigniorage If the TVL and deposit of L2 are 0, totalSeigs for sequencer is not increased. 1`] = `138505`;
+
+exports[`SeigManagerV2 # updateSeigniorage If the sum of the staking amount and the bonding liquidity amount is 0, indexLton does not change. 1`] = `155605`;

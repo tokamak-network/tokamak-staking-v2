@@ -11,8 +11,8 @@ library Layer2
     }
 
     struct Holdings {
-        uint256 securityDeposit;
-        uint256 seigs;
+        uint256 securityDeposit;    // ton unit
+        uint256 seigs;              // ton unit
         bool bonding;
     }
 

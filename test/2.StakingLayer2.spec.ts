@@ -4,6 +4,7 @@ import { ethers, network } from 'hardhat'
 import { Signer } from 'ethers'
 import {stakingV2Fixtures, getLayerKey} from './shared/fixtures'
 import { TonStakingV2Fixture } from './shared/fixtureInterfaces'
+import snapshotGasCost from './shared/snapshotGasCost'
 
 describe('StakingLayer2', () => {
     let deployer: Signer, addr1: Signer, sequencer1:Signer
@@ -48,11 +49,11 @@ describe('StakingLayer2', () => {
         })
 
         it('initialize can be executed by only owner', async () => {
-            await deployed.stakingLayer2Proxy.connect(deployer).initialize(
+            await snapshotGasCost(deployed.stakingLayer2Proxy.connect(deployer).initialize(
                 seigManagerInfo.ton,
                 deployed.seigManagerV2Proxy.address,
                 deployed.layer2ManagerProxy.address
-                );
+                ))
 
             expect(await deployed.stakingLayer2Proxy.ton()).to.eq(seigManagerInfo.ton)
             expect(await deployed.stakingLayer2Proxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)

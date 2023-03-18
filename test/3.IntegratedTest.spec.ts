@@ -4,6 +4,7 @@ import { ethers, network } from 'hardhat'
 import { Signer } from 'ethers'
 import { stakingV2Fixtures, getLayerKey} from './shared/fixtures'
 import { TonStakingV2Fixture } from './shared/fixtureInterfaces'
+import snapshotGasCost from './shared/snapshotGasCost'
 
 describe('Integrated Test', () => {
     let deployer: Signer, addr1: Signer, sequencer1:Signer
@@ -38,7 +39,7 @@ describe('Integrated Test', () => {
     describe('# initialize', () => {
 
         it('SeigManagerV2 : initialize can be executed by only owner', async () => {
-            await deployed.seigManagerV2Proxy.connect(deployer).initialize(
+            await snapshotGasCost(deployed.seigManagerV2Proxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
                     seigManagerInfo.wton,
                     seigManagerInfo.tot,
@@ -47,7 +48,7 @@ describe('Integrated Test', () => {
                     deployed.stakingLayer2Proxy.address,
                     seigManagerInfo.seigPerBlock,
                     seigManagerInfo.minimumBlocksForUpdateSeig
-                );
+                ))
 
             expect(await deployed.seigManagerV2Proxy.ton()).to.eq(seigManagerInfo.ton)
             expect(await deployed.seigManagerV2Proxy.wton()).to.eq(seigManagerInfo.wton)
@@ -61,13 +62,13 @@ describe('Integrated Test', () => {
 
 
         it('Layer2Manager : initialize can be executed by only owner', async () => {
-            await deployed.layer2ManagerProxy.connect(deployer).initialize(
+            await snapshotGasCost(deployed.layer2ManagerProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2Proxy.address,
                     deployed.stakingLayer2Proxy.address,
                     layer2ManagerInfo.minimumDepositForSequencer,
                     layer2ManagerInfo.delayBlocksForWithdraw
-                );
+                ))
 
             expect(await deployed.layer2ManagerProxy.ton()).to.eq(seigManagerInfo.ton)
             expect(await deployed.layer2ManagerProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
@@ -77,11 +78,11 @@ describe('Integrated Test', () => {
         })
 
         it('StakingLayer2 : initialize can be executed by only owner', async () => {
-            await deployed.stakingLayer2Proxy.connect(deployer).initialize(
+            await snapshotGasCost(deployed.stakingLayer2Proxy.connect(deployer).initialize(
                 seigManagerInfo.ton,
                 deployed.seigManagerV2Proxy.address,
                 deployed.layer2ManagerProxy.address
-                );
+                ))
 
             expect(await deployed.stakingLayer2Proxy.ton()).to.eq(seigManagerInfo.ton)
             expect(await deployed.stakingLayer2Proxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
@@ -95,7 +96,7 @@ describe('Integrated Test', () => {
 
         it('LastSeigBlock can be executed by only owner ', async () => {
             const block = await ethers.provider.getBlock('latest')
-            await deployed.seigManagerV2.connect(deployer).setLastSeigBlock(block.number)
+            await snapshotGasCost(deployed.seigManagerV2.connect(deployer).setLastSeigBlock(block.number))
             expect(await deployed.seigManagerV2.lastSeigBlock()).to.eq(block.number)
         })
 
@@ -105,7 +106,7 @@ describe('Integrated Test', () => {
 
         it('setMaxLayer2Count can be executed by only owner ', async () => {
             const maxLayer2Count = ethers.BigNumber.from("2");
-            await deployed.layer2Manager.connect(deployer).setMaxLayer2Count(maxLayer2Count)
+            await snapshotGasCost(deployed.layer2Manager.connect(deployer).setMaxLayer2Count(maxLayer2Count))
             expect(await deployed.layer2Manager.maxLayer2Count()).to.eq(maxLayer2Count)
 
             await deployed.layer2Manager.connect(deployer).setMaxLayer2Count(ethers.constants.One)
@@ -130,12 +131,12 @@ describe('Integrated Test', () => {
             if (amount.gte(await deployed.ton.allowance(sequencer1.address, deployed.layer2Manager.address)))
                 await (await deployed.ton.connect(sequencer1).approve(deployed.layer2Manager.address, amount)).wait();
 
-            await deployed.layer2Manager.connect(sequencer1).create(
+            await snapshotGasCost(deployed.layer2Manager.connect(sequencer1).create(
                     deployed.addressManager.address,
                     deployed.l1Messenger.address,
                     deployed.l1Bridge.address,
                     deployed.l2ton.address
-                );
+                ));
 
             expect(await deployed.layer2Manager.totalLayerKeys()).to.eq(totalLayerKeys.add(1))
             expect(await deployed.layer2Manager.totalSecurityDeposit()).to.eq(totalSecurityDeposit.add(amount))
@@ -227,10 +228,10 @@ describe('Integrated Test', () => {
             if (amount.gte(await deployed.ton.allowance(addr1.address, deployed.stakingLayer2.address)))
                 await (await deployed.ton.connect(addr1).approve(deployed.stakingLayer2.address, amount)).wait();
 
-            await (await deployed.stakingLayer2.connect(addr1).stake(
+            await snapshotGasCost(deployed.stakingLayer2.connect(addr1).stake(
                     layerKey,
                     amount
-                )).wait();
+                ));
 
             // expect(await deployed.stakingLayer2.totalStakedPrincipal()).to.eq(totalStakedPrincipal.add(amount))
             expect(await deployed.stakingLayer2.totalStakedLton()).to.gt(totalStakedLton)
@@ -250,7 +251,7 @@ describe('Integrated Test', () => {
             const minimumBlocksForUpdateSeig = await deployed.seigManagerV2.minimumBlocksForUpdateSeig()
             const block = await ethers.provider.getBlock('latest')
 
-            await deployed.seigManagerV2.connect(addr1).updateSeigniorage()
+            await snapshotGasCost(deployed.seigManagerV2.connect(addr1).updateSeigniorage())
 
             if (block.number - lastSeigBlock.toNumber() < minimumBlocksForUpdateSeig ) {
                 expect(await deployed.seigManagerV2.lastSeigBlock()).to.eq(lastSeigBlock)
@@ -284,7 +285,7 @@ describe('Integrated Test', () => {
 
             expect(await deployed.seigManagerV2.getTotalLton()).to.gt(ethers.constants.Zero)
             const indexLton = await deployed.seigManagerV2.indexLton();
-            await deployed.seigManagerV2.connect(addr1).updateSeigniorage()
+            await snapshotGasCost(deployed.seigManagerV2.connect(addr1).updateSeigniorage())
             expect(await deployed.seigManagerV2.indexLton()).to.gt(indexLton)
 
             expect(await deployed.ton.balanceOf(deployed.dao.address)).to.eq(0)
@@ -319,7 +320,7 @@ describe('Integrated Test', () => {
 
             expect(await deployed.seigManagerV2.getTotalLton()).to.gt(ethers.constants.Zero)
             const indexLton = await deployed.seigManagerV2.indexLton();
-            await deployed.seigManagerV2.connect(addr1).runUpdateSeigniorage()
+            await snapshotGasCost(deployed.seigManagerV2.connect(addr1).runUpdateSeigniorage())
             expect(await deployed.seigManagerV2.indexLton()).to.gt(indexLton)
 
             expect(await deployed.ton.balanceOf(deployed.dao.address)).to.eq(0)
@@ -345,12 +346,12 @@ describe('Integrated Test', () => {
                 ratesUnits: 10000
             }
 
-            await deployed.seigManagerV2.connect(deployer).setDividendRates(
+            await snapshotGasCost(deployed.seigManagerV2.connect(deployer).setDividendRates(
                     rates.ratesDao,
                     rates.ratesStosHolders,
                     rates.ratesTonStakers,
                     rates.ratesUnits
-                )
+                ))
             expect(await deployed.seigManagerV2.ratesDao()).to.eq(rates.ratesDao)
             expect(await deployed.seigManagerV2.ratesStosHolders()).to.eq(rates.ratesStosHolders)
             expect(await deployed.seigManagerV2.ratesTonStakers()).to.eq(rates.ratesTonStakers)
@@ -358,10 +359,10 @@ describe('Integrated Test', () => {
         })
 
         it('setAddress can be executed by only owner ', async () => {
-            await deployed.seigManagerV2.connect(deployer).setAddress(
+            await snapshotGasCost(deployed.seigManagerV2.connect(deployer).setAddress(
                     deployed.dao.address,
                     deployed.stosDistribute.address
-                )
+                ))
             expect(await deployed.seigManagerV2.dao()).to.eq(deployed.dao.address)
             expect(await deployed.seigManagerV2.stosDistribute()).to.eq(deployed.stosDistribute.address)
 
@@ -437,10 +438,11 @@ describe('Integrated Test', () => {
             const delay = await deployed.layer2Manager.delayBlocksForWithdraw();
 
             const topic = deployed.stakingLayer2.interface.getEventTopic('Unstaked');
-            const receipt = await (await deployed.stakingLayer2.connect(addr1).unstake(
+
+            const receipt = await (await snapshotGasCost(deployed.stakingLayer2.connect(addr1).unstake(
                     layerKey,
                     amountLton
-                )).wait();
+                ))).wait();
 
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
             const deployedEvent = deployed.stakingLayer2.interface.parseLog(log);
@@ -510,7 +512,8 @@ describe('Integrated Test', () => {
             expect(availableWithdrawOfStaker.amount).to.gt(ethers.constants.Zero)
 
             const topic = deployed.stakingLayer2.interface.getEventTopic('Withdrawal');
-            const receipt = await (await deployed.stakingLayer2.connect(addr1).withdraw(layerKey)).wait();
+
+            const receipt = await (await snapshotGasCost(deployed.stakingLayer2.connect(addr1).withdraw(layerKey))).wait();
 
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
             const deployedEvent = deployed.stakingLayer2.interface.parseLog(log);
@@ -571,14 +574,14 @@ describe('Integrated Test', () => {
             let curTotalLayer2Deposits = await deployed.layer2Manager.curTotalLayer2Deposits()
             let balanceOfUser = await deployed.ton.balanceOf(addr1.address)
 
-            await (await deployed.l1Bridge.connect(addr1).finalizeERC20Withdrawal(
+            await (await snapshotGasCost(deployed.l1Bridge.connect(addr1).finalizeERC20Withdrawal(
                     deployed.ton.address,
                     deployed.l2ton.address,
                     addr1.address,
                     addr1.address,
                     amount,
                     '0x'
-                )).wait();
+                ))).wait();
 
             expect(await deployed.layer2Manager.curTotalLayer2Deposits()).to.eq(curTotalLayer2Deposits.sub(amount))
             expect(await deployed.ton.balanceOf(addr1.address)).to.eq(balanceOfUser.add(amount))
@@ -600,14 +603,14 @@ describe('Integrated Test', () => {
             if (amount.gte(await deployed.ton.allowance(addr1.address, deployed.l1Bridge.address)))
                 await (await deployed.ton.connect(addr1).approve(deployed.l1Bridge.address, amount)).wait();
 
-            await (await deployed.l1Bridge.connect(addr1).depositERC20To(
+            await (await snapshotGasCost(deployed.l1Bridge.connect(addr1).depositERC20To(
                     deployed.ton.address,
                     deployed.l2ton.address,
                     addr1.address,
                     amount,
                     20000,
                     '0x'
-                )).wait();
+                ))).wait();
 
             expect(await deployed.layer2Manager.curTotalLayer2Deposits()).to.eq(curTotalLayer2Deposits.add(amount))
         })
@@ -623,7 +626,7 @@ describe('Integrated Test', () => {
         it('When seignorage is updated, totalSeigs(the seignorage distributed to the sequencers) is increases.', async () => {
 
             let totalSeigs = await deployed.layer2Manager.totalSeigs()
-            await deployed.seigManagerV2.connect(addr1).updateSeigniorage()
+            await snapshotGasCost(deployed.seigManagerV2.connect(addr1).updateSeigniorage())
             expect(await deployed.layer2Manager.totalSeigs()).to.gt(totalSeigs)
 
         })
@@ -655,7 +658,7 @@ describe('Integrated Test', () => {
             expect((await deployed.layer2Manager.holdings(layerKey)).seigs).to.eq(ethers.constants.Zero)
             expect(await deployed.layer2Manager.totalSeigs()).to.gt(ethers.constants.Zero)
 
-            await deployed.layer2Manager.connect(addr1).distribute()
+            await snapshotGasCost(deployed.layer2Manager.connect(addr1).distribute())
 
             expect(await deployed.layer2Manager.totalSeigs()).to.eq(ethers.constants.Zero)
             expect((await deployed.layer2Manager.holdings(layerKey)).seigs).to.gt(ethers.constants.Zero)
@@ -676,7 +679,7 @@ describe('Integrated Test', () => {
             let seig = (await deployed.layer2Manager.holdings(layerKey)).seigs;
             expect(seig).to.gt(ethers.constants.Zero)
 
-            await deployed.layer2Manager.connect(addr1).claim(layerKey)
+            await snapshotGasCost(deployed.layer2Manager.connect(addr1).claim(layerKey))
             expect((await deployed.layer2Manager.holdings(layerKey)).seigs).to.eq(ethers.constants.Zero)
             expect(await deployed.ton.balanceOf(sequencer1.address)).to.eq(balanceOfTon.add(seig))
         })

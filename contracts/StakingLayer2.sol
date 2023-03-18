@@ -101,7 +101,7 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
     function unstake(bytes32 layerKey, uint256 lton_)
         public ifFree nonZero(lton_)
     {
-        require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
+        // require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
         address sender = msg.sender;
 
         uint256 amount = SeigManagerV2I(seigManagerV2).getLtonToTon(lton_);
@@ -132,12 +132,14 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
 
     function restake(bytes32 layerKey) public
     {
+        require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
         uint256 i = withdrawalRequestIndex[layerKey][msg.sender];
         require(_restake(layerKey, msg.sender, i, 1),'SL_E_RESTAKE');
     }
 
     function restakeMulti(bytes32 layerKey, uint256 n) public
     {
+        require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
         uint256 i = withdrawalRequestIndex[layerKey][msg.sender];
         require(_restake(layerKey, msg.sender, i, n),'SL_E_RESTAKE');
     }
