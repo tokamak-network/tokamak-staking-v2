@@ -34,26 +34,52 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
 
     event Staked(bytes32 layerKey, address sender, uint256 amount, uint256 lton);
     event Unstaked(bytes32 layerKey, address sender, uint256 amount, uint256 lton);
+    event Restaked(bytes32 layerKey, address sender, uint256 amount, uint256 lton);
     event Withdrawal(bytes32 layerKey, address sender, uint256 amount);
 
     /* ========== CONSTRUCTOR ========== */
     constructor() {
     }
 
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return _supportedInterfaces[interfaceId] || super.supportsInterface(interfaceId);
+    }
+
     /* ========== onlyOwner ========== */
 
 
+    /* ========== only TON ========== */
+    function onApprove(
+        address sender,
+        address spender,
+        uint256 amount,
+        bytes calldata data
+    ) external returns (bool) {
+
+        require(ton == msg.sender, "EA");
+        // data : (32 bytes)layerKey
+        require(Layer2ManagerI(layer2Manager).registeredLayerKeys(bytes32(data)), 'non-registered layer');
+        require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
+
+        IERC20(ton).safeTransferFrom(sender, address(this), amount);
+        _stake(bytes32(data), sender, amount);
+
+        return true;
+    }
+
     /* ========== Anyone can execute ========== */
 
-    function stake(bytes32 layerKey, uint256 amount)
-        public ifFree nonZero(amount)
+    function stake(bytes32 layerKey, uint256 amount) external nonZero(amount)
     {
         require(Layer2ManagerI(layer2Manager).registeredLayerKeys(layerKey), 'non-registered layer');
-
         require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
         address sender = msg.sender;
         IERC20(ton).safeTransferFrom(sender, address(this), amount);
+        _stake(layerKey, sender, amount);
+    }
 
+    function _stake(bytes32 layerKey, address sender, uint256 amount) internal ifFree nonZero(amount)
+    {
         uint256 lton_ = SeigManagerV2I(seigManagerV2).getTonToLton(amount);
         LibStake.StakeInfo storage info_ = layerStakes[layerKey][sender];
 
@@ -65,11 +91,12 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
         info_.stakePrincipal += amount;
         info_.stakelton += lton_;
 
+        layerStakedLton[layerKey] += lton_;
         totalStakedLton += lton_;
-        // totalStakedPrincipal += amount;
 
         emit Staked(layerKey, sender, amount, lton_);
     }
+
 
     function unstake(bytes32 layerKey, uint256 lton_)
         public ifFree nonZero(lton_)
@@ -85,6 +112,7 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
         if (info_.stakePrincipal < amount) info_.stakePrincipal = 0;
         else info_.stakePrincipal -= amount;
 
+        layerStakedLton[layerKey] -= lton_;
         totalStakedLton -= lton_;
 
         uint256 delay = Layer2ManagerI(layer2Manager).delayBlocksForWithdraw();
@@ -102,7 +130,58 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
         emit Unstaked(layerKey, sender, amount, lton_);
     }
 
-    function withdraw(bytes32 layerKey) public ifFree returns (bool) {
+    function restake(bytes32 layerKey) public
+    {
+        uint256 i = withdrawalRequestIndex[layerKey][msg.sender];
+        require(_restake(layerKey, msg.sender, i, 1),'SL_E_RESTAKE');
+    }
+
+    function restakeMulti(bytes32 layerKey, uint256 n) public
+    {
+        uint256 i = withdrawalRequestIndex[layerKey][msg.sender];
+        require(_restake(layerKey, msg.sender, i, n),'SL_E_RESTAKE');
+    }
+
+    function _restake(bytes32 layerKey, address sender, uint256 i, uint256 nlength) internal ifFree returns (bool) {
+        uint256 accAmount;
+        uint256 totalRequests = withdrawalRequests[layerKey][sender].length;
+
+        require(totalRequests > 0, "no unstake");
+        require(totalRequests - i >= nlength, "n exceeds num of pending");
+
+        uint256 e = i + nlength;
+        for (; i < e; i++) {
+            LibStake.WithdrawalReqeust storage r = withdrawalRequests[layerKey][sender][i];
+            uint256 amount = r.amount;
+            require(!r.processed, "already withdrawal");
+            if (amount > 0) accAmount += amount;
+            r.processed = true;
+        }
+
+        require(accAmount > 0, "no valid restake amount");
+
+        // deposit-related storages
+        uint256 lton_ = SeigManagerV2I(seigManagerV2).getTonToLton(accAmount);
+        LibStake.StakeInfo storage info_ = layerStakes[layerKey][sender];
+        info_.stakePrincipal += accAmount;
+        info_.stakelton += lton_;
+        layerStakedLton[layerKey] += lton_;
+        totalStakedLton += lton_;
+
+        // withdrawal-related storages
+        _pendingUnstaked[layerKey][sender] -= accAmount;
+        _pendingUnstakedLayer2[layerKey] -= accAmount;
+        _pendingUnstakedAccount[sender] -= accAmount;
+
+        withdrawalRequestIndex[layerKey][sender] += nlength;
+
+        emit Restaked(layerKey, sender, accAmount, lton_);
+        return true;
+    }
+
+
+
+    function withdraw(bytes32 layerKey) public ifFree {
         address sender = msg.sender;
 
         uint256 totalRequests = withdrawalRequests[layerKey][sender].length;
@@ -136,8 +215,6 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
         }
 
         emit Withdrawal(layerKey, sender, amount);
-
-        return true;
     }
 
     /* ========== VIEW ========== */
@@ -181,6 +258,10 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
                 break;
             }
         }
+    }
+
+    function balanceOfLton(bytes32 layerKey) public view returns (uint256 amount) {
+        amount = layerStakedLton[layerKey];
     }
 
     function balanceOfLton(bytes32 layerKey, address account) public view returns (uint256 amount) {

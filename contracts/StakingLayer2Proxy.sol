@@ -21,5 +21,13 @@ contract StakingLayer2Proxy is BaseProxy, StakingLayer2Storage {
         seigManagerV2 = _seigManagerV2;
         ton = _ton;
         layer2Manager =_layer2Manager;
+
+        _registerInterface(ERC20_ONAPPROVE);
+        _registerInterface(InterfaceId_ERC165);
+    }
+
+    function _registerInterface(bytes4 interfaceId) internal virtual {
+        require(interfaceId != 0xffffffff, "ERC165: invalid interface id");
+        _supportedInterfaces[interfaceId] = true;
     }
 }
