@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.4;
 
-// import {IERC20} from "./interfaces/IERC20.sol";
 import {Layer2} from "./libraries/Layer2.sol";
 import "./libraries/LibStake.sol";
 
@@ -15,6 +14,7 @@ contract StakingLayer2Storage {
     uint256 public totalStakedLton;
     uint256 public totalBondedLton;
 
+    mapping (bytes32 => uint256) public layerStakedLton;
     mapping (bytes32 => mapping(address => LibStake.StakeInfo)) public layerStakes; // ltos uint
 
     // layer2Key => msg.sender => withdrawal requests (언스테이크시 등록 )
@@ -23,15 +23,21 @@ contract StakingLayer2Storage {
     mapping (bytes32 => mapping (address => uint256)) public withdrawalRequestIndex;
 
     // pending unstaked amount
-    // layer2 => msg.sender => wton amount
+    // layer2 => msg.sender => ton amount
     mapping (bytes32 => mapping (address => uint256)) public _pendingUnstaked;
-    // layer2 => wton amount
+    // layer2 => ton amount
     mapping (bytes32 => uint256) public _pendingUnstakedLayer2;
-    // msg.sender => wton amount
+    // msg.sender =>  ton amount
     mapping (address => uint256) public _pendingUnstakedAccount;
 
     address[] public stakeAccountList;
     address[] public bondAccountList;
+
+    bytes4 constant ERC20_ONAPPROVE = 0x4273ca16;
+     // As per the EIP-165 spec, no interface should ever match 0xffffffff
+    bytes4 internal constant InterfaceId_Invalid = 0xffffffff;
+    bytes4 internal constant InterfaceId_ERC165 = 0x01ffc9a7;
+    mapping(bytes4 => bool) internal _supportedInterfaces;
 
     bool internal free = true;
 

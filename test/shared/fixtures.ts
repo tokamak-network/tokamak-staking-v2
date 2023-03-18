@@ -19,38 +19,7 @@ import {Layer2Fixture, TonStakingV2Fixture } from './fixtureInterfaces'
 // mainnet
 let tonAddress = "0x2be5e8c109e2197D077D13A82dAead6a9b3433C5";
 let tonAdminAddress = "0xDD9f0cCc044B0781289Ee318e5971b0139602C26";
-/*
-interface Layer2Fixture  {
-    addressManager: string,
-    l1Messenger: string,
-    l2Messenger: string,
-    l1Bridge: string,
-    l2Bridge: string,
-    l2ton: string
-}
 
-interface TonStakingV2Fixture  {
-    seigManagerV2Proxy: SeigManagerV2Proxy
-    seigManagerV2: SeigManagerV2
-    layer2ManagerProxy: Layer2ManagerProxy
-    layer2Manager: Layer2Manager
-    stakingLayer2Proxy: StakingLayer2Proxy
-    stakingLayer2: StakingLayer2
-    ton: TON,
-    deployer: Signer,
-    addr1: Signer,
-    sequencer1: Signer,
-    tonAdmin: Signer,
-    addressManager: Lib_AddressManager,
-    l1Messenger: MockL1Messenger,
-    l2Messenger: MockL2Messenger,
-    l1Bridge: MockL1Bridge,
-    l2Bridge: MockL2Bridge,
-    l2ton: TestERC20,
-    dao: Signer,
-    stosDistribute: Signer
-}
-*/
 export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture> {
 
     const [deployer, addr1, sequencer1, dao, stosDistribute ] = await ethers.getSigners();
@@ -146,12 +115,10 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
 
 export const getLayerKey = async function (info: Layer2Fixture): Promise<string> {
     const constructorArgumentsEncoded = ethers.utils.defaultAbiCoder.encode(
-        ['address', 'address', 'address', 'address', 'address', 'address'],
+        ['address', 'address', 'address', 'address' ],
         [   info.addressManager,
             info.l1Messenger,
-            info.l2Messenger,
             info.l1Bridge,
-            info.l2Bridge,
             info.l2ton]
       )
    return ethers.utils.keccak256(constructorArgumentsEncoded) ;

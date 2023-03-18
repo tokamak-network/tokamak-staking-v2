@@ -133,9 +133,7 @@ describe('Integrated Test', () => {
             await deployed.layer2Manager.connect(sequencer1).create(
                     deployed.addressManager.address,
                     deployed.l1Messenger.address,
-                    deployed.l2Messenger.address,
                     deployed.l1Bridge.address,
-                    deployed.l2Bridge.address,
                     deployed.l2ton.address
                 );
 
@@ -145,9 +143,7 @@ describe('Integrated Test', () => {
             let layerKey = await getLayerKey({
                     addressManager: deployed.addressManager.address,
                     l1Messenger: deployed.l1Messenger.address,
-                    l2Messenger: deployed.l2Messenger.address,
                     l1Bridge: deployed.l1Bridge.address,
-                    l2Bridge: deployed.l2Bridge.address,
                     l2ton: deployed.l2ton.address
                 }
             );
@@ -157,9 +153,7 @@ describe('Integrated Test', () => {
             let layer = await deployed.layer2Manager.getLayerInfo(layerKey);
             expect(layer.addressManager).to.eq(deployed.addressManager.address)
             expect(layer.l1Messenger).to.eq(deployed.l1Messenger.address)
-            expect(layer.l2Messenger).to.eq(deployed.l2Messenger.address)
             expect(layer.l1Bridge).to.eq(deployed.l1Bridge.address)
-            expect(layer.l2Bridge).to.eq(deployed.l2Bridge.address)
             expect(layer.l2ton).to.eq(deployed.l2ton.address)
 
             let getAllLayerKeys = await deployed.layer2Manager.getAllLayerKeys();
@@ -176,9 +170,7 @@ describe('Integrated Test', () => {
             let layerOne = {
                 addressManager: addressOne,
                 l1Messenger: deployed.l2ton.address,
-                l2Messenger: deployed.l2ton.address,
                 l1Bridge: deployed.l2ton.address,
-                l2Bridge:deployed.l2ton.address,
                 l2ton: deployed.l2ton.address
             }
 
@@ -199,9 +191,7 @@ describe('Integrated Test', () => {
             let layerOne = {
                 addressManager: deployed.addressManager.address,
                 l1Messenger: deployed.l1Messenger.address,
-                l2Messenger: deployed.l2Messenger.address,
                 l1Bridge: deployed.l1Bridge.address,
-                l2Bridge:deployed.l2Bridge.address,
                 l2ton: deployed.l2ton.address
             }
 
@@ -221,9 +211,7 @@ describe('Integrated Test', () => {
             let layerOne = {
                 addressManager: deployed.addressManager.address,
                 l1Messenger: deployed.l1Messenger.address,
-                l2Messenger: deployed.l2Messenger.address,
                 l1Bridge: deployed.l1Bridge.address,
-                l2Bridge:deployed.l2Bridge.address,
                 l2ton: deployed.l2ton.address
             }
 
@@ -250,7 +238,7 @@ describe('Integrated Test', () => {
             expect(await deployed.stakingLayer2.stakeAccountList(totalStakeAccountList)).to.eq(addr1.address)
 
             let lton = await deployed.seigManagerV2.getTonToLton(amount);
-            expect(await deployed.stakingLayer2.balanceOfLton(layerKey, addr1.address)).to.eq(lton)
+            expect(await deployed.stakingLayer2["balanceOfLton(bytes32,address)"](layerKey, addr1.address)).to.eq(lton)
             expect(await deployed.stakingLayer2.balanceOf(layerKey, addr1.address)).to.eq(amount)
         })
     });
@@ -283,15 +271,13 @@ describe('Integrated Test', () => {
             let layerOne = {
                 addressManager: deployed.addressManager.address,
                 l1Messenger: deployed.l1Messenger.address,
-                l2Messenger: deployed.l2Messenger.address,
                 l1Bridge: deployed.l1Bridge.address,
-                l2Bridge:deployed.l2Bridge.address,
                 l2ton: deployed.l2ton.address
             }
 
             let layerKey = await getLayerKey(layerOne);
             let prevBalanceOf = await deployed.stakingLayer2.balanceOf(layerKey, addr1.address);
-            let prevBalanceLtonOf =await deployed.stakingLayer2.balanceOfLton(layerKey, addr1.address)
+            let prevBalanceLtonOf =await deployed.stakingLayer2["balanceOfLton(bytes32,address)"](layerKey, addr1.address)
 
             expect(await deployed.seigManagerV2.ratesDao()).to.eq(0)
             expect(await deployed.seigManagerV2.ratesStosHolders()).to.eq(0)
@@ -304,7 +290,42 @@ describe('Integrated Test', () => {
             expect(await deployed.ton.balanceOf(deployed.dao.address)).to.eq(0)
             expect(await deployed.ton.balanceOf(deployed.stosDistribute.address)).to.eq(0)
 
-            expect(await deployed.stakingLayer2.balanceOfLton(layerKey, addr1.address)).to.eq(prevBalanceLtonOf)
+            expect(await deployed.stakingLayer2["balanceOfLton(bytes32,address)"](layerKey, addr1.address)).to.eq(prevBalanceLtonOf)
+            expect(await deployed.stakingLayer2.balanceOf(layerKey, addr1.address)).to.gt(prevBalanceOf)
+        });
+
+        it("      pass blocks", async function () {
+            const minimumBlocksForUpdateSeig = await deployed.seigManagerV2.minimumBlocksForUpdateSeig()
+            let i
+            for (i = 0; i < minimumBlocksForUpdateSeig; i++){
+                await ethers.provider.send('evm_mine');
+            }
+        });
+
+        it('runUpdateSeigniorage : If the sum of the staking amount and the bonding liquidity amount is greater than 0, indexLton increase.', async () => {
+            let layerOne = {
+                addressManager: deployed.addressManager.address,
+                l1Messenger: deployed.l1Messenger.address,
+                l1Bridge: deployed.l1Bridge.address,
+                l2ton: deployed.l2ton.address
+            }
+
+            let layerKey = await getLayerKey(layerOne);
+            let prevBalanceOf = await deployed.stakingLayer2.balanceOf(layerKey, addr1.address);
+            let prevBalanceLtonOf =await deployed.stakingLayer2["balanceOfLton(bytes32,address)"](layerKey, addr1.address)
+
+            expect(await deployed.seigManagerV2.ratesDao()).to.eq(0)
+            expect(await deployed.seigManagerV2.ratesStosHolders()).to.eq(0)
+
+            expect(await deployed.seigManagerV2.getTotalLton()).to.gt(ethers.constants.Zero)
+            const indexLton = await deployed.seigManagerV2.indexLton();
+            await deployed.seigManagerV2.connect(addr1).runUpdateSeigniorage()
+            expect(await deployed.seigManagerV2.indexLton()).to.gt(indexLton)
+
+            expect(await deployed.ton.balanceOf(deployed.dao.address)).to.eq(0)
+            expect(await deployed.ton.balanceOf(deployed.stosDistribute.address)).to.eq(0)
+
+            expect(await deployed.stakingLayer2["balanceOfLton(bytes32,address)"](layerKey, addr1.address)).to.eq(prevBalanceLtonOf)
             expect(await deployed.stakingLayer2.balanceOf(layerKey, addr1.address)).to.gt(prevBalanceOf)
         });
 
@@ -350,15 +371,13 @@ describe('Integrated Test', () => {
             let layerOne = {
                 addressManager: deployed.addressManager.address,
                 l1Messenger: deployed.l1Messenger.address,
-                l2Messenger: deployed.l2Messenger.address,
                 l1Bridge: deployed.l1Bridge.address,
-                l2Bridge:deployed.l2Bridge.address,
                 l2ton: deployed.l2ton.address
             }
 
             let layerKey = await getLayerKey(layerOne);
             let prevBalanceOf = await deployed.stakingLayer2.balanceOf(layerKey, addr1.address);
-            let prevBalanceLtonOf =await deployed.stakingLayer2.balanceOfLton(layerKey, addr1.address)
+            let prevBalanceLtonOf =await deployed.stakingLayer2["balanceOfLton(bytes32,address)"](layerKey, addr1.address)
 
             const topic = deployed.seigManagerV2.interface.getEventTopic('UpdatedSeigniorage');
             const balanceOfDao = await deployed.ton.balanceOf(deployed.dao.address)
@@ -384,7 +403,7 @@ describe('Integrated Test', () => {
                 .add(deployedEvent.args.amount_[3])
             )
 
-            expect(await deployed.stakingLayer2.balanceOfLton(layerKey, addr1.address)).to.eq(prevBalanceLtonOf)
+            expect(await deployed.stakingLayer2["balanceOfLton(bytes32,address)"](layerKey, addr1.address)).to.eq(prevBalanceLtonOf)
             expect(await deployed.stakingLayer2.balanceOf(layerKey, addr1.address)).to.gt(prevBalanceOf)
         });
     });
@@ -398,9 +417,7 @@ describe('Integrated Test', () => {
             let layerOne = {
                 addressManager: deployed.addressManager.address,
                 l1Messenger: deployed.l1Messenger.address,
-                l2Messenger: deployed.l2Messenger.address,
                 l1Bridge: deployed.l1Bridge.address,
-                l2Bridge:deployed.l2Bridge.address,
                 l2ton: deployed.l2ton.address
             }
 
@@ -410,7 +427,7 @@ describe('Integrated Test', () => {
             const availableWithdrawOfStaker = await deployed.stakingLayer2.availableWithdraw(layerKey, addr1.address)
             const amountOfPendings = await deployed.stakingLayer2.amountOfPendings(layerKey, addr1.address)
 
-            let amountLton = await deployed.stakingLayer2.balanceOfLton(layerKey, addr1.address)
+            let amountLton = await deployed.stakingLayer2["balanceOfLton(bytes32,address)"](layerKey, addr1.address)
             let amount = await deployed.seigManagerV2.getLtonToTon(amountLton)
 
             let totalStakedLton = await deployed.stakingLayer2.totalStakedLton()
@@ -432,7 +449,7 @@ describe('Integrated Test', () => {
 
             expect(await deployed.stakingLayer2.totalStakedLton()).to.eq(totalStakedLton.sub(amountLton))
 
-            expect(await deployed.stakingLayer2.balanceOfLton(layerKey, addr1.address)).to.eq(0)
+            expect(await deployed.stakingLayer2["balanceOfLton(bytes32,address)"](layerKey, addr1.address)).to.eq(0)
             expect(await deployed.stakingLayer2.balanceOf(layerKey, addr1.address)).to.eq(0)
 
             expect(await deployed.ton.balanceOf(addr1.address)).to.eq(balanceOfStaker)
@@ -454,9 +471,7 @@ describe('Integrated Test', () => {
             let layerOne = {
                 addressManager: deployed.addressManager.address,
                 l1Messenger: deployed.l1Messenger.address,
-                l2Messenger: deployed.l2Messenger.address,
                 l1Bridge: deployed.l1Bridge.address,
-                l2Bridge:deployed.l2Bridge.address,
                 l2ton: deployed.l2ton.address
             }
 
@@ -483,9 +498,7 @@ describe('Integrated Test', () => {
             let layerOne = {
                 addressManager: deployed.addressManager.address,
                 l1Messenger: deployed.l1Messenger.address,
-                l2Messenger: deployed.l2Messenger.address,
                 l1Bridge: deployed.l1Bridge.address,
-                l2Bridge:deployed.l2Bridge.address,
                 l2ton: deployed.l2ton.address
             }
 
@@ -550,9 +563,7 @@ describe('Integrated Test', () => {
             let layerOne = {
                 addressManager: deployed.addressManager.address,
                 l1Messenger: deployed.l1Messenger.address,
-                l2Messenger: deployed.l2Messenger.address,
                 l1Bridge: deployed.l1Bridge.address,
-                l2Bridge:deployed.l2Bridge.address,
                 l2ton: deployed.l2ton.address
             }
 
@@ -620,9 +631,7 @@ describe('Integrated Test', () => {
             let layerOne = {
                 addressManager: deployed.addressManager.address,
                 l1Messenger: deployed.l1Messenger.address,
-                l2Messenger: deployed.l2Messenger.address,
                 l1Bridge: deployed.l1Bridge.address,
-                l2Bridge:deployed.l2Bridge.address,
                 l2ton: deployed.l2ton.address
             }
             let layerKey = await getLayerKey(layerOne);
@@ -638,9 +647,7 @@ describe('Integrated Test', () => {
             let layerOne = {
                 addressManager: deployed.addressManager.address,
                 l1Messenger: deployed.l1Messenger.address,
-                l2Messenger: deployed.l2Messenger.address,
                 l1Bridge: deployed.l1Bridge.address,
-                l2Bridge:deployed.l2Bridge.address,
                 l2ton: deployed.l2ton.address
             }
             let layerKey = await getLayerKey(layerOne);
@@ -659,9 +666,7 @@ describe('Integrated Test', () => {
             let layerOne = {
                 addressManager: deployed.addressManager.address,
                 l1Messenger: deployed.l1Messenger.address,
-                l2Messenger: deployed.l2Messenger.address,
                 l1Bridge: deployed.l1Bridge.address,
-                l2Bridge:deployed.l2Bridge.address,
                 l2ton: deployed.l2ton.address
             }
             let layerKey = await getLayerKey(layerOne);

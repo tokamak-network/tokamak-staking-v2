@@ -93,7 +93,7 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
 
     /* ========== Anyone can execute ========== */
 
-    function updateSeigniorage() public returns (bool res) {
+    function updateSeigniorage() external returns (bool res) {
         if (lastSeigBlock + uint256(minimumBlocksForUpdateSeig) < getCurrentBlockNumber()) {
             res = runUpdateSeigniorage();
         }
@@ -105,7 +105,7 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
         // console.log('lastSeigBlock %s',lastSeigBlock);
         // console.log('getCurrentBlockNumber() %s',getCurrentBlockNumber());
 
-        if (lastSeigBlock <  getCurrentBlockNumber()) {
+        if (lastSeigBlock <  getCurrentBlockNumber() && lastSeigBlock != 0) {
             // 총 증가량  increaseSeig
             uint256 increaseSeig = (getCurrentBlockNumber() - lastSeigBlock) * seigPerBlock;
 
@@ -158,6 +158,13 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
     }
 
     /* ========== VIEW ========== */
+
+    function mintableSeigsAmount() external view returns (uint256 amount) {
+        if (lastSeigBlock <  getCurrentBlockNumber() && lastSeigBlock != 0) {
+            amount = (getCurrentBlockNumber() - lastSeigBlock) * seigPerBlock;
+        }
+    }
+
     function getTonToLton(uint256 _amount) public view returns (uint256 amount) {
         if (_amount > 0) amount = (_amount * 1e18) / indexLton;
     }
@@ -188,7 +195,6 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
     function getTotalLton() public view returns (uint256 amount) {
         amount = StakingLayer2I(stakingLayer2).getTotalLton();
     }
-
     /* ========== internal ========== */
 
     function _distribute(uint256 amount, uint256 totalLton) internal view returns (

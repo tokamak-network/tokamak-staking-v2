@@ -13,6 +13,10 @@ contract SeigManagerV2Storage {
     address public tot;
     address public layer2Manager;
     address public stakingLayer2;
+    uint256 public seigPerBlock;
+    uint256 public lastSeigBlock;
+    uint256 public startBlock;
+    uint256 public indexLton; // for staker or bonder
 
     uint16 public ratesDao;   // divided ratesUnits
     uint16 public ratesStosHolders; // divided ratesUnits
@@ -21,13 +25,6 @@ contract SeigManagerV2Storage {
     uint32 public minimumBlocksForUpdateSeig; // the number of block
     bool internal free = true;
 
-    uint256 public indexLton; // for staker or bonder
-
-    uint256 public totalSton;
-
-    uint256 public seigPerBlock;
-    uint256 public lastSeigBlock;
-    uint256 public startBlock;
 
     modifier nonZero(uint256 value) {
         require(value != 0, "Z1");

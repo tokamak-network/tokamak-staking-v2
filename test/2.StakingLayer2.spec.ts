@@ -79,9 +79,7 @@ describe('StakingLayer2', () => {
             let layerOne = {
                 addressManager: addressOne,
                 l1Messenger: deployed.l2ton.address,
-                l2Messenger: deployed.l2ton.address,
                 l1Bridge: deployed.l2ton.address,
-                l2Bridge:deployed.l2ton.address,
                 l2ton: deployed.l2ton.address
             }
 
