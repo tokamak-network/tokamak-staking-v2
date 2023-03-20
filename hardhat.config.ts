@@ -1,14 +1,20 @@
-import { HardhatUserConfig } from "hardhat/config";
+// import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import '@typechain/hardhat'
 import '@nomiclabs/hardhat-ethers'
 import "@nomicfoundation/hardhat-chai-matchers";
+
 import "hardhat-gas-reporter";
 import dotenv from "dotenv" ;
+import { HardhatUserConfig } from "hardhat/types";
+import "hardhat-deploy";
 
 dotenv.config();
 
 const config: HardhatUserConfig = {
+  namedAccounts: {
+    deployer: 0,
+  },
   networks: {
     hardhat: {
       forking: {
@@ -19,12 +25,15 @@ const config: HardhatUserConfig = {
     },
     local: {
       url: `${process.env.ETH_NODE_URI_localhost}`,
+      accounts: [`${process.env.DEPLOYER}`],
     },
     mainnet: {
       url: `${process.env.ETH_NODE_URI_MAINNET}`,
     },
     goerli: {
       url: `${process.env.ETH_NODE_URI_goerli}`,
+      accounts: [`${process.env.DEPLOYER}`],
+      // chainId: 5,
     },
   },
   etherscan: {
