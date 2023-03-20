@@ -89,16 +89,13 @@ describe('Layer2Manager', () => {
         })
 
         it('setMaxLayer2Count can be executed by only owner ', async () => {
-            const maxLayer2Count = ethers.BigNumber.from("2");
+            const maxLayer2Count = ethers.BigNumber.from("3");
             await snapshotGasCost(deployed.layer2Manager.connect(deployer).setMaxLayer2Count(maxLayer2Count))
             expect(await deployed.layer2Manager.maxLayer2Count()).to.eq(maxLayer2Count)
-
-            await deployed.layer2Manager.connect(deployer).setMaxLayer2Count(ethers.constants.One)
-            expect(await deployed.layer2Manager.maxLayer2Count()).to.eq(ethers.constants.One)
         })
 
         it('cannot be changed to the same value', async () => {
-            const maxLayer2Count = ethers.constants.One
+            const maxLayer2Count =ethers.BigNumber.from("3");
             await expect(
                 deployed.layer2Manager.connect(deployer).setMaxLayer2Count(maxLayer2Count)
                 ).to.be.revertedWith("same")
@@ -201,6 +198,33 @@ describe('Layer2Manager', () => {
                     deployed.l1Bridge.address,
                     deployed.l2ton.address
                 ))
+
+            expect(await deployed.layer2Manager.totalSecurityDeposit()).to.eq(totalSecurityDeposit.add(amount))
+        })
+
+    });
+
+    describe('# createStakingOnly', () => {
+
+        it('If the minimum security deposit is not provided, it cannot be created.', async () => {
+
+            expect(await deployed.addressManager.getAddress("OVM_Sequencer")).to.eq(sequencer1.address)
+            await expect(
+                deployed.layer2Manager.connect(sequencer1).createStakingOnly()).to.be.reverted;
+        })
+
+        it('Approve the minimum security deposit and create StakingOnlyLayer.', async () => {
+
+            let totalSecurityDeposit = await deployed.layer2Manager.totalSecurityDeposit();
+            let amount = await deployed.layer2Manager.minimumDepositForSequencer();
+
+            if (amount.gt(await deployed.ton.balanceOf(sequencer1.address)))
+                await (await deployed.ton.connect(deployed.tonAdmin).mint(sequencer1.address, amount)).wait();
+
+            if (amount.gte(await deployed.ton.allowance(sequencer1.address, deployed.layer2Manager.address)))
+                await (await deployed.ton.connect(sequencer1).approve(deployed.layer2Manager.address, amount)).wait();
+
+            await snapshotGasCost(deployed.layer2Manager.connect(sequencer1).createStakingOnly())
 
             expect(await deployed.layer2Manager.totalSecurityDeposit()).to.eq(totalSecurityDeposit.add(amount))
         })

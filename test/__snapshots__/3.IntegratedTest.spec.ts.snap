@@ -1,18 +1,22 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Integrated Test # TON.approveAndCall -> stake  You can stake without approval before staking. 1`] = `244726`;
+
 exports[`Integrated Test # claim of sequencer Depositing in L2 will increase L2 holdings. 1`] = `51230`;
 
-exports[`Integrated Test # claim of sequencer When seignorage is updated, totalSeigs(the seignorage distributed to the sequencers) is increases. 1`] = `188113`;
+exports[`Integrated Test # claim of sequencer When seignorage is updated, totalSeigs(the seignorage distributed to the sequencers) is increases. 1`] = `203548`;
 
-exports[`Integrated Test # claim of sequencer When totalSeigs is not 0, seigniorage can be distributed to the sequencer. 1`] = `78473`;
+exports[`Integrated Test # claim of sequencer When totalSeigs is not 0, seigniorage can be distributed to the sequencer. 1`] = `113887`;
 
 exports[`Integrated Test # claim of sequencer the sequencers can claim  1`] = `106312`;
 
-exports[`Integrated Test # create Approve the minimum security deposit and create. 1`] = `279560`;
+exports[`Integrated Test # create Approve the minimum security deposit and create. 1`] = `279548`;
+
+exports[`Integrated Test # createStakingOnly Approve the minimum security deposit and createStakingOnly. 1`] = `131229`;
 
 exports[`Integrated Test # curTotalLayer2Deposits If you withdraw from layer 2, the deposit amount of the total layer will be reduced. 1`] = `48456`;
 
-exports[`Integrated Test # initialize Layer2Manager : initialize can be executed by only owner 1`] = `158559`;
+exports[`Integrated Test # initialize Layer2Manager : initialize can be executed by only owner 1`] = `158553`;
 
 exports[`Integrated Test # initialize SeigManagerV2 : initialize can be executed by only owner 1`] = `209436`;
 
@@ -24,16 +28,16 @@ exports[`Integrated Test # setMaxLayer2Count setMaxLayer2Count can be executed b
 
 exports[`Integrated Test # stake If it is a registered layer, you can stake it. 1`] = `276702`;
 
-exports[`Integrated Test # unstake You can unstake when you have the staked amount. 1`] = `173910`;
+exports[`Integrated Test # unstake You can unstake when you have the staked amount. 1`] = `178710`;
 
 exports[`Integrated Test # updateSeigniorage After the recent seignorage issuance, seignorage will not be issued unless the minimum block has passed. 1`] = `35196`;
 
-exports[`Integrated Test # updateSeigniorage If the sum of the staking amount and the bonding liquidity amount is greater than 0, indexLton increase. 1`] = `201590`;
+exports[`Integrated Test # updateSeigniorage If the sum of the staking amount and the bonding liquidity amount is greater than 0, indexLton increase. 1`] = `212867`;
 
-exports[`Integrated Test # updateSeigniorage runUpdateSeigniorage : If the sum of the staking amount and the bonding liquidity amount is greater than 0, indexLton increase. 1`] = `166982`;
+exports[`Integrated Test # updateSeigniorage runUpdateSeigniorage : If the sum of the staking amount and the bonding liquidity amount is greater than 0, indexLton increase. 1`] = `178259`;
 
 exports[`Integrated Test # updateSeigniorage setAddress can be executed by only owner  1`] = `78501`;
 
 exports[`Integrated Test # updateSeigniorage setDividendRates can be executed by only owner  1`] = `39494`;
 
-exports[`Integrated Test # withdraw You can withdraw if there is amount available for withdrawal. 1`] = `135305`;
+exports[`Integrated Test # withdraw You can withdraw if there is amount available for withdrawal. 1`] = `106629`;

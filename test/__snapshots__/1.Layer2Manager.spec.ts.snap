@@ -2,7 +2,9 @@
 
 exports[`Layer2Manager # create Approve the minimum security deposit and create. 1`] = `279560`;
 
-exports[`Layer2Manager # initialize initialize can be executed by only owner 1`] = `158559`;
+exports[`Layer2Manager # createStakingOnly Approve the minimum security deposit and create StakingOnlyLayer. 1`] = `131229`;
+
+exports[`Layer2Manager # initialize initialize can be executed by only owner 1`] = `158553`;
 
 exports[`Layer2Manager # setDelayBlocksForWithdraw setDelayBlocksForWithdraw can be executed by only owner  1`] = `38332`;
 

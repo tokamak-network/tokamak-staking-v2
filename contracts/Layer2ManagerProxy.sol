@@ -29,6 +29,6 @@ contract Layer2ManagerProxy is BaseProxy, Layer2ManagerStorage {
         minimumDepositForSequencer = _minimumDepositForSequencer;
         delayBlocksForWithdraw = _delayBlocksForWithdraw;
 
-        maxLayer2Count = 1;
+        maxLayer2Count = 5;
     }
 }

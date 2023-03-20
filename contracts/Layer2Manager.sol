@@ -114,9 +114,9 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         address sequencer_ = msg.sender;
 
         bytes32 _key = layerKey(sequencer_, address(0), address(0), address(0));
-        Layer2.Info storage layer = layers[_key];
-        require(layer.addressManager == address(0), 'already created');
+        require(layers[_key].addressManager == address(0), 'already created');
 
+        Layer2.Info storage layer = layers[_key];
         // check minimumDepositForSequencer
         ton.safeTransferFrom(sequencer_, address(this), minimumDepositForSequencer);
 
@@ -135,28 +135,29 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         require (totalSeigs != 0, 'no distributable amount');
         uint256 len = layerKeys.length;
         uint256 sum = 0;
-        uint256[] memory deposits = new uint256[](len);
 
+        uint256[] memory amountLayer = new uint256[](len);
         for(uint256 i = 0; i < len; i++){
             bytes32 _key = layerKeys[i];
             Layer2.Holdings memory holding = holdings[_key];
             if (holding.securityDeposit >= minimumDepositForSequencer && holding.bonding == true) {
-                deposits[i] = depositsOf(layers[_key].l1Bridge, layers[_key].l2ton);
-                sum += deposits[i];
+                amountLayer[i] += depositsOf(layers[_key].l1Bridge, layers[_key].l2ton);
             }
-            sum += holding.securityDeposit;
+            amountLayer[i] += holding.securityDeposit;
+            sum += amountLayer[i];
         }
-
         if (sum > 0) {
+            uint256 amount1 = 0;
             for(uint256 i = 0; i < len; i++){
                 bytes32 _key = layerKeys[i];
                 Layer2.Holdings storage holding = holdings[_key];
-                if (deposits[i] > 0 || holding.securityDeposit > 0) {
-                    uint256 amount = totalSeigs * (deposits[i] + holding.securityDeposit) / sum;
+                if (amountLayer[i] > 0 ) {
+                    uint256 amount = totalSeigs * amountLayer[i] / sum;
                     holding.seigs += amount;
-                    totalSeigs -= amount;
+                    amount1 += amount;
                 }
             }
+            if (amount1 > 0)  totalSeigs -= amount1;
         }
     }
 

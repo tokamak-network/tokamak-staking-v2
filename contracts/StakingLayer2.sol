@@ -6,7 +6,7 @@ import "./proxy/BaseProxyStorage.sol";
 import "./common/AccessibleCommon.sol";
 import "./libraries/SafeERC20.sol";
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 interface SeigManagerV2I {
     function getLtonToTon(uint256 lton) external view returns (uint256);
@@ -41,10 +41,6 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
     constructor() {
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return _supportedInterfaces[interfaceId] || super.supportsInterface(interfaceId);
-    }
-
     /* ========== onlyOwner ========== */
 
 
@@ -55,7 +51,6 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
         uint256 amount,
         bytes calldata data
     ) external returns (bool) {
-
         require(ton == msg.sender, "EA");
         // data : (32 bytes)layerKey
         require(Layer2ManagerI(layer2Manager).registeredLayerKeys(bytes32(data)), 'non-registered layer');
@@ -96,7 +91,6 @@ contract StakingLayer2 is AccessibleCommon, BaseProxyStorage, StakingLayer2Stora
 
         emit Staked(layerKey, sender, amount, lton_);
     }
-
 
     function unstake(bytes32 layerKey, uint256 lton_)
         public ifFree nonZero(lton_)
