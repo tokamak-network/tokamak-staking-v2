@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.4;
 
-import {IERC20} from "./interfaces/IERC20.sol";
+import {IERC20} from "../interfaces/IERC20.sol";
 
 contract SeigManagerV2Storage {
 
@@ -12,7 +12,9 @@ contract SeigManagerV2Storage {
     address public seigManagerV1;
     address public tot;
     address public layer2Manager;
-    address public stakingLayer2;
+    address public optimismSequencer;
+    address public candidate;
+
     uint256 public seigPerBlock;
     uint256 public lastSeigBlock;
     uint256 public startBlock;
@@ -24,7 +26,6 @@ contract SeigManagerV2Storage {
     uint16 public ratesUnits; // divided uint. 10000
     uint32 public minimumBlocksForUpdateSeig; // the number of block
     bool internal free = true;
-
 
     modifier nonZero(uint256 value) {
         require(value != 0, "Z1");

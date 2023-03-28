@@ -7,6 +7,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
+import "hardhat/console.sol";
 contract MockL1Bridge is Ownable {
     using SafeERC20 for IERC20;
 
@@ -68,6 +69,7 @@ contract MockL1Bridge is Ownable {
         uint32 _l2Gas,
         bytes calldata _data
     ) external virtual {
+
         _initiateERC20Deposit(_l1Token, _l2Token, msg.sender, _to, _amount, _l2Gas, _data);
     }
 

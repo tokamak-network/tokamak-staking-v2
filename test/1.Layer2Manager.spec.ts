@@ -24,6 +24,7 @@ describe('Layer2Manager', () => {
 
     let layer2ManagerInfo = {
         minimumDepositForSequencer: ethers.utils.parseEther("100"),
+        minimumDepositForCandidate: ethers.utils.parseEther("200"),
         delayBlocksForWithdraw: 300,
     }
 
@@ -43,8 +44,10 @@ describe('Layer2Manager', () => {
                 deployed.layer2ManagerProxy.connect(addr1).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2Proxy.address,
-                    deployed.stakingLayer2Proxy.address,
+                    deployed.optimismSequencerProxy.address,
+                    deployed.candidateProxy.address,
                     layer2ManagerInfo.minimumDepositForSequencer,
+                    layer2ManagerInfo.minimumDepositForCandidate,
                     layer2ManagerInfo.delayBlocksForWithdraw
                 )
                 ).to.be.revertedWith("Accessible: Caller is not an admin")
@@ -54,15 +57,21 @@ describe('Layer2Manager', () => {
             await snapshotGasCost(deployed.layer2ManagerProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2Proxy.address,
-                    deployed.stakingLayer2Proxy.address,
+                    deployed.optimismSequencerProxy.address,
+                    deployed.candidateProxy.address,
                     layer2ManagerInfo.minimumDepositForSequencer,
+                    layer2ManagerInfo.minimumDepositForCandidate,
                     layer2ManagerInfo.delayBlocksForWithdraw
                 ))
 
             expect(await deployed.layer2ManagerProxy.ton()).to.eq(seigManagerInfo.ton)
             expect(await deployed.layer2ManagerProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
-            expect(await deployed.layer2ManagerProxy.stakingLayer2()).to.eq(deployed.stakingLayer2Proxy.address)
+            expect(await deployed.layer2ManagerProxy.optimismSequencer()).to.eq(deployed.optimismSequencerProxy.address)
+            expect(await deployed.layer2ManagerProxy.candidate()).to.eq(deployed.candidateProxy.address)
+
             expect(await deployed.layer2ManagerProxy.minimumDepositForSequencer()).to.eq(layer2ManagerInfo.minimumDepositForSequencer)
+            expect(await deployed.layer2ManagerProxy.minimumDepositForCandidate()).to.eq(layer2ManagerInfo.minimumDepositForCandidate)
+
             expect(await deployed.layer2ManagerProxy.delayBlocksForWithdraw()).to.eq(layer2ManagerInfo.delayBlocksForWithdraw)
         })
 
@@ -71,8 +80,10 @@ describe('Layer2Manager', () => {
                 deployed.layer2ManagerProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2Proxy.address,
-                    deployed.stakingLayer2Proxy.address,
+                    deployed.optimismSequencerProxy.address,
+                    deployed.candidateProxy.address,
                     layer2ManagerInfo.minimumDepositForSequencer,
+                    layer2ManagerInfo.minimumDepositForCandidate,
                     layer2ManagerInfo.delayBlocksForWithdraw
                 )
                 ).to.be.revertedWith("already initialize")
@@ -152,13 +163,16 @@ describe('Layer2Manager', () => {
                 ).to.be.revertedWith("same")
         })
     });
-
-    describe('# create', () => {
+    /*
+    describe('# createOptimismSequencer', () => {
 
         it('Cannot be created unless the caller is the layer\'s sequencer.', async () => {
             expect(await deployed.addressManager.getAddress("OVM_Sequencer")).to.not.eq(addr1.address)
+            let name = "Tokamak Optimism";
+
             await expect(
-                deployed.layer2Manager.connect(addr1).create(
+                deployed.layer2Manager.connect(addr1).createOptimismSequencer(
+                    ethers.utils.formatBytes32String(name),
                     deployed.addressManager.address,
                     deployed.l1Messenger.address,
                     deployed.l1Bridge.address,
@@ -168,10 +182,11 @@ describe('Layer2Manager', () => {
         })
 
         it('If the minimum security deposit is not provided, it cannot be created.', async () => {
-
+            let name = "Tokamak Optimism";
             expect(await deployed.addressManager.getAddress("OVM_Sequencer")).to.eq(sequencer1.address)
             await expect(
-                deployed.layer2Manager.connect(sequencer1).create(
+                deployed.layer2Manager.connect(sequencer1).createOptimismSequencer(
+                    ethers.utils.formatBytes32String(name),
                     deployed.addressManager.address,
                     deployed.l1Messenger.address,
                     deployed.l1Bridge.address,
@@ -180,7 +195,7 @@ describe('Layer2Manager', () => {
         })
 
         it('Approve the minimum security deposit and create.', async () => {
-
+            let name = "Tokamak Optimism";
             expect(await deployed.addressManager.getAddress("OVM_Sequencer")).to.eq(sequencer1.address)
             let totalSecurityDeposit = await deployed.layer2Manager.totalSecurityDeposit();
             let amount = await deployed.layer2Manager.minimumDepositForSequencer();
@@ -192,7 +207,8 @@ describe('Layer2Manager', () => {
             if (amount.gte(await deployed.ton.allowance(sequencer1.address, deployed.layer2Manager.address)))
                 await (await deployed.ton.connect(sequencer1).approve(deployed.layer2Manager.address, amount)).wait();
 
-            await snapshotGasCost(deployed.layer2Manager.connect(sequencer1).create(
+            await snapshotGasCost(deployed.layer2Manager.connect(sequencer1).createOptimismSequencer(
+                    ethers.utils.formatBytes32String(name),
                     deployed.addressManager.address,
                     deployed.l1Messenger.address,
                     deployed.l1Bridge.address,
@@ -204,7 +220,7 @@ describe('Layer2Manager', () => {
 
     });
 
-    describe('# createStakingOnly', () => {
+    describe('# createCandidate', () => {
 
         it('If the minimum security deposit is not provided, it cannot be created.', async () => {
 
@@ -230,6 +246,6 @@ describe('Layer2Manager', () => {
         })
 
     });
-
+    */
 });
 

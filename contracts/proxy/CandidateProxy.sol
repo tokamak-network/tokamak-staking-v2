@@ -1,13 +1,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.4;
 
-import "./StakingLayer2Storage.sol";
-import "./proxy/BaseProxy.sol";
+import "../storages/StakingStorage.sol";
+import "../storages/CandidateStorage.sol";
+import "../proxy/BaseProxy.sol";
 
 // import "hardhat/console.sol";
 
-contract StakingLayer2Proxy is BaseProxy, StakingLayer2Storage {
+contract CandidateProxy is BaseProxy, StakingStorage, CandidateStorage {
+    /* ========== DEPENDENCIES ========== */
 
+    /* ========== CONSTRUCTOR ========== */
+    constructor() {
+    }
+
+    /* ========== onlyOwner ========== */
     function initialize(
         address _ton,
         address _seigManagerV2,
@@ -36,5 +43,17 @@ contract StakingLayer2Proxy is BaseProxy, StakingLayer2Storage {
     function supportsInterface(bytes4 interfaceId) public view   override returns (bool) {
         return _supportedInterfaces[interfaceId] || super.supportsInterface(interfaceId);
     }
+
+    /* ========== only TON ========== */
+
+
+    /* ========== Anyone can execute ========== */
+
+
+    /* ========== VIEW ========== */
+
+
+    /* ========== internal ========== */
+
 
 }

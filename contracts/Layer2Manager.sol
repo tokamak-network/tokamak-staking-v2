@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.4;
 
-import "./Layer2ManagerStorage.sol";
+import "./storages/Layer2ManagerStorage.sol";
 import "./proxy/BaseProxyStorage.sol";
 import "./common/AccessibleCommon.sol";
 import "./libraries/SafeERC20.sol";
+import "./libraries/Layer2.sol";
+import "./libraries/LibOptimism.sol";
 
-// import "hardhat/console.sol";
-
-interface L1BridgeI {
-    function deposits(address l1token, address l2token) external view returns (uint256);
-}
+import "hardhat/console.sol";
 
 interface AddressManagerI {
     function getAddress(string memory _name) external view returns (address);
@@ -21,16 +19,29 @@ interface SeigManagerV2I {
 }
 
 interface StakingLayer2I {
-    function balanceOfLton(bytes32 layerKey, address account) external view returns (uint256 amount);
+    function balanceOfLton(uint32 layerKey, address account) external view returns (uint256 amount);
+}
+
+interface SequencerI {
+    function create (uint32 _index, bytes memory _layerInfo) external returns (bool);
+    function getTvl (uint32 _index) external view returns (uint256);
+    function sequencer(uint32 _index) external view returns (address);
+    function layerInfo (uint32 _index) external view returns (bytes memory);
+}
+
+interface CandidateI {
+    function create (uint32 _candidateIndex, bytes memory _data) external returns (bool);
+    function layerInfo (uint32 _index) external view returns (bytes memory);
 }
 
 contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStorage {
     /* ========== DEPENDENCIES ========== */
     using SafeERC20 for IERC20;
-    using Layer2 for mapping(bytes32 => Layer2.Info);
-    using Layer2 for Layer2.Info;
 
-    event Claimed(bytes32 layerKey_, address to, uint256 amount);
+    event Claimed(uint32 _index, address to, uint256 amount);
+    event CreatedOptimismSequencer(uint32 _index, address _sequencer, bytes32 _name, address addressManager, address l1Messenger, address l1Bridge, address l2ton);
+    event CreatedCandidate(uint32 _index, address _operator, bytes32 _name, uint32 _sequenceIndex);
+    event Distributed(uint256 _totalSeigs, uint256 _distributedAmount);
 
     /* ========== CONSTRUCTOR ========== */
     constructor() {
@@ -53,6 +64,22 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         minimumDepositForSequencer = _minimumDepositForSequencer;
     }
 
+    function setRatioSecurityDepositOfTvl(uint16 _ratioSecurityDepositOfTvl)
+        external
+        onlyOwner
+    {
+        require(ratioSecurityDepositOfTvl != _ratioSecurityDepositOfTvl, "same");
+        ratioSecurityDepositOfTvl = _ratioSecurityDepositOfTvl;
+    }
+
+    function setMinimumDepositForCandidate(uint256 _minimumDepositForCandidate)
+        external
+        onlyOwner
+    {
+        require(minimumDepositForCandidate != _minimumDepositForCandidate, "same");
+        minimumDepositForCandidate = _minimumDepositForCandidate;
+    }
+
     function setDelayBlocksForWithdraw(uint256 _delayBlocksForWithdraw)
         external
         onlyOwner
@@ -70,14 +97,20 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
     }
 
     /* ========== Sequncer can execute ========== */
-     function create(
+
+    function createOptimismSequencer(
+        bytes32 _name,
         address addressManager,
         address l1Messenger,
         address l1Bridge,
         address l2ton
     )
-        external
+        external ifFree
     {
+        require(msg.sender == AddressManagerI(addressManager).getAddress('OVM_Sequencer'), 'NOT Sequencer');
+
+        require(indexSequencers < maxLayer2Count, 'exceeded maxLayer2Count');
+
         require(
             addressManager != address(0) &&
             l1Messenger != address(0) &&
@@ -85,72 +118,84 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
             l2ton != address(0), "zero address"
         );
 
-        require(layerKeys.length < maxLayer2Count, 'exceeded maxLayer2Count');
-        require(msg.sender == AddressManagerI(addressManager).getAddress('OVM_Sequencer'), 'NOT Sequencer');
+        bytes32 _key = LibOptimism.getKey(addressManager, l1Messenger, l1Bridge, l2ton);
+        require(!layerKeys[_key], 'already created');
+        layerKeys[_key] = true;
 
-        bytes32 _key = layerKey(addressManager, l1Messenger, l1Bridge, l2ton);
-        Layer2.Info storage layer = layers[_key];
-        require(layer.addressManager == address(0), 'already created');
+        uint32 _index = ++indexSequencers;
 
-        // check minimumDepositForSequencer
+        totalSecurityDeposit += minimumDepositForSequencer;
         ton.safeTransferFrom(msg.sender, address(this), minimumDepositForSequencer);
 
-        layer.addressManager = addressManager;
-        layer.l1Messenger = l1Messenger;
-        layer.l1Bridge = l1Bridge;
-        layer.l2ton = l2ton;
+        require(
+            SequencerI(optimismSequencer).create(_index, abi.encodePacked(addressManager, l1Messenger, l1Bridge, l2ton)),
+            "Fail createOptimismSequencer"
+        );
 
-        Layer2.Holdings storage holding = holdings[_key];
+        optimismSequencerIndexes.push(_index);
+        Layer2.Layer2Holdings storage holding = holdings[_index];
         holding.securityDeposit = minimumDepositForSequencer;
-        holding.bonding = true;
-        totalSecurityDeposit += minimumDepositForSequencer;
+        optimismSequencerNames[_index] = _name;
 
-        layerKeys.push(_key);
+        emit CreatedOptimismSequencer(
+            _index, msg.sender, _name, addressManager, l1Messenger, l1Bridge, l2ton);
     }
 
-    function createStakingOnly() external
+    function createCandidate(
+        uint32 _sequenceIndex,
+        bytes32 _name
+    )   external nonZeroUint32(_sequenceIndex) ifFree
     {
-        require(layerKeys.length < maxLayer2Count, 'exceeded maxLayer2Count');
-        address sequencer_ = msg.sender;
+        require(_sequenceIndex <= indexSequencers, "wrong index");
 
-        bytes32 _key = layerKey(sequencer_, address(0), address(0), address(0));
-        require(layers[_key].addressManager == address(0), 'already created');
+        bytes32 _key = LibOperator.getKey(msg.sender, _sequenceIndex);
+        require(!layerKeys[_key], 'already created');
+        layerKeys[_key] = true;
 
-        Layer2.Info storage layer = layers[_key];
-        // check minimumDepositForSequencer
-        ton.safeTransferFrom(sequencer_, address(this), minimumDepositForSequencer);
+        uint32 _index = ++indexCandidates;
 
-        layer.addressManager = sequencer_;
-        Layer2.Holdings storage holding = holdings[_key];
-        holding.securityDeposit = minimumDepositForSequencer;
-        totalSecurityDeposit += minimumDepositForSequencer;
+        candidatesIndexes.push(_index);
+        candidateNames[_index] = _name;
 
-        layerKeys.push(_key);
+        ton.safeTransferFrom(msg.sender, address(this), minimumDepositForCandidate);
+
+        if (ton.allowance(address(this), candidate) < minimumDepositForCandidate) {
+            ton.approve(candidate, ton.totalSupply());
+        }
+
+        require(
+            CandidateI(candidate).create(
+                _index,
+                abi.encodePacked(msg.sender, _sequenceIndex, minimumDepositForCandidate)),
+            "Fail createCandidate"
+        );
+
+        emit CreatedCandidate(_index, msg.sender, _name, _sequenceIndex);
     }
-
 
     /* ========== Anyone can execute ========== */
 
     function distribute() external {
         require (totalSeigs != 0, 'no distributable amount');
-        uint256 len = layerKeys.length;
+        uint256 len = optimismSequencerIndexes.length;
         uint256 sum = 0;
 
         uint256[] memory amountLayer = new uint256[](len);
         for(uint256 i = 0; i < len; i++){
-            bytes32 _key = layerKeys[i];
-            Layer2.Holdings memory holding = holdings[_key];
-            if (holding.securityDeposit >= minimumDepositForSequencer && holding.bonding == true) {
-                amountLayer[i] += depositsOf(layers[_key].l1Bridge, layers[_key].l2ton);
+            uint32 _layerIndex = optimismSequencerIndexes[i];
+            Layer2.Layer2Holdings memory holding = holdings[_layerIndex];
+
+            if (holding.securityDeposit >= minimumDepositForSequencer ) {
+                amountLayer[i] += depositsOf(_layerIndex);
             }
             amountLayer[i] += holding.securityDeposit;
             sum += amountLayer[i];
         }
+        uint256 amount1 = 0;
         if (sum > 0) {
-            uint256 amount1 = 0;
             for(uint256 i = 0; i < len; i++){
-                bytes32 _key = layerKeys[i];
-                Layer2.Holdings storage holding = holdings[_key];
+                uint32 _layerIndex = optimismSequencerIndexes[i];
+                Layer2.Layer2Holdings storage holding = holdings[_layerIndex];
                 if (amountLayer[i] > 0 ) {
                     uint256 amount = totalSeigs * amountLayer[i] / sum;
                     holding.seigs += amount;
@@ -159,137 +204,119 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
             }
             if (amount1 > 0)  totalSeigs -= amount1;
         }
+
+        emit Distributed(totalSeigs, amount1);
     }
 
-    function claim(bytes32 layerKey_) external {
-        require(holdings[layerKey_].seigs != 0, 'no amount to claim');
-        address sequencer_ = sequencer(layerKey_);
+    function claim(uint32 _layerIndex) external {
+        uint256 amount = holdings[_layerIndex].seigs;
+        require(amount != 0, 'no amount to claim');
+        address sequencer_ = sequencer(_layerIndex);
         require(sequencer_ != address(0), 'zero sequencer');
-        uint256 amount = holdings[layerKey_].seigs;
-        holdings[layerKey_].seigs = 0;
+        holdings[_layerIndex].seigs = 0;
         SeigManagerV2I(seigManagerV2).claim(sequencer_, amount);
-
-        emit Claimed(layerKey_, sequencer_, amount);
+        emit Claimed(_layerIndex, sequencer_, amount);
     }
 
     /* ========== VIEW ========== */
 
     function balanceOfLton(address account) public view returns (uint256 amount) {
-        uint256 len = layerKeys.length;
+        uint256 len = optimismSequencerIndexes.length;
         for(uint256 i = 0; i < len; i++){
-            amount += StakingLayer2I(stakingLayer2).balanceOfLton(layerKeys[i], account);
+            amount += StakingLayer2I(optimismSequencer).balanceOfLton(optimismSequencerIndexes[i], account);
         }
     }
 
     function curTotalLayer2Deposits() public view returns (uint256 amount) {
-        uint256 len = layerKeys.length;
+        uint256 len = optimismSequencerIndexes.length;
         for(uint256 i = 0; i < len; i++){
-            Layer2.Info memory layer = layers[layerKeys[i]];
-            amount += depositsOf(layer.l1Bridge, layer.l2ton);
+            amount += SequencerI(optimismSequencer).getTvl(optimismSequencerIndexes[i]);
         }
     }
 
-    function sequencer(bytes32 _key) public view returns (address sequencer_) {
-            Layer2.Info memory layer = getLayerWithKey(_key);
-            if (layer.addressManager != address(0) && layer.l1Messenger != address(0)) {
-                try
-                    AddressManagerI(layer.addressManager).getAddress('OVM_Sequencer') returns (address a) {
-                        sequencer_ = a;
-                } catch (bytes memory ) {
-                    sequencer_ = address(0);
-                }
-            } else if (layer.addressManager != address(0) && layer.l1Messenger == address(0)) {
-                sequencer_ = layer.addressManager;
-            }
+    function sequencer(uint32 _layerIndex) public view returns (address sequencer_) {
+        if (_layerIndex <= indexSequencers ){
+            sequencer_ = SequencerI(optimismSequencer).sequencer(_layerIndex);
+        }
     }
 
-    function layerKey(
-        address addressManager,
-        address l1Messenger,
-        address l1Bridge,
-        address l2ton
-    ) public pure returns (bytes32 key) {
-            key = bytes32(keccak256(abi.encode(
-                addressManager,
-                l1Messenger,
-                l1Bridge,
-                l2ton
-            )));
+    function existedLayer2Index(uint32 _index) external view returns (bool exist_) {
+        if (_index <= indexSequencers) exist_ = true;
+    }
+
+    function existedCandidateIndex(uint32 _index) external view returns (bool exist_) {
+        if (_index <= indexCandidates) exist_ = true;
     }
 
     function curTotalAmountsLayer2() external view returns (uint256 amount) {
         amount = curTotalLayer2Deposits() + totalSecurityDeposit;
     }
 
-    function registeredLayerKeys(bytes32 layerKey_) external view returns (bool exist_) {
-
-        Layer2.Info memory layer = layers[layerKey_];
-        if (layer.addressManager != address(0)) exist_ = true;
+    function totalLayers() external view returns (uint256 total) {
+        total = optimismSequencerIndexes.length;
     }
 
-    function totalLayerKeys() external view returns (uint256 total) {
-        total = layerKeys.length;
+    function totalCandidates() external view returns (uint256 total) {
+        total = candidatesIndexes.length;
     }
 
-    function getAllLayerKeys() external view returns (bytes32[] memory) {
-        return layerKeys;
+    function curlayer2DepositsOf(uint32 _layerIndex) external view returns (uint256 amount) {
+        amount = depositsOf(_layerIndex);
     }
 
-    function getLayerInfo(bytes32 _key) external view returns (Layer2.Info memory) {
-        return layers[_key];
-    }
-
-    function curlayer2DepositsOf(bytes32 _key) external view returns (uint256 amount) {
-        Layer2.Info memory layer = layers[_key];
-        if (layer.l1Bridge != address(0)) amount = depositsOf(layer.l1Bridge, layer.l2ton);
-    }
-
-    function depositsOf(address l1bridge, address l2ton) public view returns (uint256 amount) {
-        if (l1bridge == address(0) || l2ton == address(0)) return 0;
+    function depositsOf(uint32 _layerIndex) public view returns (uint256 amount) {
         try
-            L1BridgeI(l1bridge).deposits(address(ton), l2ton) returns (uint256 a) {
+            SequencerI(optimismSequencer).getTvl(_layerIndex) returns (uint256 a) {
                 amount = a;
         } catch (bytes memory ) {
             amount = 0;
         }
     }
 
-    function getLayer(
-        address addressManager,
-        address l1Messenger,
-        address l1Bridge,
-        address l2ton
-    ) external view returns (Layer2.Info memory layer) {
-            layer = layers.get(
-                addressManager,
-                l1Messenger,
-                l1Bridge,
-                l2ton);
-    }
-
-    function getLayerWithKey(bytes32 _key) public view returns (Layer2.Info memory layer) {
-        layer = layers.getWithLayerKey(_key);
-    }
-
-
     function getAllLayers()
         external view
-        returns (bytes32[] memory layerKeys_, Layer2.Info[] memory layers_, Layer2.Holdings[] memory holdings_)
+        returns (
+            bytes32[] memory optimismSequencerNames_,
+            uint32[] memory optimismSequencerIndexes_,
+            Layer2.Layer2Holdings[] memory holdings_,
+            bytes[] memory infos_
+            )
     {
-        uint256 len = layerKeys.length;
+        uint256 len = optimismSequencerIndexes.length;
 
-        layerKeys_ = layerKeys;
-        layers_ = new Layer2.Info[](len);
-        holdings_ = new Layer2.Holdings[](len);
+        optimismSequencerNames_ = new bytes32[](len);
+        optimismSequencerIndexes_ = optimismSequencerIndexes;
+        holdings_ = new Layer2.Layer2Holdings[](len);
+        infos_ = new bytes[](len);
         for (uint256 i = 0; i < len ; i++){
-            layers_[i] = layers[layerKeys[i]];
-            holdings_[i] = holdings[layerKeys[i]];
+            optimismSequencerNames_[i] = optimismSequencerNames[optimismSequencerIndexes[i]];
+            holdings_[i] = holdings[optimismSequencerIndexes[i]];
+            infos_[i] = SequencerI(optimismSequencer).layerInfo(optimismSequencerIndexes[i]);
         }
     }
 
-    function layerHoldings(bytes32 layerKey_)
+    function getAllCandidates()
         external view
-        returns (Layer2.Holdings memory)
+        returns (
+            bytes32[] memory candidateNames_,
+            uint32[] memory candidateNamesIndexes_,
+            bytes[] memory infos_
+            )
+    {
+        uint256 len = candidatesIndexes.length;
+
+        candidateNames_ = new bytes32[](len);
+        candidateNamesIndexes_ = candidatesIndexes;
+        infos_ = new bytes[](len);
+        for (uint256 i = 0; i < len ; i++){
+            candidateNames_[i] = candidateNames[candidatesIndexes[i]];
+            infos_[i] = CandidateI(candidate).layerInfo(candidatesIndexes[i]);
+        }
+    }
+
+    function layerHoldings(uint32 layerKey_)
+        external view
+        returns (Layer2.Layer2Holdings memory)
     {
         return holdings[layerKey_];
     }

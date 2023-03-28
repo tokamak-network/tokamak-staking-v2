@@ -10,8 +10,8 @@ library LibStake
         uint256 stakelton;
         uint256 bondlton;
         // uint256 fwlton;
-        bool staker;
-        bool bonder;
+        bool stake;
+        uint16 fwFee;
     }
 
     struct WithdrawalReqeust {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.4;
 
-import "./SeigManagerV2Storage.sol";
+import "./storages/SeigManagerV2Storage.sol";
 import "./proxy/BaseProxyStorage.sol";
 import "./common/AccessibleCommon.sol";
 import "./libraries/SafeERC20.sol";
@@ -18,7 +18,7 @@ interface Layer2ManagerI {
     function addSeigs(uint256 amount) external returns (bool);
 }
 
-interface StakingLayer2I {
+interface StakingI {
     function getTotalLton() external view returns (uint256) ;
 }
 
@@ -73,18 +73,24 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
     }
 
     function setAddress(address _dao, address _stosDistribute) external onlyOwner {
-        require(
-            !(dao == _dao  &&
-            stosDistribute == _stosDistribute), "same");
+        require(!(dao == _dao  && stosDistribute == _stosDistribute), "same");
 
         dao = _dao;
         stosDistribute = _stosDistribute;
     }
 
-    /* ========== only Layer2Manager Or StakingLayer2 ========== */
+    /* ========== only Layer2Manager Or Optimism ========== */
 
     function claim(address _to, uint256 _amount) external {
-        require(msg.sender == layer2Manager || msg.sender == stakingLayer2 , "Caller is not layer2Manager or stakingLayer2.");
+
+        require(
+            msg.sender != address(0) ||
+            msg.sender == layer2Manager ||
+            msg.sender == optimismSequencer ||
+            msg.sender == candidate
+            , "SM_E1"
+        );
+
         require(_amount <= ton.balanceOf(address(this)), 'insufficient TON balance');
         ton.safeTransfer(_to, _amount);
 
@@ -140,8 +146,6 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
             // 3. transfer amountOfDao,amountOfStosHolders  (to dao, powerTON for tosHolders)
             if (amountOfDao != 0 && dao != address(0)) ton.safeTransfer(dao, amountOfDao);
             if (amountOfStosHolders != 0 && stosDistribute != address(0)) ton.safeTransfer(stosDistribute, amountOfStosHolders);
-            // if (amountOfstaker != 0 && stakingLayer2 != address(0)) ton.safeTransfer(stakingLayer2, amountOfstaker);
-            // if (amountOfsequencer != 0 && layer2Manager != address(0)) ton.safeTransfer(layer2Manager, amountOfsequencer);
 
             lastSeigBlock = getCurrentBlockNumber();
 
@@ -193,7 +197,7 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
     }
 
     function getTotalLton() public view returns (uint256 amount) {
-        amount = StakingLayer2I(stakingLayer2).getTotalLton();
+        amount = StakingI(optimismSequencer).getTotalLton() + StakingI(candidate).getTotalLton();
     }
     /* ========== internal ========== */
 

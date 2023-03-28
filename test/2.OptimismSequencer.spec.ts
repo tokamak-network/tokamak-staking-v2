@@ -6,7 +6,7 @@ import {stakingV2Fixtures, getLayerKey} from './shared/fixtures'
 import { TonStakingV2Fixture } from './shared/fixtureInterfaces'
 import snapshotGasCost from './shared/snapshotGasCost'
 
-describe('StakingLayer2', () => {
+describe('OptimismSequencer', () => {
     let deployer: Signer, addr1: Signer, sequencer1:Signer
 
     let deployed: TonStakingV2Fixture
@@ -40,7 +40,7 @@ describe('StakingLayer2', () => {
 
         it('initialize can not be executed by not owner', async () => {
             await expect(
-                deployed.stakingLayer2Proxy.connect(addr1).initialize(
+                deployed.optimismSequencerProxy.connect(addr1).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2Proxy.address,
                     deployed.layer2ManagerProxy.address
@@ -49,21 +49,21 @@ describe('StakingLayer2', () => {
         })
 
         it('initialize can be executed by only owner', async () => {
-            await snapshotGasCost(deployed.stakingLayer2Proxy.connect(deployer).initialize(
+            await snapshotGasCost(deployed.optimismSequencerProxy.connect(deployer).initialize(
                 seigManagerInfo.ton,
                 deployed.seigManagerV2Proxy.address,
                 deployed.layer2ManagerProxy.address
                 ))
 
-            expect(await deployed.stakingLayer2Proxy.ton()).to.eq(seigManagerInfo.ton)
-            expect(await deployed.stakingLayer2Proxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
-            expect(await deployed.stakingLayer2Proxy.layer2Manager()).to.eq(deployed.layer2ManagerProxy.address)
+            expect(await deployed.optimismSequencerProxy.ton()).to.eq(seigManagerInfo.ton)
+            expect(await deployed.optimismSequencerProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
+            expect(await deployed.optimismSequencerProxy.layer2Manager()).to.eq(deployed.layer2ManagerProxy.address)
 
         })
 
         it('can execute only once.', async () => {
             await expect(
-                deployed.stakingLayer2Proxy.connect(deployer).initialize(
+                deployed.optimismSequencerProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2Proxy.address,
                     deployed.layer2ManagerProxy.address
@@ -77,18 +77,11 @@ describe('StakingLayer2', () => {
         it('You cannot stake on unregistered layers.', async () => {
             let amount = ethers.utils.parseEther("100");
             let addressOne ="0x0000000000000000000000000000000000000001";
-            let layerOne = {
-                addressManager: addressOne,
-                l1Messenger: deployed.l2ton.address,
-                l1Bridge: deployed.l2ton.address,
-                l2ton: deployed.l2ton.address
-            }
-
-            let layerKey = await getLayerKey(layerOne);
+            let _index = 1;
 
             await expect(
-                deployed.stakingLayer2.connect(addr1).stake(
-                    layerKey,
+                deployed.optimismSequencer.connect(addr1).stake(
+                    _index,
                     amount
                 )
                 ).to.be.revertedWith("non-registered layer")

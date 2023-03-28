@@ -19,7 +19,7 @@ describe('SeigManagerV2', () => {
         seigManagerV1: "0x710936500aC59e8551331871Cbad3D33d5e0D909",
         layer2Manager: "",
         seigPerBlock: ethers.BigNumber.from("3920000000000000000"),
-        minimumBlocksForUpdateSeig: 300,
+        minimumBlocksForUpdateSeig: 300
     }
 
     before('create fixture loader', async () => {
@@ -41,7 +41,8 @@ describe('SeigManagerV2', () => {
                     seigManagerInfo.tot,
                     seigManagerInfo.seigManagerV1,
                     deployed.layer2ManagerProxy.address,
-                    deployed.stakingLayer2Proxy.address,
+                    deployed.optimismSequencerProxy.address,
+                    deployed.candidateProxy.address,
                     seigManagerInfo.seigPerBlock,
                     seigManagerInfo.minimumBlocksForUpdateSeig
                 )
@@ -56,7 +57,8 @@ describe('SeigManagerV2', () => {
                         seigManagerInfo.tot,
                         seigManagerInfo.seigManagerV1,
                         deployed.layer2ManagerProxy.address,
-                        deployed.stakingLayer2Proxy.address,
+                        deployed.optimismSequencerProxy.address,
+                        deployed.candidateProxy.address,
                         seigManagerInfo.seigPerBlock,
                         seigManagerInfo.minimumBlocksForUpdateSeig
                     )
@@ -67,7 +69,9 @@ describe('SeigManagerV2', () => {
             expect(await deployed.seigManagerV2Proxy.tot()).to.eq(seigManagerInfo.tot)
             expect(await deployed.seigManagerV2Proxy.seigManagerV1()).to.eq(seigManagerInfo.seigManagerV1)
             expect(await deployed.seigManagerV2Proxy.layer2Manager()).to.eq(deployed.layer2ManagerProxy.address)
-            expect(await deployed.seigManagerV2Proxy.stakingLayer2()).to.eq(deployed.stakingLayer2Proxy.address)
+            expect(await deployed.seigManagerV2Proxy.optimismSequencer()).to.eq(deployed.optimismSequencerProxy.address)
+            expect(await deployed.seigManagerV2Proxy.candidate()).to.eq(deployed.candidateProxy.address)
+
             expect(await deployed.seigManagerV2Proxy.seigPerBlock()).to.eq(seigManagerInfo.seigPerBlock)
             expect(await deployed.seigManagerV2Proxy.minimumBlocksForUpdateSeig()).to.eq(seigManagerInfo.minimumBlocksForUpdateSeig)
 
@@ -81,7 +85,8 @@ describe('SeigManagerV2', () => {
                     seigManagerInfo.tot,
                     seigManagerInfo.seigManagerV1,
                     deployed.layer2ManagerProxy.address,
-                    deployed.stakingLayer2Proxy.address,
+                    deployed.optimismSequencerProxy.address,
+                    deployed.candidateProxy.address,
                     seigManagerInfo.seigPerBlock,
                     seigManagerInfo.minimumBlocksForUpdateSeig
                 )

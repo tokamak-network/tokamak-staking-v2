@@ -1,11 +1,15 @@
 import { ethers } from 'hardhat'
 import {  Wallet, Signer } from 'ethers'
-import { SeigManagerV2Proxy } from '../../typechain-types/contracts/SeigManagerV2Proxy'
+import { SeigManagerV2Proxy } from '../../typechain-types/contracts/proxy/SeigManagerV2Proxy'
 import { SeigManagerV2 } from '../../typechain-types/contracts/SeigManagerV2.sol'
-import { Layer2ManagerProxy } from '../../typechain-types/contracts/Layer2ManagerProxy'
+import { Layer2ManagerProxy } from '../../typechain-types/contracts/proxy/Layer2ManagerProxy'
 import { Layer2Manager } from '../../typechain-types/contracts/Layer2Manager.sol'
-import { StakingLayer2Proxy } from '../../typechain-types/contracts/StakingLayer2Proxy'
-import { StakingLayer2 } from '../../typechain-types/contracts/StakingLayer2.sol'
+
+import { OptimismSequencerProxy } from '../../typechain-types/contracts/proxy/OptimismSequencerProxy'
+import { OptimismSequencer } from '../../typechain-types/contracts/OptimismSequencer.sol'
+import { CandidateProxy } from '../../typechain-types/contracts/proxy/CandidateProxy'
+import { Candidate } from '../../typechain-types/contracts/Candidate'
+
 import { TON } from '../../typechain-types/contracts/test/TON.sol'
 import { Lib_AddressManager } from '../../typechain-types/contracts/test/Lib_AddressManager'
 import { MockL1Messenger } from '../../typechain-types/contracts/test/MockL1Messenger'
@@ -14,15 +18,18 @@ import { MockL1Bridge } from '../../typechain-types/contracts/test/MockL1Bridge'
 import { MockL2Bridge } from '../../typechain-types/contracts/test/MockL2Bridge'
 import { TestERC20 } from '../../typechain-types/contracts/test/TestERC20'
 
+import { LibOperator } from '../../typechain-types/contracts/libraries/LibOperator'
+import { LibOptimism } from '../../typechain-types/contracts/libraries/LibOptimism'
+
 import TON_ABI from '../../artifacts/contracts/test/TON.sol/TON.json'
-import {Layer2Fixture, TonStakingV2Fixture } from './fixtureInterfaces'
+import {Layer2Fixture, TonStakingV2Fixture, OperatorFixture } from './fixtureInterfaces'
 // mainnet
 let tonAddress = "0x2be5e8c109e2197D077D13A82dAead6a9b3433C5";
 let tonAdminAddress = "0xDD9f0cCc044B0781289Ee318e5971b0139602C26";
 
 export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture> {
 
-    const [deployer, addr1, sequencer1, dao, stosDistribute ] = await ethers.getSigners();
+    const [deployer, addr1, addr2, sequencer1, dao, stosDistribute ] = await ethers.getSigners();
 
     await ethers.provider.send("hardhat_impersonateAccount",[tonAdminAddress]);
     const tonAdmin = await ethers.getSigner(tonAdminAddress);
@@ -37,8 +44,18 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
 
     const seigManagerV2 = seigManagerV2Logic.attach(seigManagerV2Proxy.address) as SeigManagerV2
 
+    // LibOptimism.sol
+    const LibOptimism_ = await ethers.getContractFactory('LibOptimism');
+    const libOptimism = (await LibOptimism_.connect(deployer).deploy()) as LibOptimism
+
+    // LibOperator.sol
+    const LibOperator_ = await ethers.getContractFactory('LibOperator');
+    const libOperator = (await LibOperator_.connect(deployer).deploy()) as LibOperator
+
     //
-    const Layer2Manager_ = await ethers.getContractFactory('Layer2Manager')
+    const Layer2Manager_ = await ethers.getContractFactory('Layer2Manager', {
+        signer: deployer, libraries: { LibOptimism: libOptimism.address, LibOperator: libOperator.address }
+    })
     const Layer2ManagerLogic_ = (await Layer2Manager_.connect(deployer).deploy()) as Layer2Manager
 
     const Layer2ManagerProxy_ = await ethers.getContractFactory('Layer2ManagerProxy')
@@ -47,14 +64,22 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
 
     const layer2Manager = Layer2ManagerLogic_.attach(layer2ManagerProxy.address) as Layer2Manager
 
-    //
-    const StakingLayer2_ = await ethers.getContractFactory('StakingLayer2')
-    const StakingLayer2Logic_ = (await StakingLayer2_.connect(deployer).deploy()) as StakingLayer2
+    const OptimismSequencer_ = await ethers.getContractFactory('OptimismSequencer')
+    const OptimismSequencerLogic_ = (await OptimismSequencer_.connect(deployer).deploy()) as OptimismSequencer
 
-    const StakingLayer2Proxy_ = await ethers.getContractFactory('StakingLayer2Proxy')
-    const stakingLayer2Proxy = (await StakingLayer2Proxy_.connect(deployer).deploy()) as StakingLayer2Proxy
-    await stakingLayer2Proxy.connect(deployer).upgradeTo(StakingLayer2Logic_.address);
-    const stakingLayer2 = StakingLayer2Logic_.attach(stakingLayer2Proxy.address) as StakingLayer2
+    const OptimismSequencerProxy_ = await ethers.getContractFactory('OptimismSequencerProxy')
+    const optimismSequencerProxy = (await OptimismSequencerProxy_.connect(deployer).deploy()) as OptimismSequencerProxy
+    await optimismSequencerProxy.connect(deployer).upgradeTo(OptimismSequencerLogic_.address);
+    const optimismSequencer = OptimismSequencerLogic_.attach(optimismSequencerProxy.address) as OptimismSequencer
+
+    //
+    const Candidate_ = await ethers.getContractFactory('Candidate' )
+    const CandidateLogic_ = (await Candidate_.connect(deployer).deploy()) as Candidate
+
+    const CandidateProxy_ = await ethers.getContractFactory('CandidateProxy')
+    const candidateProxy = (await CandidateProxy_.connect(deployer).deploy()) as CandidateProxy
+    await candidateProxy.connect(deployer).upgradeTo(CandidateLogic_.address);
+    const candidate = CandidateLogic_.attach(candidateProxy.address) as Candidate
 
     //
     const ton = (await ethers.getContractAt(TON_ABI.abi, tonAddress, deployer)) as TON
@@ -94,11 +119,14 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
         seigManagerV2: seigManagerV2,
         layer2ManagerProxy: layer2ManagerProxy,
         layer2Manager: layer2Manager,
-        stakingLayer2Proxy: stakingLayer2Proxy,
-        stakingLayer2: stakingLayer2,
+        optimismSequencerProxy: optimismSequencerProxy,
+        optimismSequencer: optimismSequencer,
+        candidateProxy: candidateProxy,
+        candidate: candidate,
         ton: ton,
         deployer: deployer,
         addr1: addr1,
+        addr2: addr2,
         sequencer1: sequencer1,
         tonAdmin: tonAdmin,
         addressManager: addressManager,
@@ -114,12 +142,36 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
 
 
 export const getLayerKey = async function (info: Layer2Fixture): Promise<string> {
-    const constructorArgumentsEncoded = ethers.utils.defaultAbiCoder.encode(
-        ['address', 'address', 'address', 'address' ],
-        [   info.addressManager,
-            info.l1Messenger,
-            info.l1Bridge,
-            info.l2ton]
+
+    const constructorArgumentsEncoded = ethers.utils.concat([
+            ethers.utils.arrayify(info.addressManager),
+            ethers.utils.arrayify(info.l1Messenger),
+            ethers.utils.arrayify(info.l1Bridge),
+            ethers.utils.arrayify(info.l2ton)
+        ]
       )
    return ethers.utils.keccak256(constructorArgumentsEncoded) ;
 }
+
+export const getCandidateKey = async function (info: OperatorFixture): Promise<string> {
+
+    const constructorArgumentsEncoded = ethers.utils.concat([
+            ethers.utils.arrayify(info.operator),
+            ethers.utils.hexZeroPad(ethers.utils.hexlify(info.sequencerIndex), 4),
+            ethers.utils.hexZeroPad(ethers.utils.hexlify(0), 2)
+        ]
+      )
+   return ethers.utils.keccak256(constructorArgumentsEncoded) ;
+}
+
+
+export const getCandidateLayerKey = async function (info: OperatorFixture): Promise<string> {
+
+    const constructorArgumentsEncoded = ethers.utils.concat([
+            ethers.utils.arrayify(info.operator),
+            ethers.utils.hexZeroPad(ethers.utils.hexlify(info.sequencerIndex), 4)
+        ]
+      )
+   return ethers.utils.keccak256(constructorArgumentsEncoded) ;
+}
+
