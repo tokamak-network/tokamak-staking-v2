@@ -1,0 +1,299 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "Layer2ManagerStorage",
+  "sourceName": "contracts/storages/Layer2ManagerStorage.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "candidate",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "name": "candidateNames",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "candidatesIndexes",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "delayBlocksForWithdraw",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "name": "holdings",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "securityDeposit",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "seigs",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "indexCandidates",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "indexSequencers",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "layerKeys",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "maxLayer2Count",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "minimumDepositForCandidate",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "minimumDepositForSequencer",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "optimismSequencer",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "optimismSequencerIndexes",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "name": "optimismSequencerNames",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ratioSecurityDepositOfTvl",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "seigManagerV2",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ton",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalSecurityDeposit",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalSeigs",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x60806040526010805460ff60501b19166a010000000000000000000017905534801561002a57600080fd5b506103df8061003a6000396000f3fe608060405234801561001057600080fd5b50600436106101515760003560e01c80638d5d8e55116100cd578063d37c6d6911610081578063da0dc13511610066578063da0dc135146102f3578063e0ef2a7f14610306578063f71bf33a1461033957600080fd5b8063d37c6d69146102ca578063d48ddf04146102d357600080fd5b8063c14241b9116100b2578063c14241b914610281578063caef64e6146102ae578063cc48b947146102b757600080fd5b80638d5d8e5514610268578063a4dd8b7d1461027857600080fd5b8063499ad9da116101245780635b1f335f116101095780635b1f335f146102215780636c8381f81461022a57806373469a7a1461025557600080fd5b8063499ad9da1461020057806357bc1df01461020957600080fd5b806304196138146101565780633bd0c19f146101975780634339da1c146101bf57806346551ece146101d2575b600080fd5b61017d61016436600461038c565b600d602052600090815260409020805460019091015482565b604080519283526020830191909152015b60405180910390f35b6101aa6101a53660046103b9565b610342565b60405163ffffffff909116815260200161018e565b6101aa6101cd3660046103b9565b61037c565b6101f26101e036600461038c565b600b6020526000908152604090205481565b60405190815260200161018e565b6101f260095481565b6010546101aa90640100000000900463ffffffff1681565b6101f260085481565b60035461023d906001600160a01b031681565b6040516001600160a01b03909116815260200161018e565b60015461023d906001600160a01b031681565b6010546101aa9063ffffffff1681565b6101f260055481565b60105461029b9068010000000000000000900461ffff1681565b60405161ffff909116815260200161018e565b6101f260065481565b60005461023d906001600160a01b031681565b6101f260075481565b6101f26102e136600461038c565b600c6020526000908152604090205481565b60025461023d906001600160a01b031681565b6103296103143660046103b9565b600e6020526000908152604090205460ff1681565b604051901515815260200161018e565b6101f260045481565b600f818154811061035257600080fd5b9060005260206000209060089182820401919006600402915054906101000a900463ffffffff1681565b600a818154811061035257600080fd5b60006020828403121561039e57600080fd5b813563ffffffff811681146103b257600080fd5b9392505050565b6000602082840312156103cb57600080fd5b503591905056fea164736f6c6343000812000a",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106101515760003560e01c80638d5d8e55116100cd578063d37c6d6911610081578063da0dc13511610066578063da0dc135146102f3578063e0ef2a7f14610306578063f71bf33a1461033957600080fd5b8063d37c6d69146102ca578063d48ddf04146102d357600080fd5b8063c14241b9116100b2578063c14241b914610281578063caef64e6146102ae578063cc48b947146102b757600080fd5b80638d5d8e5514610268578063a4dd8b7d1461027857600080fd5b8063499ad9da116101245780635b1f335f116101095780635b1f335f146102215780636c8381f81461022a57806373469a7a1461025557600080fd5b8063499ad9da1461020057806357bc1df01461020957600080fd5b806304196138146101565780633bd0c19f146101975780634339da1c146101bf57806346551ece146101d2575b600080fd5b61017d61016436600461038c565b600d602052600090815260409020805460019091015482565b604080519283526020830191909152015b60405180910390f35b6101aa6101a53660046103b9565b610342565b60405163ffffffff909116815260200161018e565b6101aa6101cd3660046103b9565b61037c565b6101f26101e036600461038c565b600b6020526000908152604090205481565b60405190815260200161018e565b6101f260095481565b6010546101aa90640100000000900463ffffffff1681565b6101f260085481565b60035461023d906001600160a01b031681565b6040516001600160a01b03909116815260200161018e565b60015461023d906001600160a01b031681565b6010546101aa9063ffffffff1681565b6101f260055481565b60105461029b9068010000000000000000900461ffff1681565b60405161ffff909116815260200161018e565b6101f260065481565b60005461023d906001600160a01b031681565b6101f260075481565b6101f26102e136600461038c565b600c6020526000908152604090205481565b60025461023d906001600160a01b031681565b6103296103143660046103b9565b600e6020526000908152604090205460ff1681565b604051901515815260200161018e565b6101f260045481565b600f818154811061035257600080fd5b9060005260206000209060089182820401919006600402915054906101000a900463ffffffff1681565b600a818154811061035257600080fd5b60006020828403121561039e57600080fd5b813563ffffffff811681146103b257600080fd5b9392505050565b6000602082840312156103cb57600080fd5b503591905056fea164736f6c6343000812000a",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

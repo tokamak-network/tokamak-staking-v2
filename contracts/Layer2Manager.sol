@@ -322,6 +322,4 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
     }
 
     /* ========== internal ========== */
-
-
 }

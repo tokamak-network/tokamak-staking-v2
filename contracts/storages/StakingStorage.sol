@@ -5,8 +5,6 @@ import {Layer2} from "../libraries/Layer2.sol";
 import "../libraries/LibStake.sol";
 
 contract StakingStorage {
-    // using Layer2 for mapping(uint32 => Layer2.Layer2Info);
-    // using Layer2 for Layer2.Layer2Info;
 
     bytes4 constant ERC20_ONAPPROVE = 0x4273ca16;
      // As per the EIP-165 spec, no interface should ever match 0xffffffff
@@ -15,14 +13,12 @@ contract StakingStorage {
     mapping(bytes4 => bool) internal _supportedInterfaces;
 
     bool internal free = true;
-    bool public u ;
+    // bool public up;
 
     address public ton;
     address public seigManagerV2;
     address public layer2Manager;
     uint256 public totalStakedLton;
-    // uint256 public totalBondedLton;
-
 
     mapping (uint32 => uint256) public layerStakedLton;
 
