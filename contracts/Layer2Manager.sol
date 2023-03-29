@@ -38,7 +38,7 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
     /* ========== DEPENDENCIES ========== */
     using SafeERC20 for IERC20;
 
-    event Claimed(uint32 _index, address to, uint256 amount);
+    event Claimed(uint32 _index, address _sequencer, uint256 amount);
     event CreatedOptimismSequencer(uint32 _index, address _sequencer, bytes32 _name, address addressManager, address l1Messenger, address l1Bridge, address l2ton);
     event CreatedCandidate(uint32 _index, address _operator, bytes32 _name, uint32 _sequenceIndex);
     event Distributed(uint256 _totalSeigs, uint256 _distributedAmount);

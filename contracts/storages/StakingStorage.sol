@@ -32,11 +32,11 @@ contract StakingStorage {
 
     // pending unstaked amount
     // layer2Index => msg.sender => ton amount
-    mapping (uint32 => mapping (address => uint256)) public _pendingUnstaked;
+    mapping (uint32 => mapping (address => uint256)) public pendingUnstaked;
     // layer2Index => ton amount
-    mapping (uint32 => uint256) public _pendingUnstakedLayer2;
+    mapping (uint32 => uint256) public pendingUnstakedLayer2;
     // msg.sender =>  ton amount
-    mapping (address => uint256) public _pendingUnstakedAccount;
+    mapping (address => uint256) public pendingUnstakedAccount;
 
     // layer2Index - info
     mapping (uint32 => bytes) public layerInfo;

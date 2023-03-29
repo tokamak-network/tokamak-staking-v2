@@ -38,10 +38,10 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
     using SafeERC20 for IERC20;
     using BytesLib for bytes;
 
-    event Staked(uint32 layerIndex, address sender, uint256 amount, uint256 lton);
-    event Unstaked(uint32 layerIndex, address sender, uint256 amount, uint256 lton);
-    event Restaked(uint32 layerIndex, address sender, uint256 amount, uint256 lton);
-    event Withdrawal(uint32 layerIndex, address sender, uint256 amount);
+    event Staked(uint32 _index, address sender, uint256 amount, uint256 lton);
+    event Unstaked(uint32 _index, address sender, uint256 amount, uint256 lton);
+    event Restaked(uint32 _index, address sender, uint256 amount, uint256 lton);
+    event Withdrawal(uint32 _index, address sender, uint256 amount);
 
     /* ========== CONSTRUCTOR ========== */
     constructor() {
@@ -119,23 +119,23 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
             processed: false
         }));
 
-        _pendingUnstaked[_index][sender] += amount;
-        _pendingUnstakedLayer2[_index] += amount;
-        _pendingUnstakedAccount[sender] += amount;
+        pendingUnstaked[_index][sender] += amount;
+        pendingUnstakedLayer2[_index] += amount;
+        pendingUnstakedAccount[sender] += amount;
 
         emit Unstaked(_index, sender, amount, lton_);
     }
 
     function restake(uint32 _index) public
     {
-        require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
+        // require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
         uint256 i = withdrawalRequestIndex[_index][msg.sender];
         require(_restake(_index, msg.sender, i, 1),'SL_E_RESTAKE');
     }
 
     function restakeMulti(uint32 _index, uint256 n) public
     {
-        require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
+        // require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
         uint256 i = withdrawalRequestIndex[_index][msg.sender];
         require(_restake(_index, msg.sender, i, n),'SL_E_RESTAKE');
     }
@@ -167,9 +167,9 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
         totalStakedLton += lton_;
 
         // withdrawal-related storages
-        _pendingUnstaked[_index][sender] -= accAmount;
-        _pendingUnstakedLayer2[_index] -= accAmount;
-        _pendingUnstakedAccount[sender] -= accAmount;
+        pendingUnstaked[_index][sender] -= accAmount;
+        pendingUnstakedLayer2[_index] -= accAmount;
+        pendingUnstakedAccount[sender] -= accAmount;
 
         withdrawalRequestIndex[_index][sender] += nlength;
 
@@ -199,9 +199,9 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
         require (amount > 0, 'zero available withdrawal amount');
 
         withdrawalRequestIndex[_index][sender] += len;
-        _pendingUnstaked[_index][sender] -= amount;
-        _pendingUnstakedLayer2[_index] -= amount;
-        _pendingUnstakedAccount[sender] -= amount;
+        pendingUnstaked[_index][sender] -= amount;
+        pendingUnstakedLayer2[_index] -= amount;
+        pendingUnstakedAccount[sender] -= amount;
 
         uint256 bal = IERC20(ton).balanceOf(address(this));
 
@@ -290,6 +290,17 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
     function getTotalLton() public view returns (uint256) {
         return totalStakedLton;
     }
+
+
+    function getStakeAccountList() public view returns (address[] memory) {
+        return stakeAccountList;
+    }
+
+    function getPendingUnstakedAmount(uint32 _index, address account) public view returns (uint256) {
+        return pendingUnstaked[_index][account];
+    }
+
+
 
     /* ========== internal ========== */
 
