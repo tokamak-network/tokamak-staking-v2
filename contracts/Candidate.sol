@@ -27,20 +27,24 @@ contract Candidate is Staking, CandidateStorage {
         external onlyLayer2Manager returns (bool)
     {
         require(layerInfo[_candidateIndex].length == 0, "already created");
-        require(_info.length > 55, "wrong _info");
+        require(_info.length > 57, "wrong _info");
 
         // console.log('create ' );
         // console.logBytes(_info);
         // console.log("operator %s ", _info.toAddress(0));
         // console.log("sequenceIndex %s ", _info.toUint32(20));
-        // console.log("amount %s ", _info.toUint256(24));
+        // console.log("_commission %s ", _info.toUint16(24));
+        // console.log("amount %s ", _info.toUint256(26));
 
-        // 20+4+32 =  56
+        // 20+4+2+32 =  58
         // bytes
         //  address (operator)- uint32 (layerIndex) - uint256 (amount)
-        uint256 amount = _info.toUint256(24);
+        uint16 commission = _info.toUint16(24);
+        if (commission != 0) commissions[_candidateIndex] = commission;
 
-        layerInfo[_candidateIndex] = abi.encodePacked(_info.slice(0,24), bytes2(uint16(0)));
+        uint256 amount = _info.toUint256(26);
+
+        layerInfo[_candidateIndex] = abi.encodePacked(_info.slice(0,26));
         // console.logBytes(layerInfo[_candidateIndex]);
 
         IERC20(ton).safeTransferFrom(layer2Manager, address(this), amount);
@@ -103,7 +107,7 @@ contract Candidate is Staking, CandidateStorage {
 
     function getCandidateKey(uint32 _index) public view virtual  returns (bytes32 layerKey_) {
         bytes memory data = layerInfo[_index];
-        layerKey_ = bytes32(keccak256(data));
+        layerKey_ = bytes32(keccak256(abi.encodePacked(data.slice(0,24), uint16(0))));
     }
 
     function operator(uint32 _index) public view returns (address operator_) {

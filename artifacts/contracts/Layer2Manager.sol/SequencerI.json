@@ -49,6 +49,30 @@
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "l1Bridge",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "l2ton",
+          "type": "address"
+        }
+      ],
+      "name": "getTvl",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint32",
           "name": "_index",
           "type": "uint32"

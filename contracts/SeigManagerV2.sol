@@ -73,7 +73,7 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
     }
 
     function setAddress(address _dao, address _stosDistribute) external onlyOwner {
-        require(!(dao == _dao  && stosDistribute == _stosDistribute), "same");
+        require(!(dao == _dao && stosDistribute == _stosDistribute), "same");
 
         dao = _dao;
         stosDistribute = _stosDistribute;

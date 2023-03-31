@@ -264,10 +264,11 @@ describe('Integrated Test', () => {
                 await (await deployed.ton.connect(addr1).approve(deployed.layer2Manager.address, amount)).wait();
 
             const topic = deployed.layer2Manager.interface.getEventTopic('CreatedCandidate');
-
+            const commission = 500;
             const receipt = await(await snapshotGasCost(deployed.layer2Manager.connect(addr1).createCandidate(
                 sequenceIndex,
-                ethers.utils.formatBytes32String(name)
+                ethers.utils.formatBytes32String(name),
+                commission
             ))).wait();
 
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
@@ -277,11 +278,13 @@ describe('Integrated Test', () => {
             expect(deployedEvent.args._operator).to.eq(addr1.address);
             expect(deployedEvent.args._name).to.eq(ethers.utils.formatBytes32String(name));
             expect(deployedEvent.args._sequenceIndex).to.eq(sequenceIndex);
+            expect(deployedEvent.args._commission).to.eq(commission);
 
             expect(await deployed.layer2Manager.totalCandidates()).to.eq(totalCandidates.add(1))
             expect(await deployed.candidate["balanceOfLton(uint32)"](candidateIndex)).to.eq(amount)
             expect(await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)).to.eq(amount)
             expect(await deployed.candidate["balanceOf(uint32,address)"](candidateIndex, addr1.address)).to.eq(amount)
+            expect(await deployed.candidate["commissions(uint32)"](candidateIndex)).to.eq(commission)
 
 
             let candidateKey = await getCandidateKey({
@@ -296,7 +299,7 @@ describe('Integrated Test', () => {
             let candidateInfo_ = await deployed.candidate.getCandidateInfo(candidateIndex);
             expect(candidateInfo_.operator).to.eq(addr1.address)
             expect(candidateInfo_.sequencerIndex).to.eq(sequenceIndex)
-            expect(candidateInfo_.commission).to.eq(ethers.constants.Zero)
+            expect(candidateInfo_.commission).to.eq(commission)
 
 
             let candidateLayerKey = await getCandidateLayerKey({

@@ -105,6 +105,17 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
         }
     }
 
+
+    function getTvl(address l1Bridge, address l2ton) public view returns (uint256 amount) {
+
+        try
+            L1BridgeI(l1Bridge).deposits(ton, l2ton) returns (uint256 a) {
+                amount = a;
+        } catch (bytes memory ) {
+            amount = 0;
+        }
+    }
+
     function sequencer(uint32 _index) public view override returns (address sequencer_) {
         bytes memory data = layerInfo[_index];
         try

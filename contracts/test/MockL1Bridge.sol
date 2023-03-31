@@ -7,7 +7,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 contract MockL1Bridge is Ownable {
     using SafeERC20 for IERC20;
 

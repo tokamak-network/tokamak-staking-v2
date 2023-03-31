@@ -19,5 +19,4 @@ library LibOptimism
         key_ = bytes32(keccak256(abi.encodePacked(addressManager, l1Messenger, l1Bridge, l2ton)));
     }
 
-
 }
