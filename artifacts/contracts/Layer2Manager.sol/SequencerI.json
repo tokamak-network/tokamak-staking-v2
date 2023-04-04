@@ -35,6 +35,47 @@
           "type": "uint32"
         }
       ],
+      "name": "getLayerInfo",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "addressManager",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "l1Messenger",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "l1Bridge",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "l2ton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct LibOptimism.Info",
+          "name": "_layerInfo",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_index",
+          "type": "uint32"
+        }
+      ],
       "name": "getTvl",
       "outputs": [
         {
@@ -84,6 +125,25 @@
           "internalType": "bytes",
           "name": "",
           "type": "bytes"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "addressManager",
+          "type": "address"
+        }
+      ],
+      "name": "sequencer",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
         }
       ],
       "stateMutability": "view",
