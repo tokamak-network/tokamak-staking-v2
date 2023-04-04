@@ -126,6 +126,15 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
         }
     }
 
+    function sequencer(address addressManager) public view returns (address sequencer_) {
+        try
+            AddressManagerI(addressManager).getAddress('OVM_Sequencer') returns (address a) {
+                sequencer_ = a;
+        } catch (bytes memory ) {
+            sequencer_ = address(0);
+        }
+    }
+
     /* ========== internal ========== */
 
 

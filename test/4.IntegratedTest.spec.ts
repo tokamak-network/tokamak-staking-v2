@@ -20,6 +20,10 @@ describe('Integrated Test', () => {
         layer2Manager: "",
         seigPerBlock: ethers.BigNumber.from("3920000000000000000"),
         minimumBlocksForUpdateSeig: 300,
+        ratesTonStakers: 10000,
+        ratesDao: 0,
+        ratesStosHolders: 0,
+        ratesUnits: 10000
     }
 
     let layer2ManagerInfo = {
@@ -43,15 +47,23 @@ describe('Integrated Test', () => {
         it('SeigManagerV2 : initialize can be executed by only owner', async () => {
             await snapshotGasCost(
                 deployed.seigManagerV2Proxy.connect(deployer).initialize(
-                        seigManagerInfo.ton,
-                        seigManagerInfo.wton,
-                        seigManagerInfo.tot,
+                    seigManagerInfo.ton,
+                    seigManagerInfo.wton,
+                    seigManagerInfo.tot,
+                    [
                         seigManagerInfo.seigManagerV1,
                         deployed.layer2ManagerProxy.address,
                         deployed.optimismSequencerProxy.address,
-                        deployed.candidateProxy.address,
-                        seigManagerInfo.seigPerBlock,
-                        seigManagerInfo.minimumBlocksForUpdateSeig
+                        deployed.candidateProxy.address
+                    ],
+                    seigManagerInfo.seigPerBlock,
+                    seigManagerInfo.minimumBlocksForUpdateSeig,
+                    [
+                        seigManagerInfo.ratesTonStakers,
+                        seigManagerInfo.ratesDao,
+                        seigManagerInfo.ratesStosHolders,
+                        seigManagerInfo.ratesUnits,
+                    ]
                     )
             );
 
@@ -253,7 +265,7 @@ describe('Integrated Test', () => {
             let totalLayers = await deployed.layer2Manager.totalLayers()
             let totalCandidates = await deployed.layer2Manager.totalCandidates()
 
-            let sequenceIndex = await deployed.layer2Manager.optimismSequencerIndexes(totalLayers.sub(ethers.constants.One))
+            let sequencerIndex = await deployed.layer2Manager.optimismSequencerIndexes(totalLayers.sub(ethers.constants.One))
 
             let amount = await deployed.layer2Manager.minimumDepositForCandidate();
 
@@ -266,7 +278,7 @@ describe('Integrated Test', () => {
             const topic = deployed.layer2Manager.interface.getEventTopic('CreatedCandidate');
             const commission = 500;
             const receipt = await(await snapshotGasCost(deployed.layer2Manager.connect(addr1).createCandidate(
-                sequenceIndex,
+                sequencerIndex,
                 ethers.utils.formatBytes32String(name),
                 commission
             ))).wait();
@@ -277,7 +289,7 @@ describe('Integrated Test', () => {
             let candidateIndex = deployedEvent.args._index;
             expect(deployedEvent.args._operator).to.eq(addr1.address);
             expect(deployedEvent.args._name).to.eq(ethers.utils.formatBytes32String(name));
-            expect(deployedEvent.args._sequenceIndex).to.eq(sequenceIndex);
+            expect(deployedEvent.args._sequencerIndex).to.eq(sequencerIndex);
             expect(deployedEvent.args._commission).to.eq(commission);
 
             expect(await deployed.layer2Manager.totalCandidates()).to.eq(totalCandidates.add(1))
@@ -289,7 +301,7 @@ describe('Integrated Test', () => {
 
             let candidateKey = await getCandidateKey({
                     operator: addr1.address,
-                    sequencerIndex: sequenceIndex,
+                    sequencerIndex: sequencerIndex,
                     commission: ethers.constants.Zero
                 }
             );
@@ -298,13 +310,13 @@ describe('Integrated Test', () => {
 
             let candidateInfo_ = await deployed.candidate.getCandidateInfo(candidateIndex);
             expect(candidateInfo_.operator).to.eq(addr1.address)
-            expect(candidateInfo_.sequencerIndex).to.eq(sequenceIndex)
+            expect(candidateInfo_.sequencerIndex).to.eq(sequencerIndex)
             expect(candidateInfo_.commission).to.eq(commission)
 
 
             let candidateLayerKey = await getCandidateLayerKey({
                 operator: addr1.address,
-                sequencerIndex: sequenceIndex,
+                sequencerIndex: sequencerIndex,
                 commission: ethers.constants.Zero
                 }
             );
@@ -320,6 +332,95 @@ describe('Integrated Test', () => {
         })
     });
 
+    describe('# increase Security Deposit ', () => {
+        it('After approval of the use of TON in advance, the deposit can be increased.', async () => {
+            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let amount = ethers.utils.parseEther("100");
+            await expect(
+                deployed.layer2Manager.connect(addr1).increaseSecurityDeposit(
+                    layerIndex, amount
+                )).to.be.reverted;
+        })
+
+        it('Approve the deposit and increase the security deposit.', async () => {
+            let amount = ethers.utils.parseEther("100");
+            let layerIndex = await deployed.layer2Manager.indexSequencers();
+
+            if (amount.gt(await deployed.ton.balanceOf(addr1.address)))
+                await (await deployed.ton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
+
+            if (amount.gte(await deployed.ton.allowance(addr1.address, deployed.layer2Manager.address)))
+                await (await deployed.ton.connect(addr1).approve(deployed.layer2Manager.address, amount)).wait();
+
+            let balanceOfAccountBefore = await deployed.ton.balanceOf(addr1.address)
+            let balanceOfLayer2ManagerBefore = await deployed.ton.balanceOf(deployed.layer2Manager.address)
+            let totalSecurityDepositBefore = await deployed.layer2Manager.totalSecurityDeposit()
+            let depositBefore = await deployed.layer2Manager.layerHoldings(layerIndex)
+            await snapshotGasCost(deployed.layer2Manager.connect(addr1).increaseSecurityDeposit(
+                    layerIndex,
+                    amount
+                ));
+
+            let depositAfter = await deployed.layer2Manager.layerHoldings(layerIndex)
+
+            expect(await deployed.ton.balanceOf(addr1.address)).to.eq(balanceOfAccountBefore.sub(amount))
+            expect(await deployed.ton.balanceOf(deployed.layer2Manager.address)).to.eq(balanceOfLayer2ManagerBefore.add(amount))
+            expect(depositAfter.securityDeposit).to.eq(depositBefore.securityDeposit.add(amount))
+            expect(await  deployed.layer2Manager.totalSecurityDeposit()).to.eq(totalSecurityDepositBefore.add(amount))
+
+        })
+    });
+
+    describe('# decrease Security Deposit ', () => {
+
+        it('function can not be executed by not sequencer', async () => {
+            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let amount = ethers.utils.parseEther("100");
+            await expect(
+                deployed.layer2Manager.connect(addr1).decreaseSecurityDeposit(
+                    layerIndex, amount
+                )
+                ).to.be.revertedWith("sequencer is zero or not caller.")
+        })
+
+
+        it('Remained security deposit must is greater than more than the minimum security deposit.', async () => {
+            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            // let minimumDepositForSequencer = await deployed.layer2Manager.minimumDepositForSequencer();
+            let depositBefore = await deployed.layer2Manager.layerHoldings(layerIndex)
+            let amount = depositBefore.securityDeposit;
+            await expect(
+                deployed.layer2Manager.connect(sequencer1).decreaseSecurityDeposit(
+                    layerIndex, amount
+                )).to.be.revertedWith("insufficient deposit");
+        })
+
+        it('Sequencer can decrease the security deposit.', async () => {
+
+            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let minimumDepositForSequencer = await deployed.layer2Manager.minimumDepositForSequencer();
+            let depositBefore = await deployed.layer2Manager.layerHoldings(layerIndex)
+            let amount = depositBefore.securityDeposit.sub(minimumDepositForSequencer);
+
+            let balanceOfAccountBefore = await deployed.ton.balanceOf(sequencer1.address)
+            let balanceOfLayer2ManagerBefore = await deployed.ton.balanceOf(deployed.layer2Manager.address)
+            let totalSecurityDepositBefore = await deployed.layer2Manager.totalSecurityDeposit()
+
+            await snapshotGasCost(deployed.layer2Manager.connect(sequencer1).decreaseSecurityDeposit(
+                    layerIndex,
+                    amount
+                ));
+
+            let depositAfter = await deployed.layer2Manager.layerHoldings(layerIndex)
+
+            expect(await deployed.ton.balanceOf(sequencer1.address)).to.eq(balanceOfAccountBefore.add(amount))
+            expect(await deployed.ton.balanceOf(deployed.layer2Manager.address)).to.eq(balanceOfLayer2ManagerBefore.sub(amount))
+            expect(depositAfter.securityDeposit).to.eq(depositBefore.securityDeposit.sub(amount))
+
+            expect(await  deployed.layer2Manager.totalSecurityDeposit()).to.eq(totalSecurityDepositBefore.sub(amount))
+
+        })
+    });
 
     describe('# stake at Sequencer', () => {
 
@@ -567,8 +668,8 @@ describe('Integrated Test', () => {
             let prevBalanceOfCandidate = await deployed.candidate.balanceOf(candidateIndex, addr1.address);
             let prevBalanceLtonOfCandidate =await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)
 
-            expect(await deployed.seigManagerV2.ratesDao()).to.eq(0)
-            expect(await deployed.seigManagerV2.ratesStosHolders()).to.eq(0)
+            expect(await deployed.seigManagerV2.ratesDao()).to.eq(seigManagerInfo.ratesDao)
+            expect(await deployed.seigManagerV2.ratesStosHolders()).to.eq(seigManagerInfo.ratesStosHolders)
 
             expect(await deployed.seigManagerV2.getTotalLton()).to.gt(ethers.constants.Zero)
             const indexLton = await deployed.seigManagerV2.indexLton();

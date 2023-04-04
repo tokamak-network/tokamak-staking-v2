@@ -20,9 +20,10 @@ contract SeigManagerV2Storage {
     uint256 public startBlock;
     uint256 public indexLton; // for staker or bonder
 
+    uint16 public ratesTonStakers; // divided ratesUnits
     uint16 public ratesDao;   // divided ratesUnits
     uint16 public ratesStosHolders; // divided ratesUnits
-    uint16 public ratesTonStakers; // divided ratesUnits
+
     uint16 public ratesUnits; // divided uint. 10000
     uint32 public minimumBlocksForUpdateSeig; // the number of block
     bool internal free = true;

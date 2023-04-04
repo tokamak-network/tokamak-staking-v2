@@ -12,12 +12,14 @@ contract SeigManagerV2Proxy is BaseProxy, SeigManagerV2Storage {
         address _ton,
         address _wton,
         address _tot,
-        address _seigManagerV1,
-        address _layer2Manager,
-        address _optimismSequencer,
-        address _candidate,
+        address[4] calldata addr, // _seigManagerV1, _layer2Manager, _optimismSequencer, _candidate
+        // address _seigManagerV1,
+        // address _layer2Manager,
+        // address _optimismSequencer,
+        // address _candidate,
         uint256 _seigPerBlock,
-        uint32 _minimumBlocksForUpdateSeig
+        uint32 _minimumBlocksForUpdateSeig,
+        uint16[4] calldata _rates   // ratesTonStakers, ratesDao, ratesStosHolders,ratesUnits
     )
         external onlyOwner
     {
@@ -25,26 +27,33 @@ contract SeigManagerV2Proxy is BaseProxy, SeigManagerV2Storage {
             _ton != address(0) &&
             _wton != address(0) &&
             _tot != address(0) &&
-            _seigManagerV1 != address(0) &&
-            _optimismSequencer != address(0) &&
-            _candidate != address(0) &&
-            _layer2Manager != address(0) &&
+            addr[0] != address(0) &&
+            addr[1] != address(0) &&
+            addr[2] != address(0) &&
+            addr[3] != address(0) &&
             _seigPerBlock != 0
             , "P1");
 
         require(address(ton) == address(0), "already initialize");
 
-        seigManagerV1 = _seigManagerV1;
+        require(_rates[3] != 0, "wrong ratesUnits");
+        require((_rates[0] + _rates[1] + _rates[2]) ==  _rates[3], 'sum of ratio is wrong');
+
+        ratesUnits = _rates[3];
+        ratesTonStakers = _rates[0];
+        ratesDao = _rates[1];
+        ratesStosHolders = _rates[2];
+
+        seigManagerV1 = addr[0];
         ton = IERC20(_ton);
         wton = _wton;
         tot = _tot;
-        layer2Manager =_layer2Manager;
-        optimismSequencer = _optimismSequencer;
-        candidate = _candidate;
+        layer2Manager =addr[1];
+        optimismSequencer = addr[2];
+        candidate = addr[3];
 
         seigPerBlock = _seigPerBlock;
         minimumBlocksForUpdateSeig = _minimumBlocksForUpdateSeig;
-
         indexLton = 1 ether;
     }
 }

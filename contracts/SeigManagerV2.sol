@@ -65,6 +65,8 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
             ratesStosHolders == _ratesStosHolders &&
             ratesTonStakers == _ratesTonStakers &&
             ratesUnits == _ratesUnits), "same");
+        require(_ratesUnits != 0, "wrong ratesUnits");
+        require((_ratesDao + _ratesStosHolders + _ratesTonStakers) ==  _ratesUnits, 'sum of ratio is wrong');
 
         ratesDao = _ratesDao;
         ratesStosHolders = _ratesStosHolders;

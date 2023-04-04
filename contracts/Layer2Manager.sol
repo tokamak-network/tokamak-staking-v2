@@ -27,7 +27,9 @@ interface SequencerI {
     function getTvl(uint32 _index) external view returns (uint256);
     function getTvl(address l1Bridge, address l2ton) external view returns (uint256 amount);
     function sequencer(uint32 _index) external view returns (address);
+    function sequencer(address addressManager) external view returns (address);
     function layerInfo(uint32 _index) external view returns (bytes memory);
+    function getLayerInfo(uint32 _index) external view returns (LibOptimism.Info memory _layerInfo );
 }
 
 interface CandidateI {
@@ -41,8 +43,10 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
 
     event Claimed(uint32 _index, address _sequencer, uint256 amount);
     event CreatedOptimismSequencer(uint32 _index, address _sequencer, bytes32 _name, address addressManager, address l1Messenger, address l1Bridge, address l2ton, uint256 depositAmount);
-    event CreatedCandidate(uint32 _index, address _operator, bytes32 _name, uint32 _sequenceIndex, uint16 _commission);
+    event CreatedCandidate(uint32 _index, address _operator, bytes32 _name, uint32 _sequencerIndex, uint16 _commission);
     event Distributed(uint256 _totalSeigs, uint256 _distributedAmount);
+    event IncreasedSecurityDeposit(uint32 _index, address caller, uint256 amount);
+    event DecreasedSecurityDeposit(uint32 _index, address _sequencer, uint256 amount);
 
     /* ========== CONSTRUCTOR ========== */
     constructor() {
@@ -126,33 +130,32 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         uint32 _index = ++indexSequencers;
 
         uint256 depositAmount =  minimumSecurityDepositAmount(l1Bridge, l2ton);
-
         totalSecurityDeposit += depositAmount;
-        ton.safeTransferFrom(msg.sender, address(this), depositAmount);
+        optimismSequencerIndexes.push(_index);
+        Layer2.Layer2Holdings storage holding = holdings[_index];
+        holding.securityDeposit = depositAmount;
+        optimismSequencerNames[_index] = _name;
 
         require(
             SequencerI(optimismSequencer).create(_index, abi.encodePacked(addressManager, l1Messenger, l1Bridge, l2ton)),
             "Fail createOptimismSequencer"
         );
 
-        optimismSequencerIndexes.push(_index);
-        Layer2.Layer2Holdings storage holding = holdings[_index];
-        holding.securityDeposit = minimumDepositForSequencer;
-        optimismSequencerNames[_index] = _name;
+        ton.safeTransferFrom(msg.sender, address(this), depositAmount);
 
         emit CreatedOptimismSequencer(
             _index, msg.sender, _name, addressManager, l1Messenger, l1Bridge, l2ton, depositAmount);
     }
 
     function createCandidate(
-        uint32 _sequenceIndex,
+        uint32 _sequencerIndex,
         bytes32 _name,
         uint16 _commission
-    )   external nonZeroUint32(_sequenceIndex) ifFree
+    )   external nonZeroUint32(_sequencerIndex) ifFree
     {
-        require(_sequenceIndex <= indexSequencers, "wrong index");
+        require(_sequencerIndex <= indexSequencers, "wrong index");
 
-        bytes32 _key = LibOperator.getKey(msg.sender, _sequenceIndex);
+        bytes32 _key = LibOperator.getKey(msg.sender, _sequencerIndex);
         require(!layerKeys[_key], 'already created');
         layerKeys[_key] = true;
 
@@ -170,14 +173,47 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         require(
             CandidateI(candidate).create(
                 _index,
-                abi.encodePacked(msg.sender, _sequenceIndex, _commission, minimumDepositForCandidate)),
+                abi.encodePacked(msg.sender, _sequencerIndex, _commission, minimumDepositForCandidate)),
             "Fail createCandidate"
         );
 
-        emit CreatedCandidate(_index, msg.sender, _name, _sequenceIndex, _commission);
+        emit CreatedCandidate(_index, msg.sender, _name, _sequencerIndex, _commission);
+    }
+
+    function decreaseSecurityDeposit(uint32 _sequencerIndex, uint256 amount)
+        external ifFree nonZeroUint32(_sequencerIndex)
+    {
+        require(_sequencerIndex <= indexSequencers, "wrong index");
+
+        LibOptimism.Info memory _layerInfo = SequencerI(optimismSequencer).getLayerInfo(_sequencerIndex);
+        address _sequencer = SequencerI(optimismSequencer).sequencer(_layerInfo.addressManager);
+        require(_sequencer != address(0) && _sequencer == msg.sender, "sequencer is zero or not caller." );
+
+        uint256 minDepositAmount = minimumSecurityDepositAmount(_layerInfo.l1Bridge, _layerInfo.l2ton);
+        Layer2.Layer2Holdings storage holding = holdings[_sequencerIndex];
+        require(amount + minDepositAmount <= holding.securityDeposit, "insufficient deposit");
+
+        holding.securityDeposit -= amount;
+        totalSecurityDeposit -= amount;
+        ton.safeTransfer(msg.sender, amount);
+
+        emit DecreasedSecurityDeposit(_sequencerIndex, msg.sender, amount);
     }
 
     /* ========== Anyone can execute ========== */
+
+    function increaseSecurityDeposit(uint32 _sequencerIndex, uint256 amount)
+        external ifFree nonZeroUint32(_sequencerIndex)
+    {
+        require(_sequencerIndex <= indexSequencers, "wrong index");
+        ton.safeTransferFrom(msg.sender, address(this), amount);
+
+        Layer2.Layer2Holdings storage holding = holdings[_sequencerIndex];
+        holding.securityDeposit += amount;
+        totalSecurityDeposit += amount;
+        emit IncreasedSecurityDeposit(_sequencerIndex, msg.sender, amount);
+    }
+
     function distribute() external {
         require (totalSeigs != 0, 'no distributable amount');
         uint256 len = optimismSequencerIndexes.length;
@@ -223,7 +259,7 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
 
     /* ========== VIEW ========== */
     function minimumSecurityDepositAmount(address l1Bridge, address l2ton) public view returns (uint256 amount) {
-        if (ratioSecurityDepositOfTvl > 0) amount = minimumDepositForSequencer;
+        if (ratioSecurityDepositOfTvl == 0) amount = minimumDepositForSequencer;
         else {
             amount = Math.max(
                 SequencerI(optimismSequencer).getTvl(l1Bridge, l2ton) * ratioSecurityDepositOfTvl / 10000,

@@ -19,7 +19,11 @@ describe('SeigManagerV2', () => {
         seigManagerV1: "0x710936500aC59e8551331871Cbad3D33d5e0D909",
         layer2Manager: "",
         seigPerBlock: ethers.BigNumber.from("3920000000000000000"),
-        minimumBlocksForUpdateSeig: 300
+        minimumBlocksForUpdateSeig: 300,
+        ratesTonStakers: 4000,
+        ratesDao: 5000,
+        ratesStosHolders: 1000,
+        ratesUnits: 10000
     }
 
     before('create fixture loader', async () => {
@@ -39,12 +43,20 @@ describe('SeigManagerV2', () => {
                     seigManagerInfo.ton,
                     seigManagerInfo.wton,
                     seigManagerInfo.tot,
-                    seigManagerInfo.seigManagerV1,
-                    deployed.layer2ManagerProxy.address,
-                    deployed.optimismSequencerProxy.address,
-                    deployed.candidateProxy.address,
+                    [
+                        seigManagerInfo.seigManagerV1,
+                        deployed.layer2ManagerProxy.address,
+                        deployed.optimismSequencerProxy.address,
+                        deployed.candidateProxy.address
+                    ],
                     seigManagerInfo.seigPerBlock,
-                    seigManagerInfo.minimumBlocksForUpdateSeig
+                    seigManagerInfo.minimumBlocksForUpdateSeig,
+                    [
+                        seigManagerInfo.ratesTonStakers,
+                        seigManagerInfo.ratesDao,
+                        seigManagerInfo.ratesStosHolders,
+                        seigManagerInfo.ratesUnits,
+                    ]
                 )
                 ).to.be.revertedWith("Accessible: Caller is not an admin")
         })
@@ -52,15 +64,23 @@ describe('SeigManagerV2', () => {
         it('initialize can be executed by only owner', async () => {
             await snapshotGasCost(
                 deployed.seigManagerV2Proxy.connect(deployer).initialize(
-                        seigManagerInfo.ton,
-                        seigManagerInfo.wton,
-                        seigManagerInfo.tot,
+                    seigManagerInfo.ton,
+                    seigManagerInfo.wton,
+                    seigManagerInfo.tot,
+                    [
                         seigManagerInfo.seigManagerV1,
                         deployed.layer2ManagerProxy.address,
                         deployed.optimismSequencerProxy.address,
-                        deployed.candidateProxy.address,
-                        seigManagerInfo.seigPerBlock,
-                        seigManagerInfo.minimumBlocksForUpdateSeig
+                        deployed.candidateProxy.address
+                    ],
+                    seigManagerInfo.seigPerBlock,
+                    seigManagerInfo.minimumBlocksForUpdateSeig,
+                    [
+                        seigManagerInfo.ratesTonStakers,
+                        seigManagerInfo.ratesDao,
+                        seigManagerInfo.ratesStosHolders,
+                        seigManagerInfo.ratesUnits,
+                    ]
                     )
             );
 
@@ -83,12 +103,20 @@ describe('SeigManagerV2', () => {
                     seigManagerInfo.ton,
                     seigManagerInfo.wton,
                     seigManagerInfo.tot,
-                    seigManagerInfo.seigManagerV1,
-                    deployed.layer2ManagerProxy.address,
-                    deployed.optimismSequencerProxy.address,
-                    deployed.candidateProxy.address,
+                    [
+                        seigManagerInfo.seigManagerV1,
+                        deployed.layer2ManagerProxy.address,
+                        deployed.optimismSequencerProxy.address,
+                        deployed.candidateProxy.address
+                    ],
                     seigManagerInfo.seigPerBlock,
-                    seigManagerInfo.minimumBlocksForUpdateSeig
+                    seigManagerInfo.minimumBlocksForUpdateSeig,
+                    [
+                        seigManagerInfo.ratesTonStakers,
+                        seigManagerInfo.ratesDao,
+                        seigManagerInfo.ratesStosHolders,
+                        seigManagerInfo.ratesUnits,
+                    ]
                 )
                 ).to.be.revertedWith("already initialize")
         })
@@ -227,6 +255,42 @@ describe('SeigManagerV2', () => {
                     rates.ratesUnits
                 )
                 ).to.be.revertedWith("same")
+        })
+
+        it('The sum of the ratios must equal ratioUnit.', async () => {
+            let rates = {
+                ratesDao: 1000,
+                ratesStosHolders: 2000,
+                ratesTonStakers: 3000,
+                ratesUnits: 10000
+            }
+
+            await expect(
+                deployed.seigManagerV2.connect(deployer).setDividendRates(
+                    rates.ratesDao,
+                    rates.ratesStosHolders,
+                    rates.ratesTonStakers,
+                    rates.ratesUnits
+                )
+                ).to.be.revertedWith("sum of ratio is wrong")
+        })
+
+        it('ratioUnit cannot be zero.', async () => {
+            let rates = {
+                ratesDao: 1000,
+                ratesStosHolders: 2000,
+                ratesTonStakers: 3000,
+                ratesUnits: 0
+            }
+
+            await expect(
+                deployed.seigManagerV2.connect(deployer).setDividendRates(
+                    rates.ratesDao,
+                    rates.ratesStosHolders,
+                    rates.ratesTonStakers,
+                    rates.ratesUnits
+                )
+                ).to.be.revertedWith("wrong ratesUnits")
         })
     });
 

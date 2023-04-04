@@ -26,6 +26,7 @@ describe('Layer2Manager', () => {
         minimumDepositForSequencer: ethers.utils.parseEther("100"),
         minimumDepositForCandidate: ethers.utils.parseEther("200"),
         delayBlocksForWithdraw: 300,
+        ratioSecurityDepositOfTvl: 2000
     }
 
     before('create fixture loader', async () => {
@@ -138,6 +139,56 @@ describe('Layer2Manager', () => {
         })
     });
 
+    describe('# setRatioSecurityDepositOfTvl', () => {
+
+        it('setRatioSecurityDepositOfTvl can not be executed by not owner', async () => {
+            const ratioSecurityDepositOfTvl = 1000;
+            await expect(
+                deployed.layer2Manager.connect(addr1).setRatioSecurityDepositOfTvl(ratioSecurityDepositOfTvl)
+                ).to.be.revertedWith("Accessible: Caller is not an admin")
+        })
+
+        it('setRatioSecurityDepositOfTvl can be executed by only owner ', async () => {
+            const ratioSecurityDepositOfTvl = 1000;
+            await snapshotGasCost(deployed.layer2Manager.connect(deployer).setRatioSecurityDepositOfTvl(ratioSecurityDepositOfTvl))
+            expect(await deployed.layer2Manager.ratioSecurityDepositOfTvl()).to.eq(ratioSecurityDepositOfTvl)
+
+            await deployed.layer2Manager.connect(deployer).setRatioSecurityDepositOfTvl(layer2ManagerInfo.ratioSecurityDepositOfTvl)
+            expect(await deployed.layer2Manager.ratioSecurityDepositOfTvl()).to.eq(layer2ManagerInfo.ratioSecurityDepositOfTvl)
+        })
+
+        it('cannot be changed to the same value', async () => {
+            await expect(
+                deployed.layer2Manager.connect(deployer).setRatioSecurityDepositOfTvl(layer2ManagerInfo.ratioSecurityDepositOfTvl)
+                ).to.be.revertedWith("same")
+        })
+    });
+
+    describe('# setMinimumDepositForCandidate', () => {
+
+        it('setMinimumDepositForSequencer can not be executed by not owner', async () => {
+            const minimumDepositForCandidate = ethers.utils.parseEther("100");
+            await expect(
+                deployed.layer2Manager.connect(addr1).setMinimumDepositForCandidate(minimumDepositForCandidate)
+                ).to.be.revertedWith("Accessible: Caller is not an admin")
+        })
+
+        it('setMinimumDepositForSequencer can be executed by only owner ', async () => {
+            const minimumDepositForCandidate = ethers.utils.parseEther("100");
+            await snapshotGasCost(deployed.layer2Manager.connect(deployer).setMinimumDepositForCandidate(minimumDepositForCandidate))
+            expect(await deployed.layer2Manager.minimumDepositForCandidate()).to.eq(minimumDepositForCandidate)
+
+            await deployed.layer2Manager.connect(deployer).setMinimumDepositForCandidate(layer2ManagerInfo.minimumDepositForCandidate)
+            expect(await deployed.layer2Manager.minimumDepositForCandidate()).to.eq(layer2ManagerInfo.minimumDepositForCandidate)
+        })
+
+        it('cannot be changed to the same value', async () => {
+            await expect(
+                deployed.layer2Manager.connect(deployer).setMinimumDepositForCandidate(layer2ManagerInfo.minimumDepositForCandidate)
+                ).to.be.revertedWith("same")
+        })
+    });
+
     describe('# setDelayBlocksForWithdraw', () => {
 
         it('setDelayBlocksForWithdraw can not be executed by not owner', async () => {
@@ -163,89 +214,6 @@ describe('Layer2Manager', () => {
                 ).to.be.revertedWith("same")
         })
     });
-    /*
-    describe('# createOptimismSequencer', () => {
 
-        it('Cannot be created unless the caller is the layer\'s sequencer.', async () => {
-            expect(await deployed.addressManager.getAddress("OVM_Sequencer")).to.not.eq(addr1.address)
-            let name = "Tokamak Optimism";
-
-            await expect(
-                deployed.layer2Manager.connect(addr1).createOptimismSequencer(
-                    ethers.utils.formatBytes32String(name),
-                    deployed.addressManager.address,
-                    deployed.l1Messenger.address,
-                    deployed.l1Bridge.address,
-                    deployed.l2ton.address
-                )
-                ).to.be.revertedWith("NOT Sequencer")
-        })
-
-        it('If the minimum security deposit is not provided, it cannot be created.', async () => {
-            let name = "Tokamak Optimism";
-            expect(await deployed.addressManager.getAddress("OVM_Sequencer")).to.eq(sequencer1.address)
-            await expect(
-                deployed.layer2Manager.connect(sequencer1).createOptimismSequencer(
-                    ethers.utils.formatBytes32String(name),
-                    deployed.addressManager.address,
-                    deployed.l1Messenger.address,
-                    deployed.l1Bridge.address,
-                    deployed.l2ton.address
-                )).to.be.reverted;
-        })
-
-        it('Approve the minimum security deposit and create.', async () => {
-            let name = "Tokamak Optimism";
-            expect(await deployed.addressManager.getAddress("OVM_Sequencer")).to.eq(sequencer1.address)
-            let totalSecurityDeposit = await deployed.layer2Manager.totalSecurityDeposit();
-            let amount = await deployed.layer2Manager.minimumDepositForSequencer();
-
-            if (amount.gt(await deployed.ton.balanceOf(sequencer1.address)))
-                await (await deployed.ton.connect(deployed.tonAdmin).mint(sequencer1.address, amount)).wait();
-
-
-            if (amount.gte(await deployed.ton.allowance(sequencer1.address, deployed.layer2Manager.address)))
-                await (await deployed.ton.connect(sequencer1).approve(deployed.layer2Manager.address, amount)).wait();
-
-            await snapshotGasCost(deployed.layer2Manager.connect(sequencer1).createOptimismSequencer(
-                    ethers.utils.formatBytes32String(name),
-                    deployed.addressManager.address,
-                    deployed.l1Messenger.address,
-                    deployed.l1Bridge.address,
-                    deployed.l2ton.address
-                ))
-
-            expect(await deployed.layer2Manager.totalSecurityDeposit()).to.eq(totalSecurityDeposit.add(amount))
-        })
-
-    });
-
-    describe('# createCandidate', () => {
-
-        it('If the minimum security deposit is not provided, it cannot be created.', async () => {
-
-            expect(await deployed.addressManager.getAddress("OVM_Sequencer")).to.eq(sequencer1.address)
-            await expect(
-                deployed.layer2Manager.connect(sequencer1).createStakingOnly()).to.be.reverted;
-        })
-
-        it('Approve the minimum security deposit and create StakingOnlyLayer.', async () => {
-
-            let totalSecurityDeposit = await deployed.layer2Manager.totalSecurityDeposit();
-            let amount = await deployed.layer2Manager.minimumDepositForSequencer();
-
-            if (amount.gt(await deployed.ton.balanceOf(sequencer1.address)))
-                await (await deployed.ton.connect(deployed.tonAdmin).mint(sequencer1.address, amount)).wait();
-
-            if (amount.gte(await deployed.ton.allowance(sequencer1.address, deployed.layer2Manager.address)))
-                await (await deployed.ton.connect(sequencer1).approve(deployed.layer2Manager.address, amount)).wait();
-
-            await snapshotGasCost(deployed.layer2Manager.connect(sequencer1).createStakingOnly())
-
-            expect(await deployed.layer2Manager.totalSecurityDeposit()).to.eq(totalSecurityDeposit.add(amount))
-        })
-
-    });
-    */
 });
 
