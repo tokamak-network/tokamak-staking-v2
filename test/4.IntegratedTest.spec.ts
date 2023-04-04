@@ -158,6 +158,7 @@ describe('Integrated Test', () => {
         it('Cannot be created unless the caller is the layer\'s sequencer.', async () => {
             expect(await deployed.addressManager.getAddress("OVM_Sequencer")).to.not.eq(addr1.address)
             let name = "Tokamak Optimism";
+            let amount = ethers.utils.parseEther("100");
 
             await expect(
                 deployed.layer2Manager.connect(addr1).createOptimismSequencer(
@@ -165,13 +166,16 @@ describe('Integrated Test', () => {
                     deployed.addressManager.address,
                     deployed.l1Messenger.address,
                     deployed.l1Bridge.address,
-                    deployed.l2ton.address
+                    deployed.l2ton.address,
+                    amount
                 )
                 ).to.be.revertedWith("NOT Sequencer")
         })
 
         it('If the minimum security deposit is not provided, it cannot be created.', async () => {
             let name = "Tokamak Optimism";
+            let amount = ethers.utils.parseEther("100");
+
             expect(await deployed.addressManager.getAddress("OVM_Sequencer")).to.eq(sequencer1.address)
             await expect(
                 deployed.layer2Manager.connect(sequencer1).createOptimismSequencer(
@@ -179,12 +183,14 @@ describe('Integrated Test', () => {
                     deployed.addressManager.address,
                     deployed.l1Messenger.address,
                     deployed.l1Bridge.address,
-                    deployed.l2ton.address
+                    deployed.l2ton.address,
+                    amount
                 )).to.be.reverted;
         })
 
         it('Approve the minimum security deposit and create.', async () => {
             let name = "Tokamak Optimism";
+
             let totalLayers = await deployed.layer2Manager.totalLayers()
             let getAllLayersBefore = await deployed.layer2Manager.getAllLayers();
             expect(await deployed.addressManager.getAddress("OVM_Sequencer")).to.eq(sequencer1.address)
@@ -204,7 +210,8 @@ describe('Integrated Test', () => {
                     deployed.addressManager.address,
                     deployed.l1Messenger.address,
                     deployed.l1Bridge.address,
-                    deployed.l2ton.address
+                    deployed.l2ton.address,
+                    amount
                 ))).wait();
 
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
@@ -280,7 +287,8 @@ describe('Integrated Test', () => {
             const receipt = await(await snapshotGasCost(deployed.layer2Manager.connect(addr1).createCandidate(
                 sequencerIndex,
                 ethers.utils.formatBytes32String(name),
-                commission
+                commission,
+                amount
             ))).wait();
 
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
@@ -296,8 +304,6 @@ describe('Integrated Test', () => {
             expect(await deployed.candidate["balanceOfLton(uint32)"](candidateIndex)).to.eq(amount)
             expect(await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)).to.eq(amount)
             expect(await deployed.candidate["balanceOf(uint32,address)"](candidateIndex, addr1.address)).to.eq(amount)
-            expect(await deployed.candidate["commissions(uint32)"](candidateIndex)).to.eq(commission)
-
 
             let candidateKey = await getCandidateKey({
                     operator: addr1.address,
@@ -312,7 +318,6 @@ describe('Integrated Test', () => {
             expect(candidateInfo_.operator).to.eq(addr1.address)
             expect(candidateInfo_.sequencerIndex).to.eq(sequencerIndex)
             expect(candidateInfo_.commission).to.eq(commission)
-
 
             let candidateLayerKey = await getCandidateLayerKey({
                 operator: addr1.address,

@@ -17,8 +17,9 @@ interface AddressManagerI {
 
 contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
     using BytesLib for bytes;
-    using Layer2 for mapping(bytes32 => Layer2.Layer2Info);
-    using Layer2 for Layer2.Layer2Info;
+    // using Layer2 for mapping(bytes32 => Layer2.Layer2Info);
+    // using Layer2 for Layer2.Layer2Info;
+    using SafeERC20 for IERC20;
     /* ========== DEPENDENCIES ========== */
 
     modifier onlyLayer2Manager() {
@@ -52,8 +53,15 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
         uint256 amount,
         bytes calldata data
     ) external override returns (bool) {
+        require(ton == msg.sender, "EA");
         require(existedIndex(data.toUint32(0)), 'non-registered layer');
-        return _onApprove(sender, spender, amount, data);
+
+        // data : (32 bytes) index
+        uint32 _index = data.toUint32(0);
+        if(amount != 0) IERC20(ton).safeTransferFrom(sender, address(this), amount);
+        _stake(_index, sender, amount, address(0), 0);
+
+        return true;
     }
 
     /* ========== Anyone can execute ========== */
@@ -61,7 +69,7 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
     function stake(uint32 _index, uint256 amount) external override
     {
         require(existedIndex(_index), 'non-registered layer');
-        stake_(_index, amount);
+        stake_(_index, amount, address(0), 0);
     }
 
     function unstake(uint32 _index, uint256 lton_) external

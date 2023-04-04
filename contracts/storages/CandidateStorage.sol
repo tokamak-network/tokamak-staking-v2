@@ -2,6 +2,5 @@
 pragma solidity ^0.8.4;
 
 contract CandidateStorage {
-
-    mapping (uint32 => uint16) public commissions;
+    // mapping (uint32 => uint16) public commissions;
 }

@@ -43,7 +43,7 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
 
     event Claimed(uint32 _index, address _sequencer, uint256 amount);
     event CreatedOptimismSequencer(uint32 _index, address _sequencer, bytes32 _name, address addressManager, address l1Messenger, address l1Bridge, address l2ton, uint256 depositAmount);
-    event CreatedCandidate(uint32 _index, address _operator, bytes32 _name, uint32 _sequencerIndex, uint16 _commission);
+    event CreatedCandidate(uint32 _index, address _operator, bytes32 _name, uint32 _sequencerIndex, uint16 _commission, uint256 depositAmount);
     event Distributed(uint256 _totalSeigs, uint256 _distributedAmount);
     event IncreasedSecurityDeposit(uint32 _index, address caller, uint256 amount);
     event DecreasedSecurityDeposit(uint32 _index, address _sequencer, uint256 amount);
@@ -108,7 +108,8 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         address addressManager,
         address l1Messenger,
         address l1Bridge,
-        address l2ton
+        address l2ton,
+        uint256 amount
     )
         external ifFree
     {
@@ -125,15 +126,14 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
 
         bytes32 _key = LibOptimism.getKey(addressManager, l1Messenger, l1Bridge, l2ton);
         require(!layerKeys[_key], 'already created');
+        require(amount >= minimumSecurityDepositAmount(l1Bridge, l2ton), 'security deposit is insufficent');
+
         layerKeys[_key] = true;
-
         uint32 _index = ++indexSequencers;
-
-        uint256 depositAmount =  minimumSecurityDepositAmount(l1Bridge, l2ton);
-        totalSecurityDeposit += depositAmount;
+        totalSecurityDeposit += amount;
         optimismSequencerIndexes.push(_index);
         Layer2.Layer2Holdings storage holding = holdings[_index];
-        holding.securityDeposit = depositAmount;
+        holding.securityDeposit = amount;
         optimismSequencerNames[_index] = _name;
 
         require(
@@ -141,22 +141,24 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
             "Fail createOptimismSequencer"
         );
 
-        ton.safeTransferFrom(msg.sender, address(this), depositAmount);
+        if (amount != 0) ton.safeTransferFrom(msg.sender, address(this), amount);
 
         emit CreatedOptimismSequencer(
-            _index, msg.sender, _name, addressManager, l1Messenger, l1Bridge, l2ton, depositAmount);
+            _index, msg.sender, _name, addressManager, l1Messenger, l1Bridge, l2ton, amount);
     }
 
     function createCandidate(
         uint32 _sequencerIndex,
         bytes32 _name,
-        uint16 _commission
+        uint16 _commission,
+        uint256 amount
     )   external nonZeroUint32(_sequencerIndex) ifFree
     {
         require(_sequencerIndex <= indexSequencers, "wrong index");
-
         bytes32 _key = LibOperator.getKey(msg.sender, _sequencerIndex);
         require(!layerKeys[_key], 'already created');
+        require(amount >= minimumDepositForCandidate, 'security deposit is insufficent');
+
         layerKeys[_key] = true;
 
         uint32 _index = ++indexCandidates;
@@ -164,20 +166,20 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         candidatesIndexes.push(_index);
         candidateNames[_index] = _name;
 
-        ton.safeTransferFrom(msg.sender, address(this), minimumDepositForCandidate);
+        if (amount != 0) ton.safeTransferFrom(msg.sender, address(this), amount);
 
-        if (ton.allowance(address(this), candidate) < minimumDepositForCandidate) {
+        if (ton.allowance(address(this), candidate) < amount) {
             ton.approve(candidate, ton.totalSupply());
         }
 
         require(
             CandidateI(candidate).create(
                 _index,
-                abi.encodePacked(msg.sender, _sequencerIndex, _commission, minimumDepositForCandidate)),
+                abi.encodePacked(msg.sender, _sequencerIndex, _commission, amount)),
             "Fail createCandidate"
         );
 
-        emit CreatedCandidate(_index, msg.sender, _name, _sequencerIndex, _commission);
+        emit CreatedCandidate(_index, msg.sender, _name, _sequencerIndex, _commission, amount);
     }
 
     function decreaseSecurityDeposit(uint32 _sequencerIndex, uint256 amount)

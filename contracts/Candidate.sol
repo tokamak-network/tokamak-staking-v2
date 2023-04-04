@@ -40,15 +40,18 @@ contract Candidate is Staking, CandidateStorage {
         // bytes
         //  address (operator)- uint32 (layerIndex) - uint256 (amount)
         uint16 commission = _info.toUint16(24);
-        if (commission != 0) commissions[_candidateIndex] = commission;
+        // if (commission != 0) commissions[_candidateIndex] = commission;
 
+        require(commission < uint16(10000), "commission err");
         uint256 amount = _info.toUint256(26);
 
         layerInfo[_candidateIndex] = abi.encodePacked(_info.slice(0,26));
         // console.logBytes(layerInfo[_candidateIndex]);
 
-        IERC20(ton).safeTransferFrom(layer2Manager, address(this), amount);
-        _stake(_candidateIndex, _info.toAddress(0), amount);
+        if(amount != 0) {
+            IERC20(ton).safeTransferFrom(layer2Manager, address(this), amount);
+            _stake(_candidateIndex, _info.toAddress(0), amount, address(0), 0);
+        }
 
         return true;
     }
@@ -60,16 +63,34 @@ contract Candidate is Staking, CandidateStorage {
         uint256 amount,
         bytes calldata data
     ) external returns (bool) {
+        require(ton == msg.sender, "EA");
         require(existedIndex(data.toUint32(0)), 'non-registered candidate');
-        return _onApprove(sender, spender, amount, data);
+
+        // data : (32 bytes) index
+        uint32 _index = data.toUint32(0);
+        if (amount != 0) IERC20(ton).safeTransferFrom(sender, address(this), amount);
+
+        LibOperator.Info memory _layerInfo = getCandidateInfo(_index);
+        if (_layerInfo.commission == 0 || sender == _layerInfo.operator) {
+            _stake(_index, sender, amount, address(0), 0);
+        } else {
+            _stake(_index, sender, amount, _layerInfo.operator, _layerInfo.commission);
+        }
+
+        return true;
     }
 
     /* ========== Anyone can execute ========== */
     function stake(uint32 _index, uint256 amount) external
     {
         require(existedIndex(_index), 'non-registered candidate');
+        LibOperator.Info memory _layerInfo = getCandidateInfo(_index);
 
-        stake_(_index, amount);
+        if (_layerInfo.commission == 0 || msg.sender == _layerInfo.operator) {
+            stake_(_index, amount, address(0), 0);
+        } else {
+            stake_(_index, amount, _layerInfo.operator, _layerInfo.commission);
+        }
     }
 
     function unstake(uint32 _index, uint256 lton_) external

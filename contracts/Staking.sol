@@ -38,7 +38,7 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
     using SafeERC20 for IERC20;
     using BytesLib for bytes;
 
-    event Staked(uint32 _index, address sender, uint256 amount, uint256 lton);
+    event Staked(uint32 _index, address sender, uint256 amount, uint256 lton, address commissionTo, uint16 commission);
     event Unstaked(uint32 _index, address sender, uint256 amount, uint256 lton);
     event Restaked(uint32 _index, address sender, uint256 amount, uint256 lton);
     event Withdrawal(uint32 _index, address sender, uint256 amount);
@@ -49,34 +49,19 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
 
     /* ========== onlyOwner ========== */
 
-    /* ========== only TON ========== */
-    function _onApprove(
-        address sender,
-        address spender,
-        uint256 amount,
-        bytes calldata data
-    ) internal returns (bool) {
-        require(ton == msg.sender, "EA");
-        // data : (32 bytes) index
-        uint32 _index = data.toUint32(0);
-        IERC20(ton).safeTransferFrom(sender, address(this), amount);
-        _stake(_index, sender, amount);
-
-        return true;
-    }
-
     /* ========== Anyone can execute ========== */
 
-    function stake_(uint32 _index, uint256 amount) internal nonZero(amount)
+    function stake_(uint32 _index, uint256 amount, address commissionTo, uint16 commission) internal
     {
-        address sender = msg.sender;
-        IERC20(ton).safeTransferFrom(sender, address(this), amount);
-        _stake(_index, sender, amount);
+        IERC20(ton).safeTransferFrom(msg.sender, address(this), amount);
+        _stake(_index, msg.sender, amount, commissionTo, commission);
     }
 
-    function _stake(uint32 _index, address sender, uint256 amount) internal ifFree nonZero(amount)
+    function _stake(uint32 _index, address sender, uint256 amount, address commissionTo, uint16 commission) internal ifFree nonZero(amount)
     {
         uint256 lton_ = SeigManagerV2I(seigManagerV2).getTonToLton(amount);
+        layerStakedLton[_index] += lton_;
+        totalStakedLton += lton_;
 
         LibStake.StakeInfo storage info_ = layerStakes[_index][sender];
 
@@ -85,17 +70,28 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
             stakeAccountList.push(sender);
         }
 
-        info_.stakePrincipal += amount;
-        info_.stakelton += lton_;
+        uint256 commissionLton = 0;
+        if (commission != 0 && commissionTo != address(0) && commission < 10000) {
+            commissionLton = lton_ * commission / 10000;
+            lton_ -= commissionLton;
 
-        layerStakedLton[_index] += lton_;
-        totalStakedLton += lton_;
+            uint256 amount1 = SeigManagerV2I(seigManagerV2).getLtonToTon(lton_);
+            info_.stakePrincipal += amount1;
+            info_.stakelton += lton_;
 
-        emit Staked(_index, sender, amount, lton_);
+            LibStake.StakeInfo storage commissionInfo_ = layerStakes[_index][commissionTo];
+            commissionInfo_.stakePrincipal += (amount - amount1);
+            commissionInfo_.stakelton += commissionLton;
+
+        } else {
+            info_.stakePrincipal += amount;
+            info_.stakelton += lton_;
+        }
+
+        emit Staked(_index, sender, amount, lton_, commissionTo, commission);
     }
 
-    function _unstake(uint32 _index, uint256 lton_)
-        internal ifFree nonZero(lton_)
+    function _unstake(uint32 _index, uint256 lton_) internal ifFree nonZero(lton_)
     {
         // require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
         address sender = msg.sender;
