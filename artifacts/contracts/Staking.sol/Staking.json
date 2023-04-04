@@ -140,6 +140,18 @@
           "internalType": "uint256",
           "name": "lton",
           "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "commissionTo",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint16",
+          "name": "commission",
+          "type": "uint16"
         }
       ],
       "name": "Staked",
