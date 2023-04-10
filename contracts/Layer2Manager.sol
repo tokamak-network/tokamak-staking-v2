@@ -132,6 +132,7 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         uint32 _index = ++indexSequencers;
         totalSecurityDeposit += amount;
         optimismSequencerIndexes.push(_index);
+
         Layer2.Layer2Holdings storage holding = holdings[_index];
         holding.securityDeposit = amount;
         optimismSequencerNames[_index] = _name;
@@ -183,7 +184,7 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
     }
 
     function decreaseSecurityDeposit(uint32 _sequencerIndex, uint256 amount)
-        external ifFree nonZeroUint32(_sequencerIndex)
+        external ifFree nonZeroUint32(_sequencerIndex) nonZero(amount)
     {
         require(_sequencerIndex <= indexSequencers, "wrong index");
 
@@ -205,7 +206,7 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
     /* ========== Anyone can execute ========== */
 
     function increaseSecurityDeposit(uint32 _sequencerIndex, uint256 amount)
-        external ifFree nonZeroUint32(_sequencerIndex)
+        external ifFree nonZeroUint32(_sequencerIndex) nonZero(amount)
     {
         require(_sequencerIndex <= indexSequencers, "wrong index");
         ton.safeTransferFrom(msg.sender, address(this), amount);
@@ -226,11 +227,16 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
             uint32 _layerIndex = optimismSequencerIndexes[i];
             Layer2.Layer2Holdings memory holding = holdings[_layerIndex];
 
+            // if (holding.securityDeposit >= minimumDepositForSequencer ) {
+            //     amountLayer[i] += depositsOf(_layerIndex);
+            // }
+            // amountLayer[i] += holding.securityDeposit;
             if (holding.securityDeposit >= minimumDepositForSequencer ) {
                 amountLayer[i] += depositsOf(_layerIndex);
+                amountLayer[i] += holding.securityDeposit;
             }
-            amountLayer[i] += holding.securityDeposit;
-            sum += amountLayer[i];
+            sum += depositsOf(_layerIndex);
+            sum += holding.securityDeposit;
         }
         uint256 amount1 = 0;
         if (sum > 0) {
