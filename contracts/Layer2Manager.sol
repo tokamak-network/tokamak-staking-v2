@@ -227,24 +227,19 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
             uint32 _layerIndex = optimismSequencerIndexes[i];
             Layer2.Layer2Holdings memory holding = holdings[_layerIndex];
 
-            // if (holding.securityDeposit >= minimumDepositForSequencer ) {
-            //     amountLayer[i] += depositsOf(_layerIndex);
-            // }
-            // amountLayer[i] += holding.securityDeposit;
             if (holding.securityDeposit >= minimumDepositForSequencer ) {
-                amountLayer[i] += depositsOf(_layerIndex);
-                amountLayer[i] += holding.securityDeposit;
+                amountLayer[i] += holding.securityDeposit + depositsOf(_layerIndex);
+                sum += amountLayer[i];
+            } else {
+                sum += holding.securityDeposit + depositsOf(_layerIndex);
             }
-            sum += depositsOf(_layerIndex);
-            sum += holding.securityDeposit;
         }
         uint256 amount1 = 0;
         if (sum > 0) {
             for(uint256 i = 0; i < len; i++){
-                uint32 _layerIndex = optimismSequencerIndexes[i];
-                Layer2.Layer2Holdings storage holding = holdings[_layerIndex];
                 if (amountLayer[i] > 0 ) {
                     uint256 amount = totalSeigs * amountLayer[i] / sum;
+                    Layer2.Layer2Holdings storage holding = holdings[optimismSequencerIndexes[i]];
                     holding.seigs += amount;
                     amount1 += amount;
                 }
