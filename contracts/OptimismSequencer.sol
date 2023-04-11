@@ -143,6 +143,16 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
         }
     }
 
+    function L1StandardBridge(uint32 _index) public view returns (address account_) {
+        // bytes memory data = layerInfo[_index];
+        try
+            AddressManagerI(layerInfo[_index].toAddress(0)).getAddress('Proxy__OVM_L1StandardBridge') returns (address a) {
+                account_ = a;
+        } catch (bytes memory ) {
+            account_ = address(0);
+        }
+    }
+
     function L1StandardBridge(address addressManager) public view returns (address account_) {
         try
             AddressManagerI(addressManager).getAddress('Proxy__OVM_L1StandardBridge') returns (address a) {
