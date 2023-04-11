@@ -64,7 +64,9 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
 
     const layer2Manager = Layer2ManagerLogic_.attach(layer2ManagerProxy.address) as Layer2Manager
 
-    const OptimismSequencer_ = await ethers.getContractFactory('OptimismSequencer')
+    const OptimismSequencer_ = await ethers.getContractFactory('OptimismSequencer', {
+        signer: deployer, libraries: { LibOptimism: libOptimism.address }
+    })
     const OptimismSequencerLogic_ = (await OptimismSequencer_.connect(deployer).deploy()) as OptimismSequencer
 
     const OptimismSequencerProxy_ = await ethers.getContractFactory('OptimismSequencerProxy')
@@ -72,8 +74,11 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
     await optimismSequencerProxy.connect(deployer).upgradeTo(OptimismSequencerLogic_.address);
     const optimismSequencer = OptimismSequencerLogic_.attach(optimismSequencerProxy.address) as OptimismSequencer
 
-    //
-    const Candidate_ = await ethers.getContractFactory('Candidate' )
+
+    const Candidate_ = await ethers.getContractFactory('Candidate' , {
+        signer: deployer, libraries: { LibOperator: libOperator.address }
+    })
+    // const Candidate_ = await ethers.getContractFactory('Candidate')
     const CandidateLogic_ = (await Candidate_.connect(deployer).deploy()) as Candidate
 
     const CandidateProxy_ = await ethers.getContractFactory('CandidateProxy')
@@ -111,6 +116,9 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
 
     await l1Bridge.connect(deployer).setAddress(l1Messenger.address, l2Bridge.address);
 
+    await addressManager.connect(deployer).setAddress("OVM_L1CrossDomainMessenger", l1Messenger.address);
+    await addressManager.connect(deployer).setAddress("Proxy__OVM_L1StandardBridge", l1Bridge.address);
+
     const TestERC20 = await ethers.getContractFactory('TestERC20')
     const l2ton = (await TestERC20.connect(deployer).deploy()) as TestERC20
 
@@ -145,8 +153,8 @@ export const getLayerKey = async function (info: Layer2Fixture): Promise<string>
 
     const constructorArgumentsEncoded = ethers.utils.concat([
             ethers.utils.arrayify(info.addressManager),
-            ethers.utils.arrayify(info.l1Messenger),
-            ethers.utils.arrayify(info.l1Bridge),
+            // ethers.utils.arrayify(info.l1Messenger),
+            // ethers.utils.arrayify(info.l1Bridge),
             ethers.utils.arrayify(info.l2ton)
         ]
       )

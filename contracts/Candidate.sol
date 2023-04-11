@@ -36,21 +36,18 @@ contract Candidate is Staking, CandidateStorage {
         // console.log("_commission %s ", _info.toUint16(24));
         // console.log("amount %s ", _info.toUint256(26));
 
-        // 20+4+2+32 =  58
-        // bytes
-        //  address (operator)- uint32 (layerIndex) - uint256 (amount)
-        uint16 commission = _info.toUint16(24);
-        // if (commission != 0) commissions[_candidateIndex] = commission;
-
-        require(commission < uint16(10000), "commission err");
+        LibOperator.Info memory info = LibOperator.parseKey(_info);
+        require(operators[info.sequencerIndex][info.operator] == 0, "alread existed");
+        require(info.commission < uint16(10000), "commission err");
         uint256 amount = _info.toUint256(26);
 
         layerInfo[_candidateIndex] = abi.encodePacked(_info.slice(0,26));
         // console.logBytes(layerInfo[_candidateIndex]);
+        operators[info.sequencerIndex][info.operator] = _candidateIndex;
 
         if(amount != 0) {
             IERC20(ton).safeTransferFrom(layer2Manager, address(this), amount);
-            _stake(_candidateIndex, _info.toAddress(0), amount, address(0), 0);
+            _stake(_candidateIndex, info.operator, amount, address(0), 0);
         }
 
         return true;
@@ -110,20 +107,17 @@ contract Candidate is Staking, CandidateStorage {
     }
 
     function getCandidateInfo(uint32 _index)
-        public view returns (LibOperator.Info memory _layerInfo )
+        public view returns (LibOperator.Info memory info)
     {
-        bytes memory data = layerInfo[_index];
-        //
-        // bytes
-        //  address (operator)- uint32 (layerIndex) - uint16 (commission)
-        // 20 + 4+ 2
-        if (data.length > 25) {
-            _layerInfo = LibOperator.Info({
-                operator : data.toAddress(0),
-                sequencerIndex : data.toUint32(20),
-                commission : data.toUint16(24)
-            });
-        }
+        info = LibOperator.parseKey(layerInfo[_index]);
+        // bytes memory data = layerInfo[_index];
+        // if (data.length > 25) {
+        //     info = LibOperator.Info({
+        //         operator : data.toAddress(0),
+        //         sequencerIndex : data.toUint32(20),
+        //         commission : data.toUint16(24)
+        //     });
+        //  }
     }
 
     function getCandidateKey(uint32 _index) public view virtual  returns (bytes32 layerKey_) {

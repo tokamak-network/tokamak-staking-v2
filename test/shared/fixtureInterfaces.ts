@@ -7,7 +7,7 @@ import { Layer2ManagerProxy } from '../../typechain-types/contracts/proxy/Layer2
 import { Layer2Manager } from '../../typechain-types/contracts/Layer2Manager.sol'
 
 import { OptimismSequencerProxy } from '../../typechain-types/contracts/proxy/OptimismSequencerProxy'
-import { OptimismSequencer } from '../../typechain-types/contracts/OptimismSequencer'
+import { OptimismSequencer } from '../../typechain-types/contracts/OptimismSequencer.sol'
 import { CandidateProxy } from '../../typechain-types/contracts/proxy/CandidateProxy'
 import { Candidate } from '../../typechain-types/contracts/Candidate'
 

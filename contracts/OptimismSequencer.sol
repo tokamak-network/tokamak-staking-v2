@@ -38,8 +38,7 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
     function create(uint32 _index, bytes memory _layerInfo)
         external onlyLayer2Manager override returns (bool)
     {
-
-        require(_layerInfo.length == 80, "wrong layerInfo");
+        require(_layerInfo.length == 40, "wrong layerInfo");
         require(layerInfo[_index].length == 0, "already created");
         layerInfo[_index] = _layerInfo;
 
@@ -83,30 +82,21 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
     }
 
     function getLayerInfo(uint32 _index)
-        public view returns (LibOptimism.Info memory _layerInfo )
+        public view returns (LibOptimism.Info memory _layerInfo)
     {
-        bytes memory data = layerInfo[_index];
-
-        if (data.length > 79) {
-            _layerInfo = LibOptimism.Info({
-                addressManager : data.toAddress(0),
-                l1Messenger : data.toAddress(20),
-                l1Bridge : data.toAddress(40),
-                l2ton : data.toAddress(60)
-            });
-        }
+        _layerInfo = LibOptimism.parseKey(layerInfo[_index]);
     }
 
     function getLayerKey(uint32 _index) public view virtual override returns (bytes32 layerKey_) {
-        bytes memory data = layerInfo[_index];
-        layerKey_ = bytes32(keccak256(data));
+        // bytes memory data = layerInfo[_index];
+        layerKey_ = bytes32(keccak256(layerInfo[_index]));
     }
 
     function getTvl(uint32 _index) public view override returns (uint256 amount) {
 
         LibOptimism.Info memory _layerInfo = getLayerInfo(_index);
         try
-            L1BridgeI(_layerInfo.l1Bridge).deposits(ton, _layerInfo.l2ton) returns (uint256 a) {
+            L1BridgeI(L1StandardBridge(_layerInfo.addressManager)).deposits(ton, _layerInfo.l2ton) returns (uint256 a) {
                 amount = a;
         } catch (bytes memory ) {
             amount = 0;
@@ -125,9 +115,9 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
     }
 
     function sequencer(uint32 _index) public view override returns (address sequencer_) {
-        bytes memory data = layerInfo[_index];
+        // bytes memory data = layerInfo[_index];
         try
-            AddressManagerI(data.toAddress(0)).getAddress('OVM_Sequencer') returns (address a) {
+            AddressManagerI(layerInfo[_index].toAddress(0)).getAddress('OVM_Sequencer') returns (address a) {
                 sequencer_ = a;
         } catch (bytes memory ) {
             sequencer_ = address(0);
@@ -140,6 +130,25 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
                 sequencer_ = a;
         } catch (bytes memory ) {
             sequencer_ = address(0);
+        }
+
+    }
+
+    function L1CrossDomainMessenger(address addressManager) public view returns (address account_) {
+        try
+            AddressManagerI(addressManager).getAddress('OVM_L1CrossDomainMessenger') returns (address a) {
+                account_ = a;
+        } catch (bytes memory ) {
+            account_ = address(0);
+        }
+    }
+
+    function L1StandardBridge(address addressManager) public view returns (address account_) {
+        try
+            AddressManagerI(addressManager).getAddress('Proxy__OVM_L1StandardBridge') returns (address a) {
+                account_ = a;
+        } catch (bytes memory ) {
+            account_ = address(0);
         }
     }
 

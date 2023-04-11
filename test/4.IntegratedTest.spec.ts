@@ -164,8 +164,8 @@ describe('Integrated Test', () => {
                 deployed.layer2Manager.connect(addr1).createOptimismSequencer(
                     ethers.utils.formatBytes32String(name),
                     deployed.addressManager.address,
-                    deployed.l1Messenger.address,
-                    deployed.l1Bridge.address,
+                    // deployed.l1Messenger.address,
+                    // deployed.l1Bridge.address,
                     deployed.l2ton.address,
                     amount
                 )
@@ -181,8 +181,8 @@ describe('Integrated Test', () => {
                 deployed.layer2Manager.connect(sequencer1).createOptimismSequencer(
                     ethers.utils.formatBytes32String(name),
                     deployed.addressManager.address,
-                    deployed.l1Messenger.address,
-                    deployed.l1Bridge.address,
+                    // deployed.l1Messenger.address,
+                    // deployed.l1Bridge.address,
                     deployed.l2ton.address,
                     amount
                 )).to.be.reverted;
@@ -208,8 +208,6 @@ describe('Integrated Test', () => {
             const receipt = await (await snapshotGasCost(deployed.layer2Manager.connect(sequencer1).createOptimismSequencer(
                     ethers.utils.formatBytes32String(name),
                     deployed.addressManager.address,
-                    deployed.l1Messenger.address,
-                    deployed.l1Bridge.address,
                     deployed.l2ton.address,
                     amount
                 ))).wait();
@@ -226,7 +224,6 @@ describe('Integrated Test', () => {
             expect(deployedEvent.args._sequencer).to.eq(sequencer1.address);
             expect(deployedEvent.args._name).to.eq(ethers.utils.formatBytes32String(name));
             expect(deployedEvent.args.addressManager).to.eq(deployed.addressManager.address);
-            expect(deployedEvent.args.l1Messenger).to.eq(deployed.l1Messenger.address);
             expect(deployedEvent.args.l1Bridge).to.eq(deployed.l1Bridge.address);
             expect(deployedEvent.args.l2ton).to.eq(deployed.l2ton.address);
 
@@ -242,12 +239,12 @@ describe('Integrated Test', () => {
                     l2ton: deployed.l2ton.address
                 }
             );
+
             expect(await deployed.optimismSequencer.getLayerKey(sequencerIndex)).to.eq(layerKey)
 
             let layer = await deployed.optimismSequencer.getLayerInfo(sequencerIndex);
+
             expect(layer.addressManager).to.eq(deployed.addressManager.address)
-            expect(layer.l1Messenger).to.eq(deployed.l1Messenger.address)
-            expect(layer.l1Bridge).to.eq(deployed.l1Bridge.address)
             expect(layer.l2ton).to.eq(deployed.l2ton.address)
 
             expect(await deployed.layer2Manager.layerKeys(layerKey)).to.eq(true)
