@@ -10,6 +10,8 @@ import { OptimismSequencerProxy } from '../../typechain-types/contracts/proxy/Op
 import { OptimismSequencer } from '../../typechain-types/contracts/OptimismSequencer.sol'
 import { CandidateProxy } from '../../typechain-types/contracts/proxy/CandidateProxy'
 import { Candidate } from '../../typechain-types/contracts/Candidate'
+import { FwReceiptProxy } from '../../typechain-types/contracts/proxy/FwReceiptProxy'
+import { FwReceipt } from '../../typechain-types/contracts/FwReceipt.sol'
 
 import { TON } from '../../typechain-types/contracts/test/TON.sol'
 import { Lib_AddressManager } from '../../typechain-types/contracts/test/Lib_AddressManager'
@@ -43,6 +45,8 @@ interface TonStakingV2Fixture  {
     optimismSequencer: OptimismSequencer
     candidateProxy: CandidateProxy
     candidate: Candidate
+    fwReceiptProxy: FwReceiptProxy
+    fwReceipt: FwReceipt
     ton: TON,
     deployer: Signer,
     addr1: Signer,

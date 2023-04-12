@@ -93,12 +93,11 @@ contract Candidate is Staking, CandidateStorage {
     function unstake(uint32 _index, uint256 lton_) external
     {
         if(msg.sender == operator(_index)) {
-            uint256 minimumLton_ = SeigManagerV2I(seigManagerV2).getTonToLton(
-                Layer2ManagerI(layer2Manager).minimumDepositForCandidate()
-            );
-            require(lton_ + minimumLton_ <= balanceOfLton(_index, msg.sender), "minimumDepositForCandidate E1");
+            _unstake(_index, lton_, Layer2ManagerI(layer2Manager).minimumDepositForCandidate());
+        } else {
+            _unstake(_index, lton_, 0);
         }
-        _unstake(_index, lton_);
+
     }
 
     function existedIndex(uint32 _index) public view returns (bool) {

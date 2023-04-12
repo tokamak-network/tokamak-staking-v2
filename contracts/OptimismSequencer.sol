@@ -15,11 +15,19 @@ interface AddressManagerI {
     function getAddress(string memory _name) external view returns (address);
 }
 
+interface FwReceiptI {
+    function debtForFastWithdraw(address account, uint32 layerIndex) external view returns (uint256);
+}
+
 contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
     using BytesLib for bytes;
     // using Layer2 for mapping(bytes32 => Layer2.Layer2Info);
     // using Layer2 for Layer2.Layer2Info;
     using SafeERC20 for IERC20;
+
+    event FastWithdrawalCalim(uint32 layerIndex, address from, address to, uint256 amount);
+    event FastWithdrawalStaked(uint32 layerIndex, address staker, uint256 amount, uint256 lton);
+
     /* ========== DEPENDENCIES ========== */
 
     modifier onlyLayer2Manager() {
@@ -43,6 +51,41 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
         layerInfo[_index] = _layerInfo;
 
         return true;
+    }
+    /* ========== only Receipt ========== */
+    function fastWithdrawClaim(uint32 layerIndex, address from, address to, uint256 amount) external returns (bool){
+        require(fwReceipt == msg.sender, "FW_CALLER_ERR");
+        require(balanceOf(layerIndex, from) >= amount, "liquidity is insufficient");
+
+        uint256 bal = IERC20(ton).balanceOf(address(this));
+
+        if (bal < amount) {
+            if (bal > 0) IERC20(ton).safeTransfer(to, bal);
+            SeigManagerV2I(seigManagerV2).claim(to, (amount - bal));
+        } else {
+            IERC20(ton).safeTransfer(to, amount);
+        }
+
+        emit FastWithdrawalCalim(layerIndex, from, to, amount);
+        return true;
+    }
+
+    function fastWithdrawStake(uint32 layerIndex, address staker, uint256 _amount) external returns (bool){
+        require(fwReceipt == msg.sender, "FW_CALLER_ERR");
+        uint256 lton_ = SeigManagerV2I(seigManagerV2).getTonToLton(_amount);
+        layerStakedLton[layerIndex] += lton_;
+        totalStakedLton += lton_;
+        LibStake.StakeInfo storage info_ = layerStakes[layerIndex][staker];
+        info_.stakePrincipal += _amount;
+        info_.stakelton += lton_;
+        emit FastWithdrawalStaked(layerIndex, staker, _amount, lton_);
+        return true;
+    }
+
+    function availableProvidingLiquidity(uint32 layerIndex, address account, uint256 amount) external view returns (bool){
+        if (balanceOf(layerIndex, account) >= amount) {
+            return true;
+        }
     }
 
     /* ========== only TON ========== */
@@ -73,7 +116,10 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
 
     function unstake(uint32 _index, uint256 lton_) external
     {
-        _unstake(_index, lton_);
+        uint256 debtForFastWithdraw = FwReceiptI(fwReceipt).debtForFastWithdraw(msg.sender, _index);
+        console.log("debtForFastWithdraw %s", debtForFastWithdraw);
+
+        _unstake(_index, lton_, debtForFastWithdraw);
     }
 
     function existedIndex(uint32 _index) public view override returns (bool) {

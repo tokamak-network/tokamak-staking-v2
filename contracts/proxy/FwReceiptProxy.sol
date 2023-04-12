@@ -14,6 +14,18 @@ contract FwReceiptProxy is BaseProxy, FwReceiptStorage {
     }
 
     /* ========== onlyOwner ========== */
+    function initialize(
+        address _ton,
+        address _optimismSequencer
+    )
+        external onlyOwner
+        nonZeroAddress(_ton)
+        nonZeroAddress(_optimismSequencer)
+    {
+        require(ton == address(0), "already initialize");
+        ton = _ton;
+        optimismSequencer = _optimismSequencer;
+    }
 
     /* ========== only TON ========== */
 

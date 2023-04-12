@@ -91,14 +91,20 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
         emit Staked(_index, sender, amount, lton_, commissionTo, commission);
     }
 
-    function _unstake(uint32 _index, uint256 lton_) internal ifFree nonZero(lton_)
+    function _unstake(uint32 _index, uint256 lton_, uint256 _debtTon) internal ifFree nonZero(lton_)
     {
         // require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
         address sender = msg.sender;
 
         uint256 amount = SeigManagerV2I(seigManagerV2).getLtonToTon(lton_);
+
         LibStake.StakeInfo storage info_ = layerStakes[_index][sender];
-        require(lton_ <= info_.stakelton,'SL_1');
+
+        if (_debtTon != 0) {
+            require(lton_ + SeigManagerV2I(seigManagerV2).getTonToLton(_debtTon) <= info_.stakelton,'unstake_err_1');
+        } else {
+            require(lton_ <= info_.stakelton,'unstake_err_2');
+        }
 
         info_.stakelton -= lton_;
         if (info_.stakePrincipal < amount) info_.stakePrincipal = 0;

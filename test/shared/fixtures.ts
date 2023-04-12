@@ -9,6 +9,8 @@ import { OptimismSequencerProxy } from '../../typechain-types/contracts/proxy/Op
 import { OptimismSequencer } from '../../typechain-types/contracts/OptimismSequencer.sol'
 import { CandidateProxy } from '../../typechain-types/contracts/proxy/CandidateProxy'
 import { Candidate } from '../../typechain-types/contracts/Candidate'
+import { FwReceiptProxy } from '../../typechain-types/contracts/proxy/FwReceiptProxy'
+import { FwReceipt } from '../../typechain-types/contracts/FwReceipt.sol'
 
 import { TON } from '../../typechain-types/contracts/test/TON.sol'
 import { Lib_AddressManager } from '../../typechain-types/contracts/test/Lib_AddressManager'
@@ -20,6 +22,7 @@ import { TestERC20 } from '../../typechain-types/contracts/test/TestERC20'
 
 import { LibOperator } from '../../typechain-types/contracts/libraries/LibOperator'
 import { LibOptimism } from '../../typechain-types/contracts/libraries/LibOptimism'
+import { LibFastWithdraw } from '../../typechain-types/contracts/libraries/LibFastWithdraw'
 
 import TON_ABI from '../../artifacts/contracts/test/TON.sol/TON.json'
 import {Layer2Fixture, TonStakingV2Fixture, OperatorFixture } from './fixtureInterfaces'
@@ -52,6 +55,10 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
     const LibOperator_ = await ethers.getContractFactory('LibOperator');
     const libOperator = (await LibOperator_.connect(deployer).deploy()) as LibOperator
 
+    // LibFastWithdraw.sol
+    const LibFastWithdraw_ = await ethers.getContractFactory('LibFastWithdraw');
+    const libFastWithdraw = (await LibFastWithdraw_.connect(deployer).deploy()) as LibFastWithdraw
+
     //
     const Layer2Manager_ = await ethers.getContractFactory('Layer2Manager', {
         signer: deployer, libraries: { LibOptimism: libOptimism.address, LibOperator: libOperator.address }
@@ -74,7 +81,7 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
     await optimismSequencerProxy.connect(deployer).upgradeTo(OptimismSequencerLogic_.address);
     const optimismSequencer = OptimismSequencerLogic_.attach(optimismSequencerProxy.address) as OptimismSequencer
 
-
+    //
     const Candidate_ = await ethers.getContractFactory('Candidate' , {
         signer: deployer, libraries: { LibOperator: libOperator.address }
     })
@@ -85,6 +92,17 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
     const candidateProxy = (await CandidateProxy_.connect(deployer).deploy()) as CandidateProxy
     await candidateProxy.connect(deployer).upgradeTo(CandidateLogic_.address);
     const candidate = CandidateLogic_.attach(candidateProxy.address) as Candidate
+
+    //
+    const FwReceipt_ = await ethers.getContractFactory('FwReceipt' , {
+        signer: deployer, libraries: { LibFastWithdraw: libFastWithdraw.address }
+    })
+    const FwReceiptLogic_ = (await FwReceipt_.connect(deployer).deploy()) as FwReceipt
+    const FwReceiptProxy_ = await ethers.getContractFactory('FwReceiptProxy')
+    const fwReceiptProxy = (await FwReceiptProxy_.connect(deployer).deploy()) as FwReceiptProxy
+    await fwReceiptProxy.connect(deployer).upgradeTo(FwReceiptLogic_.address);
+    const fwReceipt = FwReceiptLogic_.attach(fwReceiptProxy.address) as FwReceipt
+
 
     //
     const ton = (await ethers.getContractAt(TON_ABI.abi, tonAddress, deployer)) as TON
@@ -131,6 +149,8 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
         optimismSequencer: optimismSequencer,
         candidateProxy: candidateProxy,
         candidate: candidate,
+        fwReceiptProxy: fwReceiptProxy,
+        fwReceipt: fwReceipt,
         ton: ton,
         deployer: deployer,
         addr1: addr1,

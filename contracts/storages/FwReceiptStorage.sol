@@ -5,18 +5,17 @@ import {LibFastWithdraw} from "../libraries/LibFastWithdraw.sol";
 
 contract FwReceiptStorage {
 
+    address public ton;
     address public optimismSequencer;
+    uint256 public receiptNo;
 
-    mapping(address => uint16) public providersFeeRate;
+    // receiptKey bytes32(keccak256(_l2Messages))
+    mapping(bytes32 => LibFastWithdraw.Message) public messages;
 
-    // l2Index - bill
-    mapping(bytes32 => LibFastWithdraw.Receipt) public receipts;
-
-    // address - sum of bill's amount
-    mapping(address => uint256) sumOfReceipts;
+    // address - sum of tx's amount
+    mapping(address => mapping(uint32 => uint256)) sumOfReceipts;
 
     mapping(address => bytes32[]) txsOfProviders;
-    mapping(address => bytes32[]) txsOfRequestors;
 
     modifier nonZero(uint256 value) {
         require(value != 0, "Z1");

@@ -107,12 +107,14 @@ describe('Integrated Test', () => {
             await snapshotGasCost(deployed.optimismSequencerProxy.connect(deployer).initialize(
                 seigManagerInfo.ton,
                 deployed.seigManagerV2Proxy.address,
-                deployed.layer2ManagerProxy.address
+                deployed.layer2ManagerProxy.address,
+                deployed.fwReceiptProxy.address
                 ))
 
             expect(await deployed.optimismSequencerProxy.ton()).to.eq(seigManagerInfo.ton)
             expect(await deployed.optimismSequencerProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
             expect(await deployed.optimismSequencerProxy.layer2Manager()).to.eq(deployed.layer2ManagerProxy.address)
+            expect(await deployed.optimismSequencerProxy.fwReceipt()).to.eq(deployed.fwReceiptProxy.address)
 
         })
 
@@ -129,6 +131,16 @@ describe('Integrated Test', () => {
 
         })
 
+        it('FwReceipt : initialize can be executed by only owner', async () => {
+            await snapshotGasCost(deployed.fwReceiptProxy.connect(deployer).initialize(
+                seigManagerInfo.ton,
+                deployed.optimismSequencerProxy.address
+                ))
+
+            expect(await deployed.fwReceiptProxy.ton()).to.eq(seigManagerInfo.ton)
+            expect(await deployed.fwReceiptProxy.optimismSequencer()).to.eq(deployed.optimismSequencerProxy.address)
+
+        })
 
     });
 
@@ -181,8 +193,6 @@ describe('Integrated Test', () => {
                 deployed.layer2Manager.connect(sequencer1).createOptimismSequencer(
                     ethers.utils.formatBytes32String(name),
                     deployed.addressManager.address,
-                    // deployed.l1Messenger.address,
-                    // deployed.l1Bridge.address,
                     deployed.l2ton.address,
                     amount
                 )).to.be.reverted;
@@ -873,7 +883,7 @@ describe('Integrated Test', () => {
                 deployed.candidate.connect(addr1).unstake(
                     candidateIndex,
                     amountLton
-                )).to.be.revertedWith("minimumDepositForCandidate E1");
+                )).to.be.revertedWith("unstake_err_1");
         })
 
         it('You can unstake when you have the staked amount.', async () => {

@@ -6,7 +6,7 @@ import {stakingV2Fixtures, getLayerKey} from './shared/fixtures'
 import { TonStakingV2Fixture } from './shared/fixtureInterfaces'
 import snapshotGasCost from './shared/snapshotGasCost'
 
-describe('OptimismSequencer', () => {
+describe('FwReceipt', () => {
     let deployer: Signer, addr1: Signer, sequencer1:Signer
 
     let deployed: TonStakingV2Fixture
@@ -40,55 +40,31 @@ describe('OptimismSequencer', () => {
 
         it('initialize can not be executed by not owner', async () => {
             await expect(
-                deployed.optimismSequencerProxy.connect(addr1).initialize(
+                deployed.fwReceiptProxy.connect(addr1).initialize(
                     seigManagerInfo.ton,
-                    deployed.seigManagerV2Proxy.address,
-                    deployed.layer2ManagerProxy.address,
-                    deployed.fwReceiptProxy.address
+                    deployed.optimismSequencerProxy.address
                 )
                 ).to.be.revertedWith("Accessible: Caller is not an admin")
         })
 
         it('initialize can be executed by only owner', async () => {
-            await snapshotGasCost(deployed.optimismSequencerProxy.connect(deployer).initialize(
-                seigManagerInfo.ton,
-                deployed.seigManagerV2Proxy.address,
-                deployed.layer2ManagerProxy.address,
-                deployed.fwReceiptProxy.address
+            await snapshotGasCost(deployed.fwReceiptProxy.connect(deployer).initialize(
+                    seigManagerInfo.ton,
+                    deployed.optimismSequencerProxy.address
                 ))
 
-            expect(await deployed.optimismSequencerProxy.ton()).to.eq(seigManagerInfo.ton)
-            expect(await deployed.optimismSequencerProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
-            expect(await deployed.optimismSequencerProxy.layer2Manager()).to.eq(deployed.layer2ManagerProxy.address)
+            expect(await deployed.fwReceiptProxy.ton()).to.eq(seigManagerInfo.ton)
+            expect(await deployed.fwReceiptProxy.optimismSequencer()).to.eq(deployed.optimismSequencerProxy.address)
 
         })
 
         it('can execute only once.', async () => {
             await expect(
-                deployed.optimismSequencerProxy.connect(deployer).initialize(
+                deployed.fwReceiptProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
-                    deployed.seigManagerV2Proxy.address,
-                    deployed.layer2ManagerProxy.address,
-                    deployed.fwReceiptProxy.address
+                    deployed.optimismSequencerProxy.address
                 )
                 ).to.be.revertedWith("already initialize")
-        })
-    });
-
-    describe('# stake', () => {
-
-        it('You cannot stake on unregistered layers.', async () => {
-            let amount = ethers.utils.parseEther("100");
-            let addressOne ="0x0000000000000000000000000000000000000001";
-            let _index = 1;
-
-            await expect(
-                deployed.optimismSequencer.connect(addr1).stake(
-                    _index,
-                    amount
-                )
-                ).to.be.revertedWith("non-registered layer")
-
         })
     });
 
