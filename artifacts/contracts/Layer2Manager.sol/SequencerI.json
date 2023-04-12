@@ -6,6 +6,25 @@
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "addressManager",
+          "type": "address"
+        }
+      ],
+      "name": "L1StandardBridge",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint32",
           "name": "_index",
           "type": "uint32"
@@ -42,16 +61,6 @@
             {
               "internalType": "address",
               "name": "addressManager",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "l1Messenger",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "l1Bridge",
               "type": "address"
             },
             {

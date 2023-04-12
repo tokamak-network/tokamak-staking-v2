@@ -2,9 +2,34 @@
   "_format": "hh-sol-artifact-1",
   "contractName": "CandidateStorage",
   "sourceName": "contracts/storages/CandidateStorage.sol",
-  "abi": [],
-  "bytecode": "0x6080604052348015600f57600080fd5b50601680601d6000396000f3fe6080604052600080fdfea164736f6c6343000812000a",
-  "deployedBytecode": "0x6080604052600080fdfea164736f6c6343000812000a",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "operators",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608060405234801561001057600080fd5b5060d68061001f6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c8063fde4819714602d575b600080fd5b605860383660046071565b600060208181529281526040808220909352908152205463ffffffff1681565b60405163ffffffff909116815260200160405180910390f35b60008060408385031215608357600080fd5b823563ffffffff81168114609657600080fd5b9150602083013573ffffffffffffffffffffffffffffffffffffffff8116811460be57600080fd5b80915050925092905056fea164736f6c6343000812000a",
+  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060285760003560e01c8063fde4819714602d575b600080fd5b605860383660046071565b600060208181529281526040808220909352908152205463ffffffff1681565b60405163ffffffff909116815260200160405180910390f35b60008060408385031215608357600080fd5b823563ffffffff81168114609657600080fd5b9150602083013573ffffffffffffffffffffffffffffffffffffffff8116811460be57600080fd5b80915050925092905056fea164736f6c6343000812000a",
   "linkReferences": {},
   "deployedLinkReferences": {}
 }
