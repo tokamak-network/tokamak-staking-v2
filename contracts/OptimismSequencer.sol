@@ -25,7 +25,7 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
     // using Layer2 for Layer2.Layer2Info;
     using SafeERC20 for IERC20;
 
-    event FastWithdrawalCalim(uint32 layerIndex, address from, address to, uint256 amount);
+    event FastWithdrawalClaim(uint32 layerIndex, address from, address to, uint256 amount);
     event FastWithdrawalStaked(uint32 layerIndex, address staker, uint256 amount, uint256 lton);
 
     /* ========== DEPENDENCIES ========== */
@@ -66,7 +66,7 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
             IERC20(ton).safeTransfer(to, amount);
         }
 
-        emit FastWithdrawalCalim(layerIndex, from, to, amount);
+        emit FastWithdrawalClaim(layerIndex, from, to, amount);
         return true;
     }
 
