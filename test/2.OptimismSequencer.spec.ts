@@ -92,5 +92,39 @@ describe('OptimismSequencer', () => {
         })
     });
 
+    describe('# fastWithdrawClaim', () => {
+
+        it('fastWithdrawClaim can not be executed by not FwReceiptContract', async () => {
+            let amount = ethers.utils.parseEther("100");
+            let _index = 1;
+
+            await expect(
+                deployed.optimismSequencer.connect(addr1).fastWithdrawClaim(
+                    _index,
+                    addr1.address,
+                    addr1.address,
+                    amount
+                )
+                ).to.be.revertedWith("FW_CALLER_ERR")
+
+        })
+    });
+
+    describe('# fastWithdrawStake', () => {
+
+        it('fastWithdrawStake can not be executed by not FwReceiptContract', async () => {
+            let amount = ethers.utils.parseEther("100");
+            let _index = 1;
+
+            await expect(
+                deployed.optimismSequencer.connect(addr1).fastWithdrawStake(
+                    _index,
+                    addr1.address,
+                    amount
+                )
+                ).to.be.revertedWith("FW_CALLER_ERR")
+
+        })
+    });
 });
 

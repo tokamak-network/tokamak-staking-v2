@@ -52,8 +52,9 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
 
         return true;
     }
+
     /* ========== only Receipt ========== */
-    function fastWithdrawClaim(uint32 layerIndex, address from, address to, uint256 amount) external returns (bool){
+    function fastWithdrawClaim(uint32 layerIndex, address from, address to, uint256 amount) external ifFree returns (bool){
         require(fwReceipt == msg.sender, "FW_CALLER_ERR");
         require(balanceOf(layerIndex, from) >= amount, "liquidity is insufficient");
 
@@ -86,6 +87,7 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
         if (balanceOf(layerIndex, account) >= amount) {
             return true;
         }
+        return false;
     }
 
     /* ========== only TON ========== */
@@ -116,10 +118,7 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
 
     function unstake(uint32 _index, uint256 lton_) external
     {
-        uint256 debtForFastWithdraw = FwReceiptI(fwReceipt).debtForFastWithdraw(msg.sender, _index);
-        console.log("debtForFastWithdraw %s", debtForFastWithdraw);
-
-        _unstake(_index, lton_, debtForFastWithdraw);
+        _unstake(_index, lton_, FwReceiptI(fwReceipt).debtForFastWithdraw(msg.sender, _index));
     }
 
     function existedIndex(uint32 _index) public view override returns (bool) {
@@ -134,7 +133,6 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
     }
 
     function getLayerKey(uint32 _index) public view virtual override returns (bytes32 layerKey_) {
-        // bytes memory data = layerInfo[_index];
         layerKey_ = bytes32(keccak256(layerInfo[_index]));
     }
 
@@ -149,9 +147,7 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
         }
     }
 
-
     function getTvl(address l1Bridge, address l2ton) public view returns (uint256 amount) {
-
         try
             L1BridgeI(l1Bridge).deposits(ton, l2ton) returns (uint256 a) {
                 amount = a;
@@ -161,9 +157,10 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
     }
 
     function sequencer(uint32 _index) public view override returns (address sequencer_) {
-        // bytes memory data = layerInfo[_index];
+        address manager = LibOptimism.getAddressManager(layerInfo[_index]);
+        if (manager == address(0)) return address(0);
         try
-            AddressManagerI(layerInfo[_index].toAddress(0)).getAddress('OVM_Sequencer') returns (address a) {
+            AddressManagerI(LibOptimism.getAddressManager(layerInfo[_index])).getAddress('OVM_Sequencer') returns (address a) {
                 sequencer_ = a;
         } catch (bytes memory ) {
             sequencer_ = address(0);
@@ -177,7 +174,6 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
         } catch (bytes memory ) {
             sequencer_ = address(0);
         }
-
     }
 
     function L1CrossDomainMessenger(address addressManager) public view returns (address account_) {
@@ -189,17 +185,19 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
         }
     }
 
-    function L1StandardBridge(uint32 _index) public view returns (address account_) {
-        // bytes memory data = layerInfo[_index];
+    function L1StandardBridge(uint32 _index) public view returns (address) {
+        address manager = LibOptimism.getAddressManager(layerInfo[_index]);
+        if (manager == address(0)) return address(0);
         try
-            AddressManagerI(layerInfo[_index].toAddress(0)).getAddress('Proxy__OVM_L1StandardBridge') returns (address a) {
-                account_ = a;
-        } catch (bytes memory ) {
-            account_ = address(0);
+            AddressManagerI(manager).getAddress('Proxy__OVM_L1StandardBridge') returns (address a) {
+                return a;
+        } catch (bytes memory) {
+            return address(0);
         }
     }
 
     function L1StandardBridge(address addressManager) public view returns (address account_) {
+        if (addressManager == address(0)) return address(0);
         try
             AddressManagerI(addressManager).getAddress('Proxy__OVM_L1StandardBridge') returns (address a) {
                 account_ = a;

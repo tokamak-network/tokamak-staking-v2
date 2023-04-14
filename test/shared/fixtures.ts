@@ -24,8 +24,9 @@ import { LibOperator } from '../../typechain-types/contracts/libraries/LibOperat
 import { LibOptimism } from '../../typechain-types/contracts/libraries/LibOptimism'
 import { LibFastWithdraw } from '../../typechain-types/contracts/libraries/LibFastWithdraw'
 
+import Web3EthAbi from 'web3-eth-abi';
 import TON_ABI from '../../artifacts/contracts/test/TON.sol/TON.json'
-import {Layer2Fixture, TonStakingV2Fixture, OperatorFixture } from './fixtureInterfaces'
+import {FastWithdrawMessageFixture, Layer2Fixture, TonStakingV2Fixture, OperatorFixture } from './fixtureInterfaces'
 // mainnet
 let tonAddress = "0x2be5e8c109e2197D077D13A82dAead6a9b3433C5";
 let tonAdminAddress = "0xDD9f0cCc044B0781289Ee318e5971b0139602C26";
@@ -181,7 +182,7 @@ export const getLayerKey = async function (info: Layer2Fixture): Promise<string>
    return ethers.utils.keccak256(constructorArgumentsEncoded) ;
 }
 
-export const getCandidateKey = async function (info: OperatorFixture): Promise<string> {
+export const getCandidateKey = function (info: OperatorFixture): string{
 
     const constructorArgumentsEncoded = ethers.utils.concat([
             ethers.utils.arrayify(info.operator),
@@ -193,7 +194,7 @@ export const getCandidateKey = async function (info: OperatorFixture): Promise<s
 }
 
 
-export const getCandidateLayerKey = async function (info: OperatorFixture): Promise<string> {
+export const getCandidateLayerKey = function (info: OperatorFixture): string {
 
     const constructorArgumentsEncoded = ethers.utils.concat([
             ethers.utils.arrayify(info.operator),
@@ -203,3 +204,90 @@ export const getCandidateLayerKey = async function (info: OperatorFixture): Prom
    return ethers.utils.keccak256(constructorArgumentsEncoded) ;
 }
 
+/*
+export const bytesFastWithdrawMessage = function (info: FastWithdrawMessageFixture): string {
+
+    let data = ethers.utils.solidityPack(
+        ["bytes4", "address", "uint256", "uint16", "uint32", "uint32"],
+        [info.functionSig, info.requestor, info.amount, info.feeRates, info.deadline,info.layerIndex]
+        )
+
+    return data;
+}
+*/
+export const bytesFastWithdrawMessage = function (
+    messageNonce: number,
+    fwReceiptContract: string,
+    l1ton: string,
+    layerInfo: Layer2Fixture,
+    info: FastWithdrawMessageFixture): string {
+
+    let relayFunctionSig = Web3EthAbi.encodeFunctionSignature("relayMessage(address,address,bytes,uint256)") ;
+    let erc20WithdrawFunctionSig = Web3EthAbi.encodeFunctionSignature(
+            "finalizeERC20Withdrawal(address,address,address,address,uint256,bytes)") ;
+    let fwReceiptFinalizeSig = Web3EthAbi.encodeFunctionSignature("finalizeFastWithdraw(bytes)") ;
+
+    // 2+4+4 = 10
+    let fwRequestBytes = ethers.utils.solidityPack(
+        ["uint16","uint32","uint32"],
+        [info.feeRates, info.deadline, info.layerIndex]
+        );
+
+    // console.log('fwRequestBytes',fwRequestBytes)
+
+    // 4+10 = 14
+    // fwReceiptData : FwReceipt.finalizeFastWithdraw(bytes)
+    let fwReceiptData = ethers.utils.solidityPack(
+        ["bytes4","bytes"],
+        [fwReceiptFinalizeSig, fwRequestBytes]
+        );
+    // console.log('fwReceiptData',fwReceiptData)
+
+    // 4+20+20+20+20+32+14 = 130
+    // L1Bridge.finalizeERC20Withdrawal(address _l1Token, address _l2Token, address _from, address _to, uint256 _amount, bytes calldata _data  )
+    let finalizeERC20WithdrawalData = ethers.utils.solidityPack(
+        ["bytes4","address","address","address","address","uint256","bytes"],
+        [erc20WithdrawFunctionSig, l1ton, layerInfo.l2ton,
+            info.requestor, fwReceiptContract, info.amount, fwReceiptData]
+        );
+    // console.log('finalizeERC20WithdrawalData',finalizeERC20WithdrawalData)
+
+    // 4+20+20+130+32 = 206
+    // xDomainCalldata : relayMessage(address,address,bytes,uint256)
+    let xDomainCalldata = ethers.utils.solidityPack(
+        ["bytes4","address","address","bytes","uint256"],
+        [relayFunctionSig, layerInfo.l1Bridge, layerInfo.l2Bridge, finalizeERC20WithdrawalData, messageNonce]
+        )
+    // console.log('xDomainCalldata',xDomainCalldata)
+    return xDomainCalldata;
+}
+
+export const bytesInvalidFastWithdrawMessage = function (info: FastWithdrawMessageFixture): string {
+
+    let data = ethers.utils.solidityPack(
+        ["bytes4", "address", "uint256", "uint16", "uint32" ],
+        [info.functionSig, info.requestor, info.amount, info.feeRates, info.deadline ]
+        )
+
+    return data;
+}
+
+export enum FW_STATUS {
+    NONE,
+    CANCELED,
+    PROVIDE_LIQUIDITY,
+    NORMAL_WITHDRAWAL,
+    CANCEL_WITHDRAWAL,
+    FINALIZE_WITHDRAWAL,
+    CALLER_NOT_L1_BRIDGE,
+    ZERO_L1_BRIDGE,
+    ZERO_AMOUNT,
+    ZERO_REQUESTOR,
+    INVALID_LAYERINDEX,
+    PAST_DEADLINE,
+    WRONG_MESSAGE,
+    FAIL_FINISH_FW,
+    ALREADY_PROCESSED,
+    INVALID_LENGTH,
+    INVALID_FUNC_SIG
+}

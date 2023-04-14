@@ -33,4 +33,11 @@ library LibOptimism
             });
          }
     }
+
+    function getAddressManager(bytes memory data) public pure returns (address addr){
+         if (data.length > 20) {
+            addr = data.toAddress(0);
+         }
+    }
+
 }

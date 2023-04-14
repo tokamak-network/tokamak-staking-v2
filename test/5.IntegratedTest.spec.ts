@@ -2,14 +2,43 @@ import { expect } from './shared/expect'
 import { ethers, network } from 'hardhat'
 
 import { Signer } from 'ethers'
-import { stakingV2Fixtures, getLayerKey, getCandidateKey, getCandidateLayerKey} from './shared/fixtures'
+import {
+    stakingV2Fixtures, getLayerKey, getCandidateKey,
+    getCandidateLayerKey,
+    bytesFastWithdrawMessage
+    } from './shared/fixtures'
 import { TonStakingV2Fixture } from './shared/fixtureInterfaces'
 import snapshotGasCost from './shared/snapshotGasCost'
+
+import Web3EthAbi from 'web3-eth-abi';
 
 describe('Integrated Test', () => {
     let deployer: Signer, addr1: Signer, addr2: Signer, sequencer1:Signer
 
     let deployed: TonStakingV2Fixture
+
+    let L2_XDomainCalldataList = [] ; // calldata bytes, calldata bytes
+
+    let OptimismSequencerStakeList = [];
+        /*
+           {
+            index: ,
+            layerKey: ,
+            staker: '',
+            amount:''
+            ltos:
+           }
+         */
+    let CandidateStakeList = [];
+        /**
+          {
+            index: ,
+            sequenceIndex: 0,
+            staker: '',
+            amount:''
+            ltos:
+           }
+         */
 
     // mainnet
     let seigManagerInfo = {
@@ -32,6 +61,23 @@ describe('Integrated Test', () => {
         delayBlocksForWithdraw: 300,
     }
 
+    let messageInfo =  {
+        requestor: "",
+        amount: ethers.utils.parseEther("1"),
+        feeRates: 1000,
+        deadline: 0,
+        layerIndex: 0
+    }
+
+    let layerInfo = {
+        addressManager: "",
+        l1Messenger: "",
+        l2Messenger: "",
+        l1Bridge: "",
+        l2Bridge: "",
+        l2ton: ""
+    }
+
     before('create fixture loader', async () => {
         // deployed = await loadFixture(stakingV2Fixtures)
 
@@ -40,6 +86,14 @@ describe('Integrated Test', () => {
         addr1 = deployed.addr1;
         addr2 = deployed.addr2;
         sequencer1 = deployed.sequencer1;
+
+        layerInfo.addressManager = deployed.addressManager.address;
+        layerInfo.l1Messenger = deployed.l1Messenger.address
+        layerInfo.l2Messenger = deployed.l2Messenger.address
+        layerInfo.l1Bridge= deployed.l1Bridge.address
+        layerInfo.l2Bridge= deployed.l2Bridge.address
+        layerInfo.l2ton= deployed.l2ton.address
+
     })
 
     describe('# initialize', () => {
@@ -134,11 +188,13 @@ describe('Integrated Test', () => {
         it('FwReceipt : initialize can be executed by only owner', async () => {
             await snapshotGasCost(deployed.fwReceiptProxy.connect(deployer).initialize(
                 seigManagerInfo.ton,
-                deployed.optimismSequencerProxy.address
+                deployed.optimismSequencerProxy.address,
+                deployed.candidateProxy.address
                 ))
 
             expect(await deployed.fwReceiptProxy.ton()).to.eq(seigManagerInfo.ton)
             expect(await deployed.fwReceiptProxy.optimismSequencer()).to.eq(deployed.optimismSequencerProxy.address)
+            expect(await deployed.fwReceiptProxy.candidate()).to.eq(deployed.candidateProxy.address)
 
         })
 
@@ -645,6 +701,34 @@ describe('Integrated Test', () => {
         })
 
     });
+
+
+    /// l2 fast withdraw
+    describe('# fast withdraw', () => {
+
+        it('L2 user request the fast withdraw ', async () => {
+        });
+
+        it('If anyone don\'t provide liquidity to l2\'s request fw, L2 user cannot withdraw before DTD.', async () => {
+        });
+
+        it('L1 users cannot provide liquidity after the fw deadline has passed.', async () => {
+        });
+
+        it('If there is not enough money to provide liquidity, it cannot provide liquidity.', async () => {
+        });
+
+        it('The L1 provider cannot provide liquidity for cases canceled by the L2 requester.', async () => {
+        });
+
+        it('If someone provide liquidity to l2\'s request fw, L2 user withdraw at providing.', async () => {
+        });
+
+
+
+    });
+
+
 
     describe('# updateSeigniorage', () => {
 

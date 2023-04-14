@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`FwReceipt # finalizeFastWithdraw It fails with a layer index that does not exist. 1`] = `75169`;
+
+exports[`FwReceipt # finalizeFastWithdraw Zero Layer Index is not allowed. 1`] = `53779`;
+
+exports[`FwReceipt # finalizeFastWithdraw Zero amount is not allowed. 1`] = `51108`;
+
+exports[`FwReceipt # initialize initialize can be executed by only owner 1`] = `91666`;
+
+exports[`FwReceipt # setCandidate setCandidate can be executed by only owner  1`] = `38790`;
+
+exports[`FwReceipt # setCandidate setCandidate can be executed by only owner  2`] = `38790`;
+
+exports[`FwReceipt # setOptimismSequencer setOptimismSequencer can be executed by only owner  1`] = `38809`;
+
+exports[`FwReceipt # setOptimismSequencer setOptimismSequencer can be executed by only owner  2`] = `38809`;

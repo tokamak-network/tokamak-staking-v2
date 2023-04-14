@@ -1,5 +1,6 @@
 
 import { ethers } from 'hardhat'
+import { BigNumber } from 'ethers'
 import {  Wallet, Signer } from 'ethers'
 import { SeigManagerV2Proxy } from '../../typechain-types/contracts/proxy/SeigManagerV2Proxy'
 import { SeigManagerV2 } from '../../typechain-types/contracts/SeigManagerV2.sol'
@@ -21,6 +22,14 @@ import { MockL1Bridge } from '../../typechain-types/contracts/test/MockL1Bridge'
 import { MockL2Bridge } from '../../typechain-types/contracts/test/MockL2Bridge'
 import { TestERC20 } from '../../typechain-types/contracts/test/TestERC20'
 
+interface FastWithdrawMessageFixture  {
+    functionSig: string,
+    requestor: string,
+    amount: BigNumber,
+    feeRates: number,
+    deadline: number,
+    layerIndex: number
+}
 interface Layer2Fixture  {
     addressManager: string,
     l1Messenger: string,
@@ -64,4 +73,4 @@ interface TonStakingV2Fixture  {
 }
 
 
-export { Layer2Fixture, TonStakingV2Fixture, OperatorFixture }
+export { FastWithdrawMessageFixture, Layer2Fixture, TonStakingV2Fixture, OperatorFixture }

@@ -7,6 +7,7 @@ contract FwReceiptStorage {
 
     address public ton;
     address public optimismSequencer;
+    address public candidate;
     uint256 public receiptNo;
 
     // receiptKey bytes32(keccak256(_l2Messages))
@@ -16,6 +17,7 @@ contract FwReceiptStorage {
     mapping(address => mapping(uint32 => uint256)) sumOfReceipts;
 
     mapping(address => bytes32[]) txsOfProviders;
+    bool internal free = true;
 
     modifier nonZero(uint256 value) {
         require(value != 0, "Z1");
@@ -35,5 +37,12 @@ contract FwReceiptStorage {
     modifier nonZeroAddress(address account) {
         require(account != address(0), "Z2");
         _;
+    }
+
+    modifier ifFree {
+        require(free, "lock");
+        free = false;
+        _;
+        free = true;
     }
 }
