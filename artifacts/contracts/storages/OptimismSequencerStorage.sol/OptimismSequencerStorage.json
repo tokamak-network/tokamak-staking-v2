@@ -2,23 +2,9 @@
   "_format": "hh-sol-artifact-1",
   "contractName": "OptimismSequencerStorage",
   "sourceName": "contracts/storages/OptimismSequencerStorage.sol",
-  "abi": [
-    {
-      "inputs": [],
-      "name": "fwReceipt",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    }
-  ],
-  "bytecode": "0x6080604052348015600f57600080fd5b5060828061001e6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c8063d07918f114602d575b600080fd5b600054604c9073ffffffffffffffffffffffffffffffffffffffff1681565b60405173ffffffffffffffffffffffffffffffffffffffff909116815260200160405180910390f3fea164736f6c6343000812000a",
-  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060285760003560e01c8063d07918f114602d575b600080fd5b600054604c9073ffffffffffffffffffffffffffffffffffffffff1681565b60405173ffffffffffffffffffffffffffffffffffffffff909116815260200160405180910390f3fea164736f6c6343000812000a",
+  "abi": [],
+  "bytecode": "0x6080604052348015600f57600080fd5b50601680601d6000396000f3fe6080604052600080fdfea164736f6c6343000812000a",
+  "deployedBytecode": "0x6080604052600080fdfea164736f6c6343000812000a",
   "linkReferences": {},
   "deployedLinkReferences": {}
 }
