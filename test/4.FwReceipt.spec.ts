@@ -5,7 +5,10 @@ import { Signer } from 'ethers'
 import {
     FW_STATUS, stakingV2Fixtures, bytesFastWithdrawMessage, bytesInvalidFastWithdrawMessage
     } from './shared/fixtures'
-import { TonStakingV2Fixture } from './shared/fixtureInterfaces'
+import {
+    Layer2Fixture,
+    FastWithdrawMessageFixture,
+    ParseMessageFixture, TonStakingV2Fixture } from './shared/fixtureInterfaces'
 import snapshotGasCost from './shared/snapshotGasCost'
 
 import Web3EthAbi from 'web3-eth-abi';
@@ -31,7 +34,8 @@ describe('FwReceipt', () => {
         delayBlocksForWithdraw: 300,
     }
 
-    let messageInfo =  {
+    let messageInfo: FastWithdrawMessageFixture =  {
+        version: 0,
         requestor: "",
         amount: ethers.utils.parseEther("1"),
         feeRates: 1000,
@@ -39,7 +43,7 @@ describe('FwReceipt', () => {
         layerIndex: 0
     }
 
-    let layerInfo = {
+    let layerInfo: Layer2Fixture = {
         addressManager: "",
         l1Messenger: "",
         l2Messenger: "",
@@ -70,6 +74,8 @@ describe('FwReceipt', () => {
             await expect(
                 deployed.fwReceiptProxy.connect(addr1).initialize(
                     seigManagerInfo.ton,
+                    deployed.l1Messenger.address,
+                    deployed.seigManagerV2.address,
                     deployed.optimismSequencerProxy.address,
                     deployed.candidateProxy.address
                 )
@@ -79,6 +85,8 @@ describe('FwReceipt', () => {
         it('initialize can be executed by only owner', async () => {
             await snapshotGasCost(deployed.fwReceiptProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
+                    deployed.l1Messenger.address,
+                    deployed.seigManagerV2.address,
                     deployed.optimismSequencerProxy.address,
                     deployed.candidateProxy.address
                 ))
@@ -92,6 +100,8 @@ describe('FwReceipt', () => {
             await expect(
                 deployed.fwReceiptProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
+                    deployed.l1Messenger.address,
+                    deployed.seigManagerV2.address,
                     deployed.optimismSequencerProxy.address,
                     deployed.candidateProxy.address
                 )
@@ -165,7 +175,6 @@ describe('FwReceipt', () => {
             let messageNonce = 0;
 
             const l2Messages = bytesFastWithdrawMessage(
-                messageNonce,
                 deployed.fwReceiptProxy.address,
                 seigManagerInfo.ton,
                 layerInfo,
@@ -173,8 +182,9 @@ describe('FwReceipt', () => {
                 );
 
             const topic = deployed.fwReceipt.interface.getEventTopic('InvalidMessageFastWithdrawal');
-            const receipt = await (await snapshotGasCost(deployed.fwReceipt.connect(addr1).finalizeFastWithdraw(
-                l2Messages
+            const receipt = await (await snapshotGasCost(
+                deployed.fwReceipt.connect(addr1).finalizeFastWithdraw(
+                    l2Messages
             ))).wait();
 
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
@@ -190,9 +200,8 @@ describe('FwReceipt', () => {
             messageInfo.deadline = parseInt(messageInfo.deadline)
             messageInfo.layerIndex = 1
             messageInfo.amount = ethers.constants.Zero
-            let messageNonce = 0;
+
             const l2Messages = bytesFastWithdrawMessage(
-                messageNonce,
                 deployed.fwReceiptProxy.address,
                 seigManagerInfo.ton,
                 layerInfo,
@@ -200,8 +209,9 @@ describe('FwReceipt', () => {
                 );
 
             const topic = deployed.fwReceipt.interface.getEventTopic('InvalidMessageFastWithdrawal');
-            const receipt = await (await snapshotGasCost(deployed.fwReceipt.connect(addr1).finalizeFastWithdraw(
-                l2Messages
+            const receipt = await (await snapshotGasCost(
+                    deployed.fwReceipt.connect(addr1).finalizeFastWithdraw(
+                        l2Messages.finalizeERC20WithdrawalData
             ))).wait();
 
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
@@ -217,9 +227,8 @@ describe('FwReceipt', () => {
             messageInfo.deadline = parseInt(messageInfo.deadline)
             messageInfo.layerIndex = 1
             messageInfo.amount = ethers.utils.parseEther("1");
-            let messageNonce = 0;
-            const l2Messages = bytesFastWithdrawMessage(
-                messageNonce,
+
+            let l2Messages: ParseMessageFixture = bytesFastWithdrawMessage(
                 deployed.fwReceiptProxy.address,
                 seigManagerInfo.ton,
                 layerInfo,
@@ -229,7 +238,7 @@ describe('FwReceipt', () => {
             const topic = deployed.fwReceipt.interface.getEventTopic('InvalidMessageFastWithdrawal');
             const receipt = await (await snapshotGasCost(
                 deployed.fwReceipt.connect(addr1).finalizeFastWithdraw(
-                    l2Messages
+                    l2Messages.finalizeERC20WithdrawalData
             ))).wait();
 
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
@@ -248,11 +257,16 @@ describe('FwReceipt', () => {
             messageInfo.layerIndex = 1
             messageInfo.amount = ethers.utils.parseEther("1");
 
-            const l2Messages = bytesInvalidFastWithdrawMessage(messageInfo);
+            let l2Messages: ParseMessageFixture = bytesFastWithdrawMessage(
+                deployed.fwReceiptProxy.address,
+                seigManagerInfo.ton,
+                layerInfo,
+                messageInfo,
+                );
 
             await expect(
                 deployed.fwReceipt.connect(addr1).provideLiquidity(
-                    l2Messages
+                    l2Messages.finalizeERC20WithdrawalData
                 )
             ).to.be.revertedWith("InvalidMessageFastWithdrawal")
         })
@@ -263,9 +277,8 @@ describe('FwReceipt', () => {
             messageInfo.deadline = parseInt(messageInfo.deadline)
             messageInfo.layerIndex = 0
             messageInfo.amount = ethers.utils.parseEther("1");
-            let messageNonce = 0;
-            const l2Messages = bytesFastWithdrawMessage(
-                messageNonce,
+
+            let l2Messages: ParseMessageFixture = bytesFastWithdrawMessage(
                 deployed.fwReceiptProxy.address,
                 seigManagerInfo.ton,
                 layerInfo,
@@ -274,7 +287,7 @@ describe('FwReceipt', () => {
 
             await expect(
                 deployed.fwReceipt.connect(addr1).provideLiquidity(
-                    l2Messages
+                    l2Messages.finalizeERC20WithdrawalData
                 )
             ).to.be.revertedWith("InvalidMessageFastWithdrawal")
         })
@@ -290,11 +303,16 @@ describe('FwReceipt', () => {
             messageInfo.layerIndex = 1
             messageInfo.amount = ethers.utils.parseEther("1");
 
-            const l2Messages = bytesInvalidFastWithdrawMessage(messageInfo);
+            let l2Messages: ParseMessageFixture = bytesFastWithdrawMessage(
+                deployed.fwReceiptProxy.address,
+                seigManagerInfo.ton,
+                layerInfo,
+                messageInfo,
+                );
 
             await expect(
                 deployed.fwReceipt.connect(addr1).cancelRequest(
-                    l2Messages
+                    l2Messages.finalizeERC20WithdrawalData
                 )
             ).to.be.revertedWith("InvalidMessageFastWithdrawal")
         })
@@ -306,9 +324,8 @@ describe('FwReceipt', () => {
             messageInfo.deadline = parseInt(messageInfo.deadline)
             messageInfo.layerIndex = 0
             messageInfo.amount = ethers.utils.parseEther("1");
-            let messageNonce = 0;
-            const l2Messages = bytesFastWithdrawMessage(
-                messageNonce,
+
+            let l2Messages: ParseMessageFixture = bytesFastWithdrawMessage(
                 deployed.fwReceiptProxy.address,
                 seigManagerInfo.ton,
                 layerInfo,
@@ -317,7 +334,7 @@ describe('FwReceipt', () => {
 
             await expect(
                 deployed.fwReceipt.connect(addr1).cancelRequest(
-                    l2Messages
+                    l2Messages.finalizeERC20WithdrawalData
                 )
             ).to.be.revertedWith("InvalidMessageFastWithdrawal")
         })

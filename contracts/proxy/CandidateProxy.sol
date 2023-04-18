@@ -18,18 +18,21 @@ contract CandidateProxy is BaseProxy, StakingStorage, CandidateStorage {
     function initialize(
         address _ton,
         address _seigManagerV2,
-        address _layer2Manager
+        address _layer2Manager,
+        address _fwReceipt
     )
         external onlyOwner
         nonZeroAddress(_ton)
         nonZeroAddress(_seigManagerV2)
         nonZeroAddress(_layer2Manager)
+        nonZeroAddress(_fwReceipt)
     {
         require(address(ton) == address(0), "already initialize");
 
         seigManagerV2 = _seigManagerV2;
         ton = _ton;
         layer2Manager =_layer2Manager;
+        fwReceipt =_fwReceipt;
 
         _registerInterface(ERC20_ONAPPROVE);
         _registerInterface(InterfaceId_ERC165);

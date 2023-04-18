@@ -7,7 +7,30 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
+
+interface FwReceiptI {
+    function finalizeFastWithdraw(bytes memory _l2Messages)
+        external returns (uint8);
+}
+
+
+interface L1MessengerI {
+    function setSuccessfulMessages(bytes32 _hashMessages, bool _bool) external;
+    function successfulMessages(bytes32 _hashMessages) external view returns (bool);
+}
+
+interface MockL1BridgeI {
+    function finalizeERC20Withdrawal(
+        address _l1Token,
+        address _l2Token,
+        address _from,
+        address _to,
+        uint256 _amount,
+        bytes memory _data
+    ) external;
+}
+
 contract MockL1Bridge is Ownable {
     using SafeERC20 for IERC20;
 
@@ -95,14 +118,40 @@ contract MockL1Bridge is Ownable {
         address _from,
         address _to,
         uint256 _amount,
-        bytes calldata _data
+        bytes memory _data
     // ) external onlyFromCrossDomainAccount(l2TokenBridge) {
     ) external {
-        deposits[_l1Token][_l2Token] = deposits[_l1Token][_l2Token] - _amount;
+
+        bytes32 _hash = keccak256(abi.encodeWithSelector(MockL1BridgeI.finalizeERC20Withdrawal.selector,
+            _l1Token, _l2Token, _from, _to, _amount, _data));
+
+        require(!L1MessengerI(l1Messenger).successfulMessages(_hash), "already done");
+
+        uint256 bal = IERC20(_l1Token).balanceOf(address(this));
+
+        require(bal >= _amount, "balance is insufficient");
+
+        // deposits[_l1Token][_l2Token] = deposits[_l1Token][_l2Token] - _amount;
+        // for test
+        if(deposits[_l1Token][_l2Token] > _amount)
+            deposits[_l1Token][_l2Token] = deposits[_l1Token][_l2Token] - _amount;
+
+        L1MessengerI(l1Messenger).setSuccessfulMessages(_hash, true);
 
         // When a withdrawal is finalized on L1, the L1 Bridge transfers the funds to the withdrawer
         // slither-disable-next-line reentrancy-events
         IERC20(_l1Token).safeTransfer(_to, _amount);
+
+        // 질문. core evm 에서는 data 실행하는 코드가 왜 없는지..
+        if(_data.length != 0){
+            (bool success, bytes memory result) = _to.call{value:0}(_data);
+        }
+
+        // console.logBool(success);
+        // console.logBytes(result);
+
+        // (uint8 status) = abi.decode(result,(uint8));
+        // console.log(status);
 
         // // slither-disable-next-line reentrancy-events
         // emit ERC20WithdrawalFinalized(_l1Token, _l2Token, _from, _to, _amount, _data);

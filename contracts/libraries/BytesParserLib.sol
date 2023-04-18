@@ -9,8 +9,8 @@
 pragma solidity ^0.8.0;
 // pragma solidity >=0.5.0 <0.8.0;
 
+library BytesParserLib {
 
-library BytesLib {
     function slice(
         bytes memory _bytes,
         uint256 _start,
@@ -77,6 +77,7 @@ library BytesLib {
         return tempBytes;
     }
 
+    /*
     function toAddress(bytes memory _bytes, uint256 _start) internal pure returns (address) {
         require(_start + 20 >= _start, 'toAddress_overflow');
         require(_bytes.length >= _start + 20, 'toAddress_outOfBounds');
@@ -87,6 +88,23 @@ library BytesLib {
         }
 
         return tempAddress;
+    }
+    */
+    // 바이트의 첫 슬롯에 길이가 없다고 가정할때
+    function toAddress(bytes memory _bytes, uint256 _start) internal pure returns (address addressOutput) {
+        require(_start + 20 >= _start, 'toAddress_overflow');
+        require(_bytes.length >= _start + 20, 'toAddress_outOfBounds');
+
+        assembly {
+            addressOutput := mload(add(add(_bytes,0x14),_start))
+        }
+    }
+
+    // 32 byte에 맞게 가져올때,
+    function convertAddressToBytes(address a) public pure returns (bytes memory aaa) {
+        assembly {
+            aaa := shr(96, mload(add(a, 32)))
+        }
     }
 
     function toUint24(bytes memory _bytes, uint256 _start) internal pure returns (uint24) {

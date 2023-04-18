@@ -3,6 +3,4 @@ pragma solidity ^0.8.4;
 
 contract OptimismSequencerStorage  {
 
-    address public fwReceipt;
-
 }

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.4;
 
-import "./BytesLib.sol";
+import "./BytesParserLib.sol";
 
 library LibOptimism
 {
-    using BytesLib for bytes;
+    using BytesParserLib for bytes;
 
     struct Info {
         address addressManager;

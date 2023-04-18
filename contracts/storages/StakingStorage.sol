@@ -43,6 +43,8 @@ contract StakingStorage {
 
     address[] public stakeAccountList;
 
+    address public fwReceipt;
+
     modifier nonZero(uint256 value) {
         require(value != 0, "Z1");
         _;

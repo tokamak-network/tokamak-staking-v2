@@ -26,10 +26,72 @@ import { LibFastWithdraw } from '../../typechain-types/contracts/libraries/LibFa
 
 import Web3EthAbi from 'web3-eth-abi';
 import TON_ABI from '../../artifacts/contracts/test/TON.sol/TON.json'
-import {FastWithdrawMessageFixture, Layer2Fixture, TonStakingV2Fixture, OperatorFixture } from './fixtureInterfaces'
+import {
+    ParseMessageFixture,
+    FastWithdrawMessageFixture, Layer2Fixture, TonStakingV2Fixture, OperatorFixture } from './fixtureInterfaces'
+import { keccak256 } from 'ethers/lib/utils'
 // mainnet
 let tonAddress = "0x2be5e8c109e2197D077D13A82dAead6a9b3433C5";
 let tonAdminAddress = "0xDD9f0cCc044B0781289Ee318e5971b0139602C26";
+
+const ifwReceiptAbi = [{
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "_l2Messages",
+        "type": "bytes"
+      }
+    ],
+    "name": "finalizeFastWithdraw",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }];
+
+const iL1BridgeFinalWithdrawAbi = [{
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_l1Token",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_l2Token",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_from",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_data",
+        "type": "bytes"
+      }
+    ],
+    "name": "finalizeERC20Withdrawal",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }];
 
 export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture> {
 
@@ -195,7 +257,6 @@ export const getCandidateKey = function (info: OperatorFixture): string{
 
 
 export const getCandidateLayerKey = function (info: OperatorFixture): string {
-
     const constructorArgumentsEncoded = ethers.utils.concat([
             ethers.utils.arrayify(info.operator),
             ethers.utils.hexZeroPad(ethers.utils.hexlify(info.sequencerIndex), 4)
@@ -204,69 +265,76 @@ export const getCandidateLayerKey = function (info: OperatorFixture): string {
    return ethers.utils.keccak256(constructorArgumentsEncoded) ;
 }
 
-/*
-export const bytesFastWithdrawMessage = function (info: FastWithdrawMessageFixture): string {
-
-    let data = ethers.utils.solidityPack(
-        ["bytes4", "address", "uint256", "uint16", "uint32", "uint32"],
-        [info.functionSig, info.requestor, info.amount, info.feeRates, info.deadline,info.layerIndex]
-        )
-
-    return data;
-}
-*/
 export const bytesFastWithdrawMessage = function (
-    messageNonce: number,
     fwReceiptContract: string,
     l1ton: string,
     layerInfo: Layer2Fixture,
-    info: FastWithdrawMessageFixture): string {
+    info: FastWithdrawMessageFixture): ParseMessageFixture {
 
-    let relayFunctionSig = Web3EthAbi.encodeFunctionSignature("relayMessage(address,address,bytes,uint256)") ;
+
+    let ifwReceipt = new ethers.utils.Interface(ifwReceiptAbi);
+    let iBridge = new ethers.utils.Interface(iL1BridgeFinalWithdrawAbi);
     let erc20WithdrawFunctionSig = Web3EthAbi.encodeFunctionSignature(
             "finalizeERC20Withdrawal(address,address,address,address,uint256,bytes)") ;
-    let fwReceiptFinalizeSig = Web3EthAbi.encodeFunctionSignature("finalizeFastWithdraw(bytes)") ;
 
-    // 2+4+4 = 10
+    // 1+20+20+20+32+2+4+4 = 103
     let fwRequestBytes = ethers.utils.solidityPack(
-        ["uint16","uint32","uint32"],
-        [info.feeRates, info.deadline, info.layerIndex]
+        ["uint8","address","address","address","uint256","uint16","uint32","uint32"],
+        [
+            info.version,
+            layerInfo.l2ton,
+            info.requestor,
+            fwReceiptContract,
+            info.amount.toString(),
+            info.feeRates,
+            info.deadline,
+            info.layerIndex
+        ]
         );
+    // console.log('fwRequestBytes solidityPack',fwRequestBytes)
 
-    // console.log('fwRequestBytes',fwRequestBytes)
+    // 4+192 = 196
+    let fwReceiptData = ifwReceipt.encodeFunctionData("finalizeFastWithdraw",[ fwRequestBytes ]);
+    // console.log('*** fwReceiptData ',fwReceiptData);
 
-    // 4+10 = 14
-    // fwReceiptData : FwReceipt.finalizeFastWithdraw(bytes)
-    let fwReceiptData = ethers.utils.solidityPack(
-        ["bytes4","bytes"],
-        [fwReceiptFinalizeSig, fwRequestBytes]
-        );
-    // console.log('fwReceiptData',fwReceiptData)
-
-    // 4+20+20+20+20+32+14 = 130
+    // 4+20+20+20+20+32+196 = 312
     // L1Bridge.finalizeERC20Withdrawal(address _l1Token, address _l2Token, address _from, address _to, uint256 _amount, bytes calldata _data  )
-    let finalizeERC20WithdrawalData = ethers.utils.solidityPack(
-        ["bytes4","address","address","address","address","uint256","bytes"],
-        [erc20WithdrawFunctionSig, l1ton, layerInfo.l2ton,
-            info.requestor, fwReceiptContract, info.amount, fwReceiptData]
-        );
-    // console.log('finalizeERC20WithdrawalData',finalizeERC20WithdrawalData)
+    // let finalizeERC20WithdrawalData1 = ethers.utils.solidityPack(
+    //     ["bytes4","address","address","address","address","uint256","bytes"],
+    //     [erc20WithdrawFunctionSig,
+    //         l1ton,
+    //         layerInfo.l2ton,
+    //         info.requestor,
+    //         fwReceiptContract,
+    //         info.amount, fwReceiptData]
+    //     );
 
-    // 4+20+20+130+32 = 206
-    // xDomainCalldata : relayMessage(address,address,bytes,uint256)
-    let xDomainCalldata = ethers.utils.solidityPack(
-        ["bytes4","address","address","bytes","uint256"],
-        [relayFunctionSig, layerInfo.l1Bridge, layerInfo.l2Bridge, finalizeERC20WithdrawalData, messageNonce]
-        )
-    // console.log('xDomainCalldata',xDomainCalldata)
-    return xDomainCalldata;
+        // 4+ (12byte offset) +  = 452
+    let finalizeERC20WithdrawalData = iBridge.encodeFunctionData("finalizeERC20Withdrawal",
+        [
+            l1ton,
+            layerInfo.l2ton,
+            info.requestor,
+            fwReceiptContract,
+            info.amount,
+            fwReceiptData ]
+        );
+
+    // console.log('finalizeERC20WithdrawalData', finalizeERC20WithdrawalData);
+
+    return  {
+        xDomainCalldata: '',
+        finalizeERC20WithdrawalData: finalizeERC20WithdrawalData,
+        fwReceiptData: fwReceiptData,
+        fwRequestBytes: fwRequestBytes
+    }
 }
 
 export const bytesInvalidFastWithdrawMessage = function (info: FastWithdrawMessageFixture): string {
 
     let data = ethers.utils.solidityPack(
-        ["bytes4", "address", "uint256", "uint16", "uint32" ],
-        [info.functionSig, info.requestor, info.amount, info.feeRates, info.deadline ]
+        [  "address", "uint256", "uint16", "uint32" ],
+        [ info.requestor, info.amount, info.feeRates, info.deadline ]
         )
 
     return data;
@@ -274,20 +342,22 @@ export const bytesInvalidFastWithdrawMessage = function (info: FastWithdrawMessa
 
 export enum FW_STATUS {
     NONE,
-    CANCELED,
-    PROVIDE_LIQUIDITY,
-    NORMAL_WITHDRAWAL,
-    CANCEL_WITHDRAWAL,
-    FINALIZE_WITHDRAWAL,
-    CALLER_NOT_L1_BRIDGE,
-    ZERO_L1_BRIDGE,
-    ZERO_AMOUNT,
-    ZERO_REQUESTOR,
-    INVALID_LAYERINDEX,
-    PAST_DEADLINE,
-    WRONG_MESSAGE,
-    FAIL_FINISH_FW,
-    ALREADY_PROCESSED,
-    INVALID_LENGTH,
-    INVALID_FUNC_SIG
+        CANCELED,
+        PROVIDE_LIQUIDITY,
+        NORMAL_WITHDRAWAL,
+        CANCEL_WITHDRAWAL,
+        FINALIZE_WITHDRAWAL,
+        CALLER_NOT_L1_BRIDGE,
+        ZERO_L1_BRIDGE,
+        ZERO_AMOUNT,
+        ZERO_REQUESTOR,
+        INVALID_LAYERINDEX,
+        INVALID_AMOUNT,
+        PAST_DEADLINE,
+        WRONG_MESSAGE,
+        FAIL_FINISH_FW,
+        ALREADY_PROCESSED,
+        INVALID_LENGTH,
+        INVALID_FUNC_SIG,
+        UNSUPPORTED_VERSION
 }

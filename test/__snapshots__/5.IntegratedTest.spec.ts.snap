@@ -1,0 +1,67 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Integrated Test # TON.approveAndCall -> stake at Candidate You can stake without approval before staking. 1`] = `138177`;
+
+exports[`Integrated Test # TON.approveAndCall -> stake at Sequencer You can stake without approval before staking. 1`] = `130723`;
+
+exports[`Integrated Test # claim of sequencer Depositing in L2 will increase L2 holdings. 1`] = `51257`;
+
+exports[`Integrated Test # claim of sequencer When seignorage is updated, totalSeigs(the seignorage distributed to the sequencers) is increases. 1`] = `221954`;
+
+exports[`Integrated Test # claim of sequencer When totalSeigs is not 0, seigniorage can be distributed to the sequencer. 1`] = `106007`;
+
+exports[`Integrated Test # claim of sequencer the sequencers can claim  1`] = `108006`;
+
+exports[`Integrated Test # create Candidate Approve the minimum deposit and create. 1`] = `455346`;
+
+exports[`Integrated Test # create OptimismSequencer Approve the minimum security deposit and create. 1`] = `317918`;
+
+exports[`Integrated Test # curTotalLayer2Deposits If you withdraw from layer 2, the deposit amount of the total layer will be reduced. 1`] = `78882`;
+
+exports[`Integrated Test # decrease Security Deposit  Sequencer can decrease the security deposit. 1`] = `131280`;
+
+exports[`Integrated Test # fast withdraw Fast withdrawals, normally provided with liquidity, are settled after DTD. 1`] = `226126`;
+
+exports[`Integrated Test # fast withdraw If anyone don't provide liquidity to l2's request fw, L2 user withdraw the request amount by L1Bridge 1`] = `152282`;
+
+exports[`Integrated Test # fast withdraw If someone provide liquidity to l2's request fw, L2 user withdraw at providing. 1`] = `612238`;
+
+exports[`Integrated Test # fast withdraw The L2 request withdraw the fw amount for cases canceled by the L2 requester. 1`] = `135349`;
+
+exports[`Integrated Test # increase Security Deposit  Approve the deposit and increase the security deposit. 1`] = `64957`;
+
+exports[`Integrated Test # initialize Candidate : initialize can be executed by only owner 1`] = `141862`;
+
+exports[`Integrated Test # initialize FwReceipt : initialize can be executed by only owner 1`] = `136989`;
+
+exports[`Integrated Test # initialize Layer2Manager : initialize can be executed by only owner 1`] = `203524`;
+
+exports[`Integrated Test # initialize OptimismSequencer : initialize can be executed by only owner 1`] = `141884`;
+
+exports[`Integrated Test # initialize SeigManagerV2 : initialize can be executed by only owner 1`] = `236224`;
+
+exports[`Integrated Test # setLastSeigBlock LastSeigBlock can be executed by only owner  1`] = `77589`;
+
+exports[`Integrated Test # setMaxLayer2Count setMaxLayer2Count can be executed by only owner  1`] = `38335`;
+
+exports[`Integrated Test # stake at Candidate If it is a registered layer, you can stake it. 1`] = `118133`;
+
+exports[`Integrated Test # stake at Sequencer If it is a registered layer, you can stake it. 1`] = `260541`;
+
+exports[`Integrated Test # unstake at Candidate You can unstake when you have the staked amount. 1`] = `215913`;
+
+exports[`Integrated Test # unstake at Sequencer You can unstake when you have the staked amount. 1`] = `191116`;
+
+exports[`Integrated Test # updateSeigniorage After the recent seignorage issuance, seignorage will not be issued unless the minimum block has passed. 1`] = `35196`;
+
+exports[`Integrated Test # updateSeigniorage If the staked amount is greater than 0, indexLton increase. 1`] = `232038`;
+
+exports[`Integrated Test # updateSeigniorage runUpdateSeigniorage : If the sum of the staking amount and the bonding liquidity amount is greater than 0, indexLton increase. 1`] = `197430`;
+
+exports[`Integrated Test # updateSeigniorage setAddress can be executed by only owner  1`] = `78501`;
+
+exports[`Integrated Test # updateSeigniorage setDividendRates can be executed by only owner  1`] = `39753`;
+
+exports[`Integrated Test # withdraw  [at Candidate] You can withdraw if there is amount available for withdrawal. 1`] = `111733`;
+
+exports[`Integrated Test # withdraw  [at Sequencer] You can withdraw if there is amount available for withdrawal. 1`] = `111739`;

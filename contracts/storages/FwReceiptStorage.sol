@@ -6,15 +6,18 @@ import {LibFastWithdraw} from "../libraries/LibFastWithdraw.sol";
 contract FwReceiptStorage {
 
     address public ton;
+    address public l1CrossDomainMessenger;
+    address public seigManagerV2;
     address public optimismSequencer;
     address public candidate;
     uint256 public receiptNo;
 
-    // receiptKey bytes32(keccak256(_l2Messages))
+    // receiptKey keccak256(_l2Messages)
     mapping(bytes32 => LibFastWithdraw.Message) public messages;
 
     // address - sum of tx's amount
-    mapping(address => mapping(uint32 => uint256)) sumOfReceipts;
+    mapping(address => mapping(uint32 => uint256)) sumOfReceiptsOfSequencers;
+    mapping(address => mapping(uint32 => uint256)) sumOfReceiptsOfCandidates;
 
     mapping(address => bytes32[]) txsOfProviders;
     bool internal free = true;

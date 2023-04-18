@@ -9,7 +9,7 @@ import "../interfaces/IProxyAction.sol";
 import "./BaseProxyStorage.sol";
 import "../common/AccessibleCommon.sol";
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 contract BaseProxy is AccessibleCommon, BaseProxyStorage, IProxyEvent, IProxyAction
 {

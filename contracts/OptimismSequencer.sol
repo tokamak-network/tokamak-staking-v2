@@ -16,13 +16,11 @@ interface AddressManagerI {
 }
 
 interface FwReceiptI {
-    function debtForFastWithdraw(address account, uint32 layerIndex) external view returns (uint256);
+    function debtInStaked(bool isCandidate, uint32 layerIndex, address account) external view returns (uint256);
 }
 
 contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
-    using BytesLib for bytes;
-    // using Layer2 for mapping(bytes32 => Layer2.Layer2Info);
-    // using Layer2 for Layer2.Layer2Info;
+    using BytesParserLib for bytes;
     using SafeERC20 for IERC20;
 
     event FastWithdrawalClaim(uint32 layerIndex, address from, address to, uint256 amount);
@@ -83,12 +81,12 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
         return true;
     }
 
-    function availableProvidingLiquidity(uint32 layerIndex, address account, uint256 amount) external view returns (bool){
-        if (balanceOf(layerIndex, account) >= amount) {
-            return true;
-        }
-        return false;
-    }
+    // function availableProvidingLiquidity(uint32 layerIndex, address account, uint256 amount) external view returns (bool){
+    //     if (balanceOf(layerIndex, account) >= amount) {
+    //         return true;
+    //     }
+    //     return false;
+    // }
 
     /* ========== only TON ========== */
     function onApprove(
@@ -118,7 +116,7 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
 
     function unstake(uint32 _index, uint256 lton_) external
     {
-        _unstake(_index, lton_, FwReceiptI(fwReceipt).debtForFastWithdraw(msg.sender, _index));
+        _unstake(_index, lton_, FwReceiptI(fwReceipt).debtInStaked(false, _index, msg.sender));
     }
 
     function existedIndex(uint32 _index) public view override returns (bool) {

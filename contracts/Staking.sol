@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.4;
 
-import "./libraries/BytesLib.sol";
+import "./libraries/BytesParserLib.sol";
 import "./storages/StakingStorage.sol";
 import "./proxy/BaseProxyStorage.sol";
 import "./common/AccessibleCommon.sol";
@@ -36,7 +36,7 @@ interface Layer2ManagerI {
 contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
     /* ========== DEPENDENCIES ========== */
     using SafeERC20 for IERC20;
-    using BytesLib for bytes;
+    using BytesParserLib for bytes;
 
     event Staked(uint32 _index, address sender, uint256 amount, uint256 lton, address commissionTo, uint16 commission);
     event Unstaked(uint32 _index, address sender, uint256 amount, uint256 lton);
@@ -95,7 +95,6 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
     {
         // require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
         address sender = msg.sender;
-
         uint256 amount = SeigManagerV2I(seigManagerV2).getLtonToTon(lton_);
 
         LibStake.StakeInfo storage info_ = layerStakes[_index][sender];
