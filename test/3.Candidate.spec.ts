@@ -43,7 +43,8 @@ describe('Candidate', () => {
                 deployed.candidateProxy.connect(addr1).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2Proxy.address,
-                    deployed.layer2ManagerProxy.address
+                    deployed.layer2ManagerProxy.address,
+                    deployed.fwReceiptProxy.address
                 )
                 ).to.be.revertedWith("Accessible: Caller is not an admin")
         })
@@ -52,12 +53,14 @@ describe('Candidate', () => {
             await snapshotGasCost(deployed.candidateProxy.connect(deployer).initialize(
                 seigManagerInfo.ton,
                 deployed.seigManagerV2Proxy.address,
-                deployed.layer2ManagerProxy.address
+                deployed.layer2ManagerProxy.address,
+                deployed.fwReceiptProxy.address
                 ))
 
             expect(await deployed.candidateProxy.ton()).to.eq(seigManagerInfo.ton)
             expect(await deployed.candidateProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
             expect(await deployed.candidateProxy.layer2Manager()).to.eq(deployed.layer2ManagerProxy.address)
+            expect(await deployed.candidateProxy.fwReceipt()).to.eq(deployed.fwReceiptProxy.address)
 
         })
 
@@ -66,7 +69,8 @@ describe('Candidate', () => {
                 deployed.candidateProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2Proxy.address,
-                    deployed.layer2ManagerProxy.address
+                    deployed.layer2ManagerProxy.address,
+                    deployed.fwReceiptProxy.address
                 )
                 ).to.be.revertedWith("already initialize")
         })
