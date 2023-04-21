@@ -53,8 +53,8 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
     event Unstaked(uint32 _index, address sender, uint256 amount, uint256 lton);
     event Restaked(uint32 _index, address sender, uint256 amount, uint256 lton);
     event Withdrawal(uint32 _index, address sender, uint256 amount);
-    event FastWithdrawalClaim(uint32 layerIndex, address from, address to, uint256 amount);
-    event FastWithdrawalStaked(uint32 layerIndex, address staker, uint256 amount, uint256 lton);
+    event FastWithdrawalClaim(bytes32 hashMessage, uint32 layerIndex, address from, address to, uint256 amount);
+    event FastWithdrawalStaked(bytes32 hashMessage, uint32 layerIndex, address staker, uint256 amount, uint256 lton);
 
     /* ========== CONSTRUCTOR ========== */
     constructor() {
@@ -65,7 +65,7 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
 
     /* ========== only Receipt ========== */
 
-    function fastWithdrawClaim(uint32 layerIndex, address from, address to, uint256 amount) external ifFree returns (bool){
+    function fastWithdrawClaim(bytes32 hashMessage, uint32 layerIndex, address from, address to, uint256 amount) external ifFree returns (bool){
         require(fwReceipt == msg.sender, "FW_CALLER_ERR");
         require(balanceOf(layerIndex, from) >= amount, "liquidity is insufficient");
 
@@ -78,11 +78,11 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
             IERC20(ton).safeTransfer(to, amount);
         }
 
-        emit FastWithdrawalClaim(layerIndex, from, to, amount);
+        emit FastWithdrawalClaim(hashMessage, layerIndex, from, to, amount);
         return true;
     }
 
-    function fastWithdrawStake(uint32 layerIndex, address staker, uint256 _amount) external returns (bool){
+    function fastWithdrawStake(bytes32 hashMessage, uint32 layerIndex, address staker, uint256 _amount) external returns (bool){
         require(fwReceipt == msg.sender, "FW_CALLER_ERR");
         uint256 lton_ = SeigManagerV2I(seigManagerV2).getTonToLton(_amount);
         layerStakedLton[layerIndex] += lton_;
@@ -90,7 +90,7 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
         LibStake.StakeInfo storage info_ = layerStakes[layerIndex][staker];
         info_.stakePrincipal += _amount;
         info_.stakelton += lton_;
-        emit FastWithdrawalStaked(layerIndex, staker, _amount, lton_);
+        emit FastWithdrawalStaked(hashMessage, layerIndex, staker, _amount, lton_);
         return true;
     }
 

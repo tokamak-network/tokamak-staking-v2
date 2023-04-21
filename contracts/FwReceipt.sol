@@ -27,8 +27,8 @@ interface SequencerI {
 
     function bridges(uint32 _index) external view returns (address, address);
     function balanceOf(uint32 _index, address account) external view returns (uint256 amount);
-    function fastWithdrawClaim(uint32 layerIndex, address from, address to, uint256 amount) external returns (bool);
-    function fastWithdrawStake(uint32 layerIndex, address staker, uint256 amount) external returns (bool);
+    function fastWithdrawClaim(bytes32 hashMessage, uint32 layerIndex, address from, address to, uint256 amount) external returns (bool);
+    function fastWithdrawStake(bytes32 hashMessage, uint32 layerIndex, address staker, uint256 amount) external returns (bool);
 }
 
 interface CandidateI {
@@ -145,12 +145,12 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
                     if (!_liquidity.isCandidate) {
                         sumOfProvidedOfSequencer += _liquidity.amount;
                         sumOfReceiptsOfSequencers[_liquidity.provider][_liquidity.indexNo] -= provideAmount;
-                        fwStake = SequencerI(optimismSequencer).fastWithdrawStake(_liquidity.indexNo, _liquidity.provider, fee);
+                        fwStake = SequencerI(optimismSequencer).fastWithdrawStake(hashMessage, _liquidity.indexNo, _liquidity.provider, fee);
 
                     } else {
                         sumOfProvidedOfCandidate += _liquidity.amount;
                         sumOfReceiptsOfCandidates[_liquidity.provider][_liquidity.indexNo] -= provideAmount;
-                        fwStake = SequencerI(candidate).fastWithdrawStake(_liquidity.indexNo, _liquidity.provider, fee);
+                        fwStake = SequencerI(candidate).fastWithdrawStake(hashMessage, _liquidity.indexNo, _liquidity.provider, fee);
                     }
                     deleteTxsOfProviders(_liquidity.provider, hashMessage);
                     require(fwStake, 'fail fwStake');
@@ -271,11 +271,11 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
         require(provideAmount1 <= availableLiquidity(_isCandidate, _indexNo, msg.sender), "liquidity is insufficient.");
 
         if (_isCandidate) {
-            require(SequencerI(candidate).fastWithdrawClaim(_indexNo, msg.sender, _requestor, provideAmount1),
+            require(SequencerI(candidate).fastWithdrawClaim(hashMessage, _indexNo, msg.sender, _requestor, provideAmount1),
                 "fail fastWithdrawCalim ");
             sumOfReceiptsOfCandidates[msg.sender][_indexNo] += provideAmount1;
         } else {
-            require(SequencerI(optimismSequencer).fastWithdrawClaim(_indexNo, msg.sender, _requestor, provideAmount1),
+            require(SequencerI(optimismSequencer).fastWithdrawClaim(hashMessage, _indexNo, msg.sender, _requestor, provideAmount1),
                  "fail fastWithdrawCalim ");
             sumOfReceiptsOfSequencers[msg.sender][_indexNo] += provideAmount1;
         }

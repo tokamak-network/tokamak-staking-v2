@@ -100,6 +100,7 @@ describe('OptimismSequencer', () => {
 
             await expect(
                 deployed.optimismSequencer.connect(addr1).fastWithdrawClaim(
+                    ethers.constants.HashZero,
                     _index,
                     addr1.address,
                     addr1.address,
@@ -118,6 +119,7 @@ describe('OptimismSequencer', () => {
 
             await expect(
                 deployed.optimismSequencer.connect(addr1).fastWithdrawStake(
+                    ethers.constants.HashZero,
                     _index,
                     addr1.address,
                     amount
