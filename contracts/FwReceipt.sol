@@ -104,6 +104,7 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
         )
         external returns (uint8)
     {
+        require(requestAmount != 0 && layerIndex != uint32(0), "Z1");
         require(validateHashMessage(
             requestor,
             requestAmount,
