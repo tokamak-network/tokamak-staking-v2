@@ -4,31 +4,10 @@ import "./libraries/LibOperator.sol";
 import "./storages/CandidateStorage.sol";
 import "./Staking.sol";
 
-interface L1BridgeI {
-    function deposits(address l1token, address l2token) external view returns (uint256);
-}
-
-interface AddressManagerI {
-    function getAddress(string memory _name) external view returns (address);
-}
-
-interface FwReceiptI {
-    function debtInStaked(bool isCandidate, uint32 layerIndex, address account) external view returns (uint256);
-}
-
-
 contract Candidate is Staking, CandidateStorage {
     using BytesParserLib for bytes;
     using SafeERC20 for IERC20;
     /* ========== DEPENDENCIES ========== */
-
-    event FastWithdrawalClaim(uint32 layerIndex, address from, address to, uint256 amount);
-    event FastWithdrawalStaked(uint32 layerIndex, address staker, uint256 amount, uint256 lton);
-
-    modifier onlyLayer2Manager() {
-        require(msg.sender == layer2Manager, "not Layer2Manager");
-        _;
-    }
 
     /* ========== CONSTRUCTOR ========== */
     constructor() {
@@ -60,37 +39,8 @@ contract Candidate is Staking, CandidateStorage {
         return true;
     }
 
-    /* ========== only Receipt ========== */
-    function fastWithdrawClaim(uint32 layerIndex, address from, address to, uint256 amount) external ifFree returns (bool){
-        require(fwReceipt == msg.sender, "FW_CALLER_ERR");
-        require(balanceOf(layerIndex, from) >= amount, "liquidity is insufficient");
-
-        uint256 bal = IERC20(ton).balanceOf(address(this));
-
-        if (bal < amount) {
-            if (bal > 0) IERC20(ton).safeTransfer(to, bal);
-            SeigManagerV2I(seigManagerV2).claim(to, (amount - bal));
-        } else {
-            IERC20(ton).safeTransfer(to, amount);
-        }
-
-        emit FastWithdrawalClaim(layerIndex, from, to, amount);
-        return true;
-    }
-
-    function fastWithdrawStake(uint32 layerIndex, address staker, uint256 _amount) external returns (bool){
-        require(fwReceipt == msg.sender, "FW_CALLER_ERR");
-        uint256 lton_ = SeigManagerV2I(seigManagerV2).getTonToLton(_amount);
-        layerStakedLton[layerIndex] += lton_;
-        totalStakedLton += lton_;
-        LibStake.StakeInfo storage info_ = layerStakes[layerIndex][staker];
-        info_.stakePrincipal += _amount;
-        info_.stakelton += lton_;
-        emit FastWithdrawalStaked(layerIndex, staker, _amount, lton_);
-        return true;
-    }
-
     /* ========== only TON ========== */
+
     function onApprove(
         address sender,
         address spender,

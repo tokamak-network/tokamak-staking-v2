@@ -5,7 +5,6 @@ import "../proxy/BaseProxy.sol";
 import "../storages/StakingStorage.sol";
 import "../storages/OptimismSequencerStorage.sol";
 
-
 // import "hardhat/console.sol";
 
 contract OptimismSequencerProxy is BaseProxy, StakingStorage, OptimismSequencerStorage {

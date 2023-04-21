@@ -13,10 +13,6 @@ contract SeigManagerV2Proxy is BaseProxy, SeigManagerV2Storage {
         address _wton,
         address _tot,
         address[4] calldata addr, // _seigManagerV1, _layer2Manager, _optimismSequencer, _candidate
-        // address _seigManagerV1,
-        // address _layer2Manager,
-        // address _optimismSequencer,
-        // address _candidate,
         uint256 _seigPerBlock,
         uint32 _minimumBlocksForUpdateSeig,
         uint16[4] calldata _rates   // ratesTonStakers, ratesDao, ratesStosHolders,ratesUnits

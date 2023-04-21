@@ -93,6 +93,55 @@ const iL1BridgeFinalWithdrawAbi = [{
     "type": "function"
   }];
 
+const iL1CrossDomainMessengerAbi = [
+    {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "name": "successfulMessages",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_target",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_sender",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "_message",
+            "type": "bytes"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_messageNonce",
+            "type": "uint256"
+          }
+        ],
+        "name": "relayMessage",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ] ;
 export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture> {
 
     const [deployer, addr1, addr2, sequencer1, dao, stosDistribute ] = await ethers.getSigners();
@@ -236,8 +285,8 @@ export const getLayerKey = async function (info: Layer2Fixture): Promise<string>
 
     const constructorArgumentsEncoded = ethers.utils.concat([
             ethers.utils.arrayify(info.addressManager),
-            // ethers.utils.arrayify(info.l1Messenger),
-            // ethers.utils.arrayify(info.l1Bridge),
+            ethers.utils.arrayify(info.l1Bridge),
+            ethers.utils.arrayify(info.l2Bridge),
             ethers.utils.arrayify(info.l2ton)
         ]
       )
@@ -265,6 +314,139 @@ export const getCandidateLayerKey = function (info: OperatorFixture): string {
    return ethers.utils.keccak256(constructorArgumentsEncoded) ;
 }
 
+// export const bytesFastWithdrawMessage = async function (
+//     fwReceiptContract: string,
+//     l1ton: string,
+//     layerInfo: Layer2Fixture,
+//     info: FastWithdrawMessageFixture): Promise<ParseMessageFixture> {
+
+//     let ifwReceipt = new ethers.utils.Interface(ifwReceiptAbi);
+//     let iBridge = new ethers.utils.Interface(iL1BridgeFinalWithdrawAbi);
+//     let iL1CrossDomainMessenger = new ethers.utils.Interface(iL1CrossDomainMessengerAbi);
+
+//     // 1+20+20+20+32+2+4+4 = 103
+//     let fwRequestBytes = ethers.utils.solidityPack(
+//         ["uint8","address","address","address","uint256","uint16","uint32","uint32"],
+//         [
+//             info.version,
+//             layerInfo.l2ton,
+//             info.requestor,
+//             fwReceiptContract,
+//             info.amount.toString(),
+//             info.feeRates,
+//             info.deadline,
+//             info.layerIndex
+//         ]
+//         );
+//     // console.log('fwRequestBytes solidityPack',fwRequestBytes)
+
+//     let fwRequestBytes1 = ethers.utils.solidityPack(
+//       ["uint16","uint32","uint32"],
+//       [
+//           info.feeRates,
+//           info.deadline,
+//           info.layerIndex
+//       ]
+//       );
+//       let fwReceiptData1 = ifwReceipt.encodeFunctionData("finalizeFastWithdraw",[ fwRequestBytes ]);
+
+//     // 4+103 = 107
+//     let fwReceiptData = ifwReceipt.encodeFunctionData("finalizeFastWithdraw",[ fwRequestBytes ]);
+//     // console.log('*** fwReceiptData ',fwReceiptData);
+
+//     // 4+20+20+20+20+32+107 = 223
+//     let finalizeERC20WithdrawalData = iBridge.encodeFunctionData("finalizeERC20Withdrawal",
+//         [
+//             l1ton,
+//             layerInfo.l2ton,
+//             info.requestor,
+//             fwReceiptContract,
+//             info.amount,
+//             fwRequestBytes1 ]
+//         );
+
+//     // console.log('finalizeERC20WithdrawalData', finalizeERC20WithdrawalData);
+
+//     // 4+20+20+223+32 = 299
+//     let xDomainCalldata = iL1CrossDomainMessenger.encodeFunctionData("relayMessage",
+//     [
+//         layerInfo.l1Bridge,
+//         layerInfo.l2Bridge,
+//         finalizeERC20WithdrawalData,
+//         info.messageNonce ]);
+
+//     // console.log('relayMessage', xDomainCalldata);
+
+//     let hashMessage = await ethers.utils.keccak256(xDomainCalldata);
+
+//     return  {
+//         xDomainCalldata: xDomainCalldata,
+//         finalizeERC20WithdrawalData: finalizeERC20WithdrawalData,
+//         fwReceiptData: fwReceiptData,
+//         fwRequestBytes: fwRequestBytes,
+//         hashMessage: hashMessage
+//     }
+// }
+
+export const bytesFastWithdrawMessage1 = async function (
+  fwReceiptContract: string,
+  l1ton: string,
+  layerInfo: Layer2Fixture,
+  info: FastWithdrawMessageFixture): Promise<ParseMessageFixture> {
+
+  let ifwReceipt = new ethers.utils.Interface(ifwReceiptAbi);
+  let iBridge = new ethers.utils.Interface(iL1BridgeFinalWithdrawAbi);
+  let iL1CrossDomainMessenger = new ethers.utils.Interface(iL1CrossDomainMessengerAbi);
+
+  // 1+20+20+20+32+2+4+4 = 103
+  let fwRequestBytes = ethers.utils.solidityPack(
+    ["uint16","uint32","uint32"],
+    [
+        info.feeRates,
+        info.deadline,
+        info.layerIndex
+    ]
+    );
+  // console.log('fwRequestBytes solidityPack',fwRequestBytes)
+
+  // 4+103 = 107
+  let fwReceiptData = ifwReceipt.encodeFunctionData("finalizeFastWithdraw",[ fwRequestBytes ]);
+  // console.log('*** fwReceiptData ',fwReceiptData);
+
+  // 4+20+20+20+20+32+107 = 223
+  let finalizeERC20WithdrawalData = iBridge.encodeFunctionData("finalizeERC20Withdrawal",
+      [
+          l1ton,
+          layerInfo.l2ton,
+          info.requestor,
+          fwReceiptContract,
+          info.amount,
+          fwRequestBytes ]
+      );
+
+  // console.log('finalizeERC20WithdrawalData', finalizeERC20WithdrawalData);
+
+  // 4+20+20+223+32 = 299
+  let xDomainCalldata = iL1CrossDomainMessenger.encodeFunctionData("relayMessage",
+  [
+      layerInfo.l1Bridge,
+      layerInfo.l2Bridge,
+      finalizeERC20WithdrawalData,
+      info.messageNonce ]);
+
+  // console.log('relayMessage', xDomainCalldata);
+
+  let hashMessage = await ethers.utils.keccak256(xDomainCalldata);
+
+  return  {
+      xDomainCalldata: xDomainCalldata,
+      finalizeERC20WithdrawalData: finalizeERC20WithdrawalData,
+      fwReceiptData: fwReceiptData,
+      fwRequestBytes: fwRequestBytes,
+      hashMessage: hashMessage
+  }
+}
+/*
 export const bytesFastWithdrawMessage = function (
     fwReceiptContract: string,
     l1ton: string,
@@ -329,7 +511,7 @@ export const bytesFastWithdrawMessage = function (
         fwRequestBytes: fwRequestBytes
     }
 }
-
+*/
 export const bytesInvalidFastWithdrawMessage = function (info: FastWithdrawMessageFixture): string {
 
     let data = ethers.utils.solidityPack(

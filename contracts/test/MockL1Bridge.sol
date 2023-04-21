@@ -31,6 +31,16 @@ interface MockL1BridgeI {
     ) external;
 }
 
+interface IL1CrossDomainMessenger {
+    function relayMessage(
+            address _target,
+            address _sender,
+            bytes memory _message,
+            uint256 _messageNonce
+        )  external;
+}
+
+
 contract MockL1Bridge is Ownable {
     using SafeERC20 for IERC20;
 
@@ -112,20 +122,27 @@ contract MockL1Bridge is Ownable {
 
     }
 
+
     function finalizeERC20Withdrawal(
         address _l1Token,
         address _l2Token,
         address _from,
         address _to,
         uint256 _amount,
-        bytes memory _data
+        bytes memory _data,
+        uint256 _nonce
     // ) external onlyFromCrossDomainAccount(l2TokenBridge) {
     ) external {
 
-        bytes32 _hash = keccak256(abi.encodeWithSelector(MockL1BridgeI.finalizeERC20Withdrawal.selector,
-            _l1Token, _l2Token, _from, _to, _amount, _data));
+        bytes memory _message = abi.encodeWithSelector(MockL1BridgeI.finalizeERC20Withdrawal.selector,
+            _l1Token, _l2Token, _from, _to, _amount, _data);
 
-        require(!L1MessengerI(l1Messenger).successfulMessages(_hash), "already done");
+        bytes memory _message2 = abi.encodeWithSelector(IL1CrossDomainMessenger.relayMessage.selector,
+            address(this), l2TokenBridge, _message, _nonce);
+
+        bytes32 _key = keccak256(_message2);
+
+        require(!L1MessengerI(l1Messenger).successfulMessages(_key), "already done");
 
         uint256 bal = IERC20(_l1Token).balanceOf(address(this));
 
@@ -136,16 +153,16 @@ contract MockL1Bridge is Ownable {
         if(deposits[_l1Token][_l2Token] > _amount)
             deposits[_l1Token][_l2Token] = deposits[_l1Token][_l2Token] - _amount;
 
-        L1MessengerI(l1Messenger).setSuccessfulMessages(_hash, true);
+        L1MessengerI(l1Messenger).setSuccessfulMessages(_key, true);
 
         // When a withdrawal is finalized on L1, the L1 Bridge transfers the funds to the withdrawer
         // slither-disable-next-line reentrancy-events
         IERC20(_l1Token).safeTransfer(_to, _amount);
 
         // 질문. core evm 에서는 data 실행하는 코드가 왜 없는지..
-        if(_data.length != 0){
-            (bool success, bytes memory result) = _to.call{value:0}(_data);
-        }
+        // if(_data.length != 0){
+        //     (bool success, bytes memory result) = _to.call{value:0}(_message2);
+        // }
 
         // console.logBool(success);
         // console.logBytes(result);

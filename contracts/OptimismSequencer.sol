@@ -5,33 +5,14 @@ import "./storages/OptimismSequencerStorage.sol";
 import "./Staking.sol";
 import "./Sequencer.sol";
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
-interface L1BridgeI {
-    function deposits(address l1token, address l2token) external view returns (uint256);
-}
-
-interface AddressManagerI {
-    function getAddress(string memory _name) external view returns (address);
-}
-
-interface FwReceiptI {
-    function debtInStaked(bool isCandidate, uint32 layerIndex, address account) external view returns (uint256);
-}
 
 contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
     using BytesParserLib for bytes;
     using SafeERC20 for IERC20;
 
-    event FastWithdrawalClaim(uint32 layerIndex, address from, address to, uint256 amount);
-    event FastWithdrawalStaked(uint32 layerIndex, address staker, uint256 amount, uint256 lton);
-
     /* ========== DEPENDENCIES ========== */
-
-    modifier onlyLayer2Manager() {
-        require(msg.sender == layer2Manager, "not Layer2Manager");
-        _;
-    }
 
     /* ========== CONSTRUCTOR ========== */
     constructor() {
@@ -44,49 +25,12 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
     function create(uint32 _index, bytes memory _layerInfo)
         external onlyLayer2Manager override returns (bool)
     {
-        require(_layerInfo.length == 40, "wrong layerInfo");
+        require(_layerInfo.length == 80, "wrong layerInfo");
         require(layerInfo[_index].length == 0, "already created");
         layerInfo[_index] = _layerInfo;
 
         return true;
     }
-
-    /* ========== only Receipt ========== */
-    function fastWithdrawClaim(uint32 layerIndex, address from, address to, uint256 amount) external ifFree returns (bool){
-        require(fwReceipt == msg.sender, "FW_CALLER_ERR");
-        require(balanceOf(layerIndex, from) >= amount, "liquidity is insufficient");
-
-        uint256 bal = IERC20(ton).balanceOf(address(this));
-
-        if (bal < amount) {
-            if (bal > 0) IERC20(ton).safeTransfer(to, bal);
-            SeigManagerV2I(seigManagerV2).claim(to, (amount - bal));
-        } else {
-            IERC20(ton).safeTransfer(to, amount);
-        }
-
-        emit FastWithdrawalClaim(layerIndex, from, to, amount);
-        return true;
-    }
-
-    function fastWithdrawStake(uint32 layerIndex, address staker, uint256 _amount) external returns (bool){
-        require(fwReceipt == msg.sender, "FW_CALLER_ERR");
-        uint256 lton_ = SeigManagerV2I(seigManagerV2).getTonToLton(_amount);
-        layerStakedLton[layerIndex] += lton_;
-        totalStakedLton += lton_;
-        LibStake.StakeInfo storage info_ = layerStakes[layerIndex][staker];
-        info_.stakePrincipal += _amount;
-        info_.stakelton += lton_;
-        emit FastWithdrawalStaked(layerIndex, staker, _amount, lton_);
-        return true;
-    }
-
-    // function availableProvidingLiquidity(uint32 layerIndex, address account, uint256 amount) external view returns (bool){
-    //     if (balanceOf(layerIndex, account) >= amount) {
-    //         return true;
-    //     }
-    //     return false;
-    // }
 
     /* ========== only TON ========== */
     function onApprove(
@@ -131,7 +75,7 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
     }
 
     function getLayerKey(uint32 _index) public view virtual override returns (bytes32 layerKey_) {
-        layerKey_ = bytes32(keccak256(layerInfo[_index]));
+        layerKey_ = keccak256(layerInfo[_index]);
     }
 
     function getTvl(uint32 _index) public view override returns (uint256 amount) {
@@ -183,17 +127,6 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
         }
     }
 
-    function L1StandardBridge(uint32 _index) public view returns (address) {
-        address manager = LibOptimism.getAddressManager(layerInfo[_index]);
-        if (manager == address(0)) return address(0);
-        try
-            AddressManagerI(manager).getAddress('Proxy__OVM_L1StandardBridge') returns (address a) {
-                return a;
-        } catch (bytes memory) {
-            return address(0);
-        }
-    }
-
     function L1StandardBridge(address addressManager) public view returns (address account_) {
         if (addressManager == address(0)) return address(0);
         try
@@ -202,6 +135,12 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
         } catch (bytes memory ) {
             account_ = address(0);
         }
+    }
+
+    function bridges(uint32 _index) public view returns (address, address) {
+
+        LibOptimism.Info memory _layerInfo = LibOptimism.parseKey(layerInfo[_index]);
+        return (_layerInfo.l1Bridge, _layerInfo.l2Bridge) ;
     }
 
     /* ========== internal ========== */

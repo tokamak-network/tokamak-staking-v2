@@ -34,6 +34,5 @@ contract Layer2ManagerProxy is BaseProxy, Layer2ManagerStorage {
         delayBlocksForWithdraw = _delayBlocksForWithdraw;
 
         maxLayer2Count = 5;
-        // ratioSecurityDepositOfTvl = 0;
     }
 }

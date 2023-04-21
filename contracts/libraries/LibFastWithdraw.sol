@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./BytesParserLib.sol";
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 
 interface IFwReceipt {
@@ -56,8 +56,6 @@ library LibFastWithdraw
         INVALID_FUNC_SIG,
         UNSUPPORTED_VERSION
     }
-    // uint32 layerIndex, uint256 amount
-    uint256 private constant REQUEST_SIZE = 36;
 
     struct Request {
         address l1ton;
@@ -65,6 +63,12 @@ library LibFastWithdraw
         address requestor;
         address fwReceipt;
         uint256 amount;
+        uint16 feeRates;
+        uint32 deadline;
+        uint32 layerIndex;
+    }
+
+    struct FwRequestInfo {
         uint16 feeRates;
         uint32 deadline;
         uint32 layerIndex;
@@ -85,7 +89,7 @@ library LibFastWithdraw
         uint32 indexNo;
     }
 
-    function decodeLiquidity (bytes memory data) public view returns (Liquidity memory _liq) {
+    function decodeLiquidity (bytes memory data) public pure returns (Liquidity memory _liq) {
         if (data.length > 56) {
             _liq = Liquidity({
                 provider : data.toAddress(0),
@@ -96,11 +100,22 @@ library LibFastWithdraw
         }
     }
 
-    function encodeLiquidity (Liquidity memory _data) public view returns (bytes memory data) {
+    function encodeLiquidity (Liquidity memory _data) public pure returns (bytes memory data) {
         data = abi.encodePacked(_data.provider, _data.amount, _data.isCandidate, _data.indexNo);
     }
 
-    function decodeLiquidities (bytes memory data) public view returns (Liquidity[] memory _liquidities) {
+
+    function totalLiquidity(bytes memory data) public pure returns (uint256 amount) {
+        Liquidity[] memory _liquidities = decodeLiquidities (data);
+
+        uint256 len = _liquidities.length;
+        for(uint256 i = 0; i < len; i++){
+            amount += _liquidities[i].amount;
+        }
+    }
+
+
+    function decodeLiquidities (bytes memory data) public pure returns (Liquidity[] memory _liquidities) {
         uint256 _packetSize = 57;
         if (data.length > (_packetSize-1)) {
             uint256 _count = data.length / _packetSize;
@@ -112,12 +127,86 @@ library LibFastWithdraw
         }
     }
 
-    function encodeLiquidities (Liquidity[] memory _datas) public view returns (bytes memory data) {
+    function encodeLiquidities (Liquidity[] memory _datas) public pure returns (bytes memory data) {
         for (uint256 i = 0; i< _datas.length; i++){
             data = bytes.concat(data, encodeLiquidity(_datas[i]));
         }
     }
 
+    function parseRelayMessage(bytes memory data)
+        public pure
+        returns (uint8 , Request memory , address, address )
+    {
+        uint8 status = uint8(0);
+        address l1Bridge = address(0);
+        address  l2Bridge = address(0);
+        Request memory _request = Request({
+                    l1ton: address(0),
+                    l2ton: address(0),
+                    requestor: address(0),
+                    fwReceipt: address(0),
+                    amount: 0,
+                    feeRates: 0,
+                    deadline: 0,
+                    layerIndex: 0
+                });
+
+        // 299
+        if (data.length < 299) {
+            status = uint8(STATUS.INVALID_LENGTH);
+
+        } else if (bytes4(data.slice(0,4)) != IL1CrossDomainMessenger.relayMessage.selector) {
+            status = uint8(STATUS.INVALID_FUNC_SIG);
+
+        } else {
+            bytes memory bridgeMessage = new bytes(0);
+
+            (l1Bridge, l2Bridge, bridgeMessage, ) =
+                abi.decode(data.slice(4, data.length-4),(address,address,bytes,uint256));
+
+            (address l1ton, address l2ton, address requestor, address to, uint256 amount, bytes memory fwReceiptData) =
+                abi.decode(bridgeMessage.slice(4, bridgeMessage.length-4),(address,address,address,address,uint256,bytes));
+
+            if (amount == 0)   status = uint8(STATUS.ZERO_AMOUNT);
+            else if (requestor == address(0))  status = uint8(STATUS.ZERO_REQUESTOR);
+            else if (to == address(0) || l2ton == address(0) || l1ton == address(0))
+                    status = uint8(STATUS.WRONG_MESSAGE);
+            else if (fwReceiptData.length < 103)  status = uint8(STATUS.INVALID_LENGTH);
+            else if (bytes4(fwReceiptData.slice(0,4)) != IFwReceipt.finalizeFastWithdraw.selector)
+                status = uint8(STATUS.INVALID_FUNC_SIG);
+            else if (status == uint8(0)){
+                (
+                    uint8 status_,
+                    ,
+                    ,
+                    ,
+                    ,
+                    ,
+                    uint16 feeRates_,
+                    uint32 deadline_,
+                    uint32 layerIndex_
+                ) = parseFwReceiptBytes(abi.decode(fwReceiptData.slice(4, fwReceiptData.length-4),(bytes)));
+
+                status = status_;
+
+                _request = Request({
+                    l1ton: l1ton,
+                    l2ton: l2ton,
+                    requestor: requestor,
+                    fwReceipt: to,
+                    amount: amount,
+                    feeRates: feeRates_,
+                    deadline: deadline_,
+                    layerIndex: layerIndex_
+                });
+
+            }
+        }
+
+        return (status, _request, l1Bridge, l2Bridge);
+    }
+
+    /*
     function parseL1BridgeFinalizeERC20Withdrawal(bytes memory data)
         public pure
         returns (uint8 status, Request memory _request)
@@ -169,8 +258,8 @@ library LibFastWithdraw
 
             }
         }
-        // console.log('status %s', status);
     }
+    */
 
     function parseFwReceiptBytes(bytes memory fwReceiptBytes)
         public pure
@@ -205,4 +294,30 @@ library LibFastWithdraw
         }
     }
 
+    /*
+    function parseFwRequestBytes(bytes memory _data)
+        public pure
+        returns (
+                uint8 status,
+                uint8 version,
+                uint16 feeRates,
+                uint32 deadline,
+                uint32 layerIndex)
+    {
+        // 1+2+4+4  = 11
+        //  ["uint8","uint16","uint32","uint32"],
+        // [info.version,  info.feeRates, info.deadline, info.layerIndex]
+
+        //11
+        if (_data.length < 11) {
+            status = uint8(STATUS.INVALID_LENGTH);
+
+        } else {
+            version = _data.toUint8(0);
+            feeRates = _data.toUint16(1);
+            deadline = _data.toUint32(3);
+            layerIndex = _data.toUint32(7);
+        }
+    }
+    */
 }

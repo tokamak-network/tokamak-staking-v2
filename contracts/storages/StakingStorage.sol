@@ -18,6 +18,7 @@ contract StakingStorage {
     address public ton;
     address public seigManagerV2;
     address public layer2Manager;
+    address public fwReceipt;
     uint256 public totalStakedLton;
 
     mapping (uint32 => uint256) public layerStakedLton;
@@ -43,8 +44,6 @@ contract StakingStorage {
 
     address[] public stakeAccountList;
 
-    address public fwReceipt;
-
     modifier nonZero(uint256 value) {
         require(value != 0, "Z1");
         _;
@@ -52,6 +51,11 @@ contract StakingStorage {
 
     modifier nonZeroAddress(address account) {
         require(account != address(0), "Z2");
+        _;
+    }
+
+    modifier onlyLayer2Manager() {
+        require(msg.sender == layer2Manager, "not Layer2Manager");
         _;
     }
 

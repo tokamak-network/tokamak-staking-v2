@@ -19,16 +19,6 @@ library LibOperator
         key_ = bytes32(keccak256(abi.encodePacked(operator, sequencerIndex)));
     }
 
-
-    function getKey(
-        address addressManager,
-        address l1Messenger,
-        address l1Bridge,
-        address l2ton
-    ) external pure returns (bytes32 key_) {
-        key_ = bytes32(keccak256(abi.encodePacked(addressManager, l1Messenger, l1Bridge, l2ton)));
-    }
-
     function parseKey(bytes memory data) public pure returns (Info memory info){
          if (data.length > 25) {
             info = Info({

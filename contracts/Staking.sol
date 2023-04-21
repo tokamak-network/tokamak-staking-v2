@@ -7,7 +7,19 @@ import "./proxy/BaseProxyStorage.sol";
 import "./common/AccessibleCommon.sol";
 import "./libraries/SafeERC20.sol";
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
+
+interface L1BridgeI {
+    function deposits(address l1token, address l2token) external view returns (uint256);
+}
+
+interface AddressManagerI {
+    function getAddress(string memory _name) external view returns (address);
+}
+
+interface FwReceiptI {
+    function debtInStaked(bool isCandidate, uint32 layerIndex, address account) external view returns (uint256);
+}
 
 interface SeigManagerV2I {
     function getLtonToTon(uint256 lton) external view returns (uint256);
@@ -22,7 +34,6 @@ interface Layer2ManagerI {
     function delayBlocksForWithdraw() external view returns (uint256 amount);
     function totalSecurityDeposit() external view returns (uint256 amount);
     function totalLayer2Deposits() external view returns (uint256 amount);
-    // function registeredLayerKeys(bytes32 layerKey_) external view returns (bool exist_);
     function existedLayer2Index(uint32 _index) external view returns (bool exist_);
     function existedCandidateIndex(uint32 _index) external view returns (bool exist_);
 
@@ -42,12 +53,46 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
     event Unstaked(uint32 _index, address sender, uint256 amount, uint256 lton);
     event Restaked(uint32 _index, address sender, uint256 amount, uint256 lton);
     event Withdrawal(uint32 _index, address sender, uint256 amount);
+    event FastWithdrawalClaim(uint32 layerIndex, address from, address to, uint256 amount);
+    event FastWithdrawalStaked(uint32 layerIndex, address staker, uint256 amount, uint256 lton);
 
     /* ========== CONSTRUCTOR ========== */
     constructor() {
     }
 
     /* ========== onlyOwner ========== */
+
+
+    /* ========== only Receipt ========== */
+
+    function fastWithdrawClaim(uint32 layerIndex, address from, address to, uint256 amount) external ifFree returns (bool){
+        require(fwReceipt == msg.sender, "FW_CALLER_ERR");
+        require(balanceOf(layerIndex, from) >= amount, "liquidity is insufficient");
+
+        uint256 bal = IERC20(ton).balanceOf(address(this));
+
+        if (bal < amount) {
+            if (bal > 0) IERC20(ton).safeTransfer(to, bal);
+            SeigManagerV2I(seigManagerV2).claim(to, (amount - bal));
+        } else {
+            IERC20(ton).safeTransfer(to, amount);
+        }
+
+        emit FastWithdrawalClaim(layerIndex, from, to, amount);
+        return true;
+    }
+
+    function fastWithdrawStake(uint32 layerIndex, address staker, uint256 _amount) external returns (bool){
+        require(fwReceipt == msg.sender, "FW_CALLER_ERR");
+        uint256 lton_ = SeigManagerV2I(seigManagerV2).getTonToLton(_amount);
+        layerStakedLton[layerIndex] += lton_;
+        totalStakedLton += lton_;
+        LibStake.StakeInfo storage info_ = layerStakes[layerIndex][staker];
+        info_.stakePrincipal += _amount;
+        info_.stakelton += lton_;
+        emit FastWithdrawalStaked(layerIndex, staker, _amount, lton_);
+        return true;
+    }
 
     /* ========== Anyone can execute ========== */
 

@@ -8,7 +8,7 @@ import "./libraries/SafeERC20.sol";
 import "./libraries/Layer2.sol";
 import "./libraries/LibOptimism.sol";
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 interface AddressManagerI {
     function getAddress(string memory _name) external view returns (address);
@@ -44,7 +44,7 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
     using SafeERC20 for IERC20;
 
     event Claimed(uint32 _index, address _sequencer, uint256 amount);
-    event CreatedOptimismSequencer(uint32 _index, address _sequencer, bytes32 _name, address addressManager, address l1Bridge, address l2ton, uint256 depositAmount);
+    event CreatedOptimismSequencer(uint32 _index, address _sequencer, bytes32 _name, address addressManager, address l1Bridge, address l2Bridge, address l2ton, uint256 depositAmount);
     event CreatedCandidate(uint32 _index, address _operator, bytes32 _name, uint32 _sequencerIndex, uint16 _commission, uint256 depositAmount);
     event Distributed(uint256 _totalSeigs, uint256 _distributedAmount);
     event IncreasedSecurityDeposit(uint32 _index, address caller, uint256 amount);
@@ -108,6 +108,8 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
     function createOptimismSequencer(
         bytes32 _name,
         address addressManager,
+        address l1Bridge,
+        address l2Bridge,
         address l2ton,
         uint256 amount
     )
@@ -122,11 +124,11 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
             l2ton != address(0), "zero address"
         );
 
-        bytes32 _key = LibOptimism.getKey(addressManager, l2ton);
+        bytes32 _key = LibOptimism.getKey(addressManager, l1Bridge, l2Bridge, l2ton);
         require(!layerKeys[_key], 'already created');
 
-        address l1Bridge = SequencerI(optimismSequencer).L1StandardBridge(addressManager);
-        require(l1Bridge != address(0), 'zero l1Bridge');
+        address _l1Bridge = SequencerI(optimismSequencer).L1StandardBridge(addressManager);
+        require(l1Bridge == _l1Bridge, 'different l1Bridge');
 
         require(amount >= minimumSecurityDepositAmount(l1Bridge, l2ton), 'security deposit is insufficent');
 
@@ -140,14 +142,16 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         optimismSequencerNames[_index] = _name;
 
         require(
-            SequencerI(optimismSequencer).create(_index, abi.encodePacked(addressManager, l2ton)),
+            SequencerI(optimismSequencer).create(
+                _index,
+                abi.encodePacked(addressManager, l1Bridge, l2Bridge, l2ton)),
             "Fail createOptimismSequencer"
         );
 
         if (amount != 0) ton.safeTransferFrom(msg.sender, address(this), amount);
 
         emit CreatedOptimismSequencer(
-            _index, msg.sender, _name, addressManager, l1Bridge, l2ton, amount);
+            _index, msg.sender, _name, addressManager, l1Bridge, l2Bridge, l2ton, amount);
     }
 
     function createCandidate(

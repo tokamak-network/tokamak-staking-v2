@@ -7,7 +7,7 @@ import "./common/AccessibleCommon.sol";
 import "./libraries/SafeERC20.sol";
 import "./libraries/Layer2.sol";
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 interface AutoRefactorCoinageI {
     function totalSupply() external view returns (uint256);

@@ -26,7 +26,8 @@ interface ParseMessageFixture  {
     xDomainCalldata: string,
     finalizeERC20WithdrawalData: string,
     fwReceiptData: string,
-    fwRequestBytes: string
+    fwRequestBytes: string,
+    hashMessage: string
 }
 
 interface DomainMessageFixture  {
@@ -38,10 +39,11 @@ interface DomainMessageFixture  {
     provider: string,
     isCandidate: boolean,
     indexNo: number,
-    xDomainCalldata: string,
-    finalizeERC20WithdrawalData: string,
-    fwReceiptData: string,
-    fwRequestBytes: string
+    parseMessage: ParseMessageFixture
+    // xDomainCalldata: string,
+    // finalizeERC20WithdrawalData: string,
+    // fwReceiptData: string,
+    // fwRequestBytes: string
 }
 
 interface FastWithdrawMessageFixture  {
@@ -50,7 +52,8 @@ interface FastWithdrawMessageFixture  {
     amount: BigNumber,
     feeRates: number,
     deadline: number,
-    layerIndex: number
+    layerIndex: number,
+    messageNonce: BigNumber
 }
 interface Layer2Fixture  {
     addressManager: string,

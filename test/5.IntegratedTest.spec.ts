@@ -6,10 +6,10 @@ import {
     FW_STATUS,
     stakingV2Fixtures, getLayerKey, getCandidateKey,
     getCandidateLayerKey,
-    bytesFastWithdrawMessage
+    bytesFastWithdrawMessage1
     } from './shared/fixtures'
 import {
-    Layer2Fixture,
+    Layer2Fixture, ParseMessageFixture,
     TonStakingV2Fixture, FastWithdrawMessageFixture, DomainMessageFixture} from './shared/fixtureInterfaces'
 import snapshotGasCost from './shared/snapshotGasCost'
 
@@ -19,7 +19,7 @@ describe('Integrated Test', () => {
     let deployer: Signer, addr1: Signer, addr2: Signer, sequencer1:Signer
 
     let deployed: TonStakingV2Fixture
-    let messageNonce: number
+    let messageNonce: BigNumber
 
     let xDomainCalldataList:Array<DomainMessageFixture>   // calldata bytes, calldata bytes
 
@@ -50,7 +50,8 @@ describe('Integrated Test', () => {
         amount: ethers.utils.parseEther("1"),
         feeRates: 1000,
         deadline: 0,
-        layerIndex: 0
+        layerIndex: 0,
+        messageNonce: ethers.BigNumber.from("1000")
     }
 
     let layerInfo: Layer2Fixture = {
@@ -70,14 +71,13 @@ describe('Integrated Test', () => {
         addr1 = deployed.addr1;
         addr2 = deployed.addr2;
         sequencer1 = deployed.sequencer1;
-
         layerInfo.addressManager = deployed.addressManager.address;
         layerInfo.l1Messenger = deployed.l1Messenger.address
         layerInfo.l2Messenger = deployed.l2Messenger.address
         layerInfo.l1Bridge= deployed.l1Bridge.address
         layerInfo.l2Bridge= deployed.l2Bridge.address
         layerInfo.l2ton= deployed.l2ton.address
-        messageNonce = 0;
+        messageNonce = ethers.BigNumber.from("1000");
     })
 
     describe('# initialize', () => {
@@ -219,8 +219,8 @@ describe('Integrated Test', () => {
                 deployed.layer2Manager.connect(addr1).createOptimismSequencer(
                     ethers.utils.formatBytes32String(name),
                     deployed.addressManager.address,
-                    // deployed.l1Messenger.address,
-                    // deployed.l1Bridge.address,
+                    deployed.l1Bridge.address,
+                    deployed.l2Bridge.address,
                     deployed.l2ton.address,
                     amount
                 )
@@ -236,6 +236,8 @@ describe('Integrated Test', () => {
                 deployed.layer2Manager.connect(sequencer1).createOptimismSequencer(
                     ethers.utils.formatBytes32String(name),
                     deployed.addressManager.address,
+                    deployed.l1Bridge.address,
+                    deployed.l2Bridge.address,
                     deployed.l2ton.address,
                     amount
                 )).to.be.reverted;
@@ -261,6 +263,8 @@ describe('Integrated Test', () => {
             const receipt = await (await snapshotGasCost(deployed.layer2Manager.connect(sequencer1).createOptimismSequencer(
                     ethers.utils.formatBytes32String(name),
                     deployed.addressManager.address,
+                    deployed.l1Bridge.address,
+                    deployed.l2Bridge.address,
                     deployed.l2ton.address,
                     amount
                 ))).wait();
@@ -278,6 +282,8 @@ describe('Integrated Test', () => {
             expect(deployedEvent.args._name).to.eq(ethers.utils.formatBytes32String(name));
             expect(deployedEvent.args.addressManager).to.eq(deployed.addressManager.address);
             expect(deployedEvent.args.l1Bridge).to.eq(deployed.l1Bridge.address);
+            expect(deployedEvent.args.l2Bridge).to.eq(deployed.l2Bridge.address);
+
             expect(deployedEvent.args.l2ton).to.eq(deployed.l2ton.address);
 
             expect(await deployed.layer2Manager.totalLayers()).to.eq(totalLayers.add(1))
@@ -285,10 +291,10 @@ describe('Integrated Test', () => {
 
             let layerKey = await getLayerKey({
                     addressManager: deployed.addressManager.address,
-                    l1Messenger: deployed.l1Messenger.address,
+                    l1Messenger: ethers.constants.AddressZero,
                     l2Messenger: ethers.constants.AddressZero,
                     l1Bridge: deployed.l1Bridge.address,
-                    l2Bridge: ethers.constants.AddressZero,
+                    l2Bridge: deployed.l2Bridge.address,
                     l2ton: deployed.l2ton.address
                 }
             );
@@ -298,6 +304,8 @@ describe('Integrated Test', () => {
             let layer = await deployed.optimismSequencer.getLayerInfo(sequencerIndex);
 
             expect(layer.addressManager).to.eq(deployed.addressManager.address)
+            expect(layer.l1Bridge).to.eq(deployed.l1Bridge.address)
+            expect(layer.l2Bridge).to.eq(deployed.l2Bridge.address)
             expect(layer.l2ton).to.eq(deployed.l2ton.address)
 
             expect(await deployed.layer2Manager.layerKeys(layerKey)).to.eq(true)
@@ -697,10 +705,20 @@ describe('Integrated Test', () => {
             let layerIndex = await deployed.layer2Manager.indexSequencers();
             let block = await ethers.provider.getBlock('latest')
 
-            messageInfo.requestor = addr1.address
+            messageInfo.amount = ethers.utils.parseEther("1")
+            messageInfo.requestor = addr2.address
             messageInfo.deadline =  block.timestamp  + (60 * 60)
             messageInfo.deadline = parseInt(messageInfo.deadline)
             messageInfo.layerIndex = layerIndex
+            messageInfo.messageNonce = ethers.BigNumber.from("11")
+
+            let parseMessage : ParseMessageFixture = {
+                xDomainCalldata: '',
+                finalizeERC20WithdrawalData: '',
+                fwReceiptData: '',
+                fwRequestBytes: '',
+                hashMessage: ''
+            }
 
             let requestInfo: DomainMessageFixture = {
                 messageNonce: messageNonce,
@@ -708,91 +726,130 @@ describe('Integrated Test', () => {
                 l1ton : seigManagerInfo.ton,
                 layerInfo: layerInfo,
                 messageInfo: messageInfo,
-                xDomainCalldata: '',
-                finalizeERC20WithdrawalData:'',
-                fwReceiptData: '',
-                fwRequestBytes: ''
+                parseMessage: parseMessage
             }
 
-            const l2Messages = bytesFastWithdrawMessage(
+            const l2Messages = await bytesFastWithdrawMessage1(
                 deployed.fwReceiptProxy.address,
                 seigManagerInfo.ton,
                 layerInfo,
                 messageInfo,
                 );
+            // console.log('bytesFastWithdrawMessage', l2Messages)
 
-            requestInfo.xDomainCalldata = l2Messages.xDomainCalldata;
-            requestInfo.finalizeERC20WithdrawalData = l2Messages.finalizeERC20WithdrawalData;
-            requestInfo.fwReceiptData = l2Messages.fwReceiptData;
-            requestInfo.fwRequestBytes = l2Messages.fwRequestBytes;
+            requestInfo.parseMessage.xDomainCalldata = l2Messages.xDomainCalldata;
+            requestInfo.parseMessage.finalizeERC20WithdrawalData = l2Messages.finalizeERC20WithdrawalData;
+            requestInfo.parseMessage.fwReceiptData = l2Messages.fwReceiptData;
+            requestInfo.parseMessage.fwRequestBytes = l2Messages.fwRequestBytes;
+            requestInfo.parseMessage.hashMessage = l2Messages.hashMessage;
+
             xDomainCalldataList = [];
             xDomainCalldataList.push(requestInfo);
         });
-
         it('The requester and provider cannot be the same.', async () => {
             let info: DomainMessageFixture = xDomainCalldataList[0];
 
             await expect(
-                deployed.fwReceipt.connect(addr1).provideLiquidity(
+                deployed.fwReceipt.connect(addr2).provideLiquidity(
+                    info.messageInfo.requestor,
+                    info.messageInfo.amount,
+                    info.messageInfo.amount,
+                    info.messageInfo.deadline,
                     false,
                     info.messageInfo.layerIndex,
-                    info.finalizeERC20WithdrawalData
+                    info.messageInfo.feeRates,
+                    info.messageInfo.layerIndex,
+                    info.messageInfo.messageNonce,
+                    info.parseMessage.hashMessage
                 )
                 ).to.be.revertedWith("The requester and provider cannot be the same.")
+
         });
 
         it('If it is an unsuccessful L1 message, it cannot be executed.', async () => {
-
+            let info = xDomainCalldataList[0];
             await expect(
                 deployed.fwReceipt.connect(addr1).finalizeFastWithdraw(
-                    xDomainCalldataList[0].fwRequestBytes
+                    info.messageInfo.requestor,
+                    info.messageInfo.amount,
+                    0,
+                    info.messageInfo.feeRates,
+                    info.messageInfo.layerIndex,
+                    info.messageInfo.messageNonce,
+                    info.parseMessage.hashMessage
                 )
-                ).to.be.revertedWith("It is not successful messages.")
+                ).to.be.revertedWith("fail validateHashMessage")
         });
 
         it('If anyone don\'t provide liquidity to l2\'s request fw, L2 user withdraw the request amount by L1Bridge', async () => {
 
             let info: DomainMessageFixture = xDomainCalldataList[0];
-            let balanceBefore = await deployed.ton.balanceOf(addr1.address)
+            let balanceBefore = await deployed.ton.balanceOf(info.messageInfo.requestor)
             if (info.messageInfo.amount.gt(await deployed.ton.balanceOf(deployed.l1Bridge.address)))
                 await (await deployed.ton.connect(deployed.tonAdmin).mint(deployed.l1Bridge.address, info.messageInfo.amount)).wait();
 
-            let key = await ethers.utils.keccak256(info.finalizeERC20WithdrawalData);
+            let key = info.parseMessage.hashMessage;
+            console.log('** key', key );
 
-            const interface1 = deployed.fwReceipt.interface ;
-            const topic = interface1.getEventTopic('NormalWithdrawal');
-
-            const receipt = await(
+            // (1)  DTD 이후 브릿지에서 실행이 된다.
+            const receipt1 = await(
                 await snapshotGasCost(deployed.l1Bridge.connect(addr1).finalizeERC20Withdrawal(
                     info.l1ton,
                     info.layerInfo.l2ton,
                     info.messageInfo.requestor,
                     info.fwReceipt,
                     info.messageInfo.amount,
-                    info.fwReceiptData
+                    info.parseMessage.fwRequestBytes,
+                    info.messageInfo.messageNonce
+            ))).wait();
+            // console.log('receipt',receipt)
+
+            // (2)  l1Messenger 의 successfulMessages 가 true 가 된다.
+            let successfulMessages = await deployed.l1Messenger.successfulMessages(key);
+            expect(successfulMessages).to.be.eq(true);
+
+            // (3)  누군가가 FwContract에서 별도로 실행을 해야 한다. 실행을 해주지 않으면 시뇨리지를 계속 받게 된다.
+            const interface1 = deployed.fwReceipt.interface ;
+            const topic = interface1.getEventTopic('NormalWithdrawal');
+            const receipt = await(
+                await snapshotGasCost(deployed.fwReceipt.connect(addr1).finalizeFastWithdraw(
+                    info.messageInfo.requestor,
+                    info.messageInfo.amount,
+                    info.messageInfo.deadline,
+                    info.messageInfo.feeRates,
+                    info.messageInfo.layerIndex,
+                    info.messageInfo.messageNonce,
+                    info.parseMessage.hashMessage
             ))).wait();
 
-            const log = receipt.logs.find(x =>  x.topics.indexOf(topic) >= 0 );
+            const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0 );
             const deployedEvent = interface1.parseLog(log);
-
             expect(deployedEvent.args.key).to.be.eq(key);
             expect(deployedEvent.args.from).to.be.eq(info.messageInfo.requestor);
             expect(deployedEvent.args.to).to.be.eq(info.messageInfo.requestor);
             expect(deployedEvent.args.amount).to.be.eq(info.messageInfo.amount);
             expect(deployedEvent.args.status).to.be.eq(FW_STATUS.NORMAL_WITHDRAWAL);
-            expect(await deployed.ton.balanceOf(addr1.address)).to.be.eq(balanceBefore.add(info.messageInfo.amount));
+
+            expect(await deployed.ton.balanceOf(info.messageInfo.requestor)).to.be.eq(balanceBefore.add(info.messageInfo.amount));
 
         });
 
         it('Liquidity cannot be provided for requests that have already been withdrawn.', async () => {
 
             let info: DomainMessageFixture = xDomainCalldataList[0];
-            let key = await ethers.utils.keccak256(info.finalizeERC20WithdrawalData);
+            let key = info.parseMessage.hashMessage;
             await expect(
-                deployed.fwReceipt.connect(addr2).provideLiquidity(
+                deployed.fwReceipt.connect(addr1).provideLiquidity(
+                    info.messageInfo.requestor,
+                    info.messageInfo.amount,
+                    info.messageInfo.amount,
+                    info.messageInfo.deadline,
                     false,
                     info.messageInfo.layerIndex,
-                    info.finalizeERC20WithdrawalData
+                    info.messageInfo.feeRates,
+                    info.messageInfo.layerIndex,
+                    info.messageInfo.messageNonce,
+                    info.parseMessage.hashMessage
                 )
                 ).to.be.revertedWith("already processed")
         });
@@ -805,6 +862,15 @@ describe('Integrated Test', () => {
             messageInfo.deadline =  block.timestamp - 100;
             messageInfo.deadline = parseInt(messageInfo.deadline)
             messageInfo.layerIndex = layerIndex
+            messageInfo.messageNonce = ethers.BigNumber.from("2")
+
+            let parseMessage : ParseMessageFixture = {
+                xDomainCalldata: '',
+                finalizeERC20WithdrawalData: '',
+                fwReceiptData: '',
+                fwRequestBytes: '',
+                hashMessage: ''
+            }
 
             let requestInfo: DomainMessageFixture = {
                 messageNonce: messageNonce,
@@ -813,23 +879,22 @@ describe('Integrated Test', () => {
                 layerInfo: layerInfo,
                 messageInfo: messageInfo,
                 provider: '',
-                xDomainCalldata: '',
-                finalizeERC20WithdrawalData:'',
-                fwReceiptData: '',
-                fwRequestBytes: ''
+                parseMessage: parseMessage
             }
 
-            const l2Messages = bytesFastWithdrawMessage(
+            const l2Messages = await bytesFastWithdrawMessage1(
                 deployed.fwReceiptProxy.address,
                 seigManagerInfo.ton,
                 layerInfo,
                 messageInfo,
                 );
 
-            requestInfo.xDomainCalldata = l2Messages.xDomainCalldata;
-            requestInfo.finalizeERC20WithdrawalData = l2Messages.finalizeERC20WithdrawalData;
-            requestInfo.fwReceiptData = l2Messages.fwReceiptData;
-            requestInfo.fwRequestBytes = l2Messages.fwRequestBytes;
+            requestInfo.parseMessage.xDomainCalldata = l2Messages.xDomainCalldata;
+            requestInfo.parseMessage.finalizeERC20WithdrawalData = l2Messages.finalizeERC20WithdrawalData;
+            requestInfo.parseMessage.fwReceiptData = l2Messages.fwReceiptData;
+            requestInfo.parseMessage.fwRequestBytes = l2Messages.fwRequestBytes;
+            requestInfo.parseMessage.hashMessage = l2Messages.hashMessage;
+
             // xDomainCalldataList = [];
             xDomainCalldataList.push(requestInfo);
         });
@@ -838,9 +903,16 @@ describe('Integrated Test', () => {
             let info: DomainMessageFixture = xDomainCalldataList[1];
             await expect(
                 deployed.fwReceipt.connect(addr1).provideLiquidity(
+                    info.messageInfo.requestor,
+                    info.messageInfo.amount,
+                    info.messageInfo.amount,
+                    info.messageInfo.deadline,
                     false,
                     info.messageInfo.layerIndex,
-                    info.finalizeERC20WithdrawalData
+                    info.messageInfo.feeRates,
+                    info.messageInfo.layerIndex,
+                    info.messageInfo.messageNonce,
+                    info.parseMessage.hashMessage
                 )
                 ).to.be.revertedWith("past deadline")
 
@@ -854,12 +926,22 @@ describe('Integrated Test', () => {
             messageInfo.deadline =  block.timestamp + (60*60);
             messageInfo.deadline = parseInt(messageInfo.deadline)
             messageInfo.layerIndex = layerIndex
+            messageInfo.messageNonce = ethers.BigNumber.from("3")
 
             let availableLiquidity = await deployed.fwReceipt.availableLiquidity(
                 false, messageInfo.layerIndex,  addr1.address);
 
             messageInfo.amount = availableLiquidity.add(
                 availableLiquidity.mul(ethers.BigNumber.from("4")).div(ethers.BigNumber.from("10")))
+
+
+            let parseMessage : ParseMessageFixture = {
+                xDomainCalldata: '',
+                finalizeERC20WithdrawalData: '',
+                fwReceiptData: '',
+                fwRequestBytes: '',
+                hashMessage: ''
+            }
 
             let requestInfo: DomainMessageFixture = {
                 messageNonce: messageNonce,
@@ -868,23 +950,23 @@ describe('Integrated Test', () => {
                 layerInfo: layerInfo,
                 messageInfo: messageInfo,
                 provider: '',
-                xDomainCalldata: '',
-                finalizeERC20WithdrawalData:'',
-                fwReceiptData: '',
-                fwRequestBytes: ''
+                parseMessage: parseMessage
             }
 
-            const l2Messages = bytesFastWithdrawMessage(
+            const l2Messages = await bytesFastWithdrawMessage1(
                 deployed.fwReceiptProxy.address,
                 seigManagerInfo.ton,
                 layerInfo,
                 messageInfo,
                 );
 
-            requestInfo.xDomainCalldata = l2Messages.xDomainCalldata;
-            requestInfo.finalizeERC20WithdrawalData = l2Messages.finalizeERC20WithdrawalData;
-            requestInfo.fwReceiptData = l2Messages.fwReceiptData;
-            requestInfo.fwRequestBytes = l2Messages.fwRequestBytes;
+            requestInfo.parseMessage.xDomainCalldata = l2Messages.xDomainCalldata;
+            requestInfo.parseMessage.finalizeERC20WithdrawalData = l2Messages.finalizeERC20WithdrawalData;
+            requestInfo.parseMessage.fwReceiptData = l2Messages.fwReceiptData;
+            requestInfo.parseMessage.fwRequestBytes = l2Messages.fwRequestBytes;
+            requestInfo.parseMessage.hashMessage = l2Messages.hashMessage;
+
+
             // xDomainCalldataList = [];
             xDomainCalldataList.push(requestInfo);
 
@@ -895,9 +977,16 @@ describe('Integrated Test', () => {
 
             await expect(
                 deployed.fwReceipt.connect(addr1).provideLiquidity(
+                    info.messageInfo.requestor,
+                    info.messageInfo.amount,
+                    info.messageInfo.amount,
+                    info.messageInfo.deadline,
                     false,
                     info.messageInfo.layerIndex,
-                    info.finalizeERC20WithdrawalData
+                    info.messageInfo.feeRates,
+                    info.messageInfo.layerIndex,
+                    info.messageInfo.messageNonce,
+                    info.parseMessage.hashMessage
                 )
                 ).to.be.revertedWith("liquidity is insufficient.")
         });
@@ -905,14 +994,28 @@ describe('Integrated Test', () => {
         it('The L1 provider cannot provide liquidity for cases canceled by the L2 requester.', async () => {
             let info: DomainMessageFixture = xDomainCalldataList[2];
             await (await deployed.fwReceipt.connect(addr2).cancelRequest(
-                    info.finalizeERC20WithdrawalData
+                    info.messageInfo.requestor,
+                    info.messageInfo.amount,
+                    info.messageInfo.deadline,
+                    info.messageInfo.feeRates,
+                    info.messageInfo.layerIndex,
+                    info.messageInfo.messageNonce,
+                    info.parseMessage.hashMessage
                 )).wait();
 
             await expect(deployed.fwReceipt.connect(addr1).provideLiquidity(
-                    false,
-                    info.messageInfo.layerIndex,
-                    info.finalizeERC20WithdrawalData
-                )).to.be.revertedWith("already processed")
+                info.messageInfo.requestor,
+                info.messageInfo.amount,
+                info.messageInfo.amount,
+                info.messageInfo.deadline,
+                false,
+                info.messageInfo.layerIndex,
+                info.messageInfo.feeRates,
+                info.messageInfo.layerIndex,
+                info.messageInfo.messageNonce,
+                info.parseMessage.hashMessage
+                )
+                ).to.be.revertedWith("already processed")
         });
 
         it('The L2 request withdraw the fw amount for cases canceled by the L2 requester.', async () => {
@@ -922,19 +1025,38 @@ describe('Integrated Test', () => {
             if (info.messageInfo.amount.gt(await deployed.ton.balanceOf(deployed.l1Bridge.address)))
                 await (await deployed.ton.connect(deployed.tonAdmin).mint(deployed.l1Bridge.address, info.messageInfo.amount)).wait();
 
-            let key = await ethers.utils.keccak256(info.finalizeERC20WithdrawalData);
+            let key = info.parseMessage.hashMessage;
 
-            const interface1 = deployed.fwReceipt.interface ;
-            const topic = interface1.getEventTopic('NormalWithdrawal');
-            const receipt = await(
-                await snapshotGasCost(deployed.l1Bridge.connect(addr2).finalizeERC20Withdrawal(
+            // (1)  DTD 이후 브릿지에서 실행이 된다.
+            const receipt1 = await(
+                await snapshotGasCost(deployed.l1Bridge.connect(addr1).finalizeERC20Withdrawal(
                     info.l1ton,
                     info.layerInfo.l2ton,
                     info.messageInfo.requestor,
                     info.fwReceipt,
                     info.messageInfo.amount,
-                    info.fwReceiptData
+                    info.parseMessage.fwRequestBytes,
+                    info.messageInfo.messageNonce
             ))).wait();
+
+            // (2)  l1Messenger 의 successfulMessages 가 true 가 된다.
+            let successfulMessages = await deployed.l1Messenger.successfulMessages(key);
+            expect(successfulMessages).to.be.eq(true);
+
+            // (3)  누군가가 FwContract에서 별도로 실행을 해야 한다. 실행을 해주지 않으면 시뇨리지를 계속 받게 된다.
+            const interface1 = deployed.fwReceipt.interface ;
+            const topic = interface1.getEventTopic('NormalWithdrawal');
+            const receipt = await(
+                await snapshotGasCost(deployed.fwReceipt.connect(addr1).finalizeFastWithdraw(
+                    info.messageInfo.requestor,
+                    info.messageInfo.amount,
+                    info.messageInfo.deadline,
+                    info.messageInfo.feeRates,
+                    info.messageInfo.layerIndex,
+                    info.messageInfo.messageNonce,
+                    info.parseMessage.hashMessage
+            ))).wait();
+
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
             const deployedEvent = interface1.parseLog(log);
 
@@ -956,35 +1078,42 @@ describe('Integrated Test', () => {
             messageInfo.deadline =  block.timestamp + (60*60);
             messageInfo.deadline = parseInt(messageInfo.deadline)
             messageInfo.layerIndex = layerIndex
+            messageInfo.messageNonce = ethers.BigNumber.from("4")
 
             let availableLiquidity = await deployed.fwReceipt.availableLiquidity(
                 false, messageInfo.layerIndex,  addr1.address);
 
             messageInfo.amount = availableLiquidity.div(ethers.BigNumber.from("10000").sub(ethers.BigNumber.from(messageInfo.feeRates))).mul(ethers.BigNumber.from("10000"));
 
+            let parseMessage : ParseMessageFixture = {
+                xDomainCalldata: '',
+                finalizeERC20WithdrawalData: '',
+                fwReceiptData: '',
+                fwRequestBytes: '',
+                hashMessage: ''
+            }
             let requestInfo: DomainMessageFixture = {
                 messageNonce: messageNonce,
                 fwReceipt: deployed.fwReceiptProxy.address,
                 l1ton : seigManagerInfo.ton,
                 layerInfo: layerInfo,
                 messageInfo: messageInfo,
-                xDomainCalldata: '',
-                finalizeERC20WithdrawalData:'',
-                fwReceiptData: '',
-                fwRequestBytes: ''
+                parseMessage: parseMessage
             }
 
-            const l2Messages = bytesFastWithdrawMessage(
+            const l2Messages = await bytesFastWithdrawMessage1(
                 deployed.fwReceiptProxy.address,
                 seigManagerInfo.ton,
                 layerInfo,
                 messageInfo,
                 );
 
-            requestInfo.xDomainCalldata = l2Messages.xDomainCalldata;
-            requestInfo.finalizeERC20WithdrawalData = l2Messages.finalizeERC20WithdrawalData;
-            requestInfo.fwReceiptData = l2Messages.fwReceiptData;
-            requestInfo.fwRequestBytes = l2Messages.fwRequestBytes;
+            requestInfo.parseMessage.xDomainCalldata = l2Messages.xDomainCalldata;
+            requestInfo.parseMessage.finalizeERC20WithdrawalData = l2Messages.finalizeERC20WithdrawalData;
+            requestInfo.parseMessage.fwReceiptData = l2Messages.fwReceiptData;
+            requestInfo.parseMessage.fwRequestBytes = l2Messages.fwRequestBytes;
+            requestInfo.parseMessage.hashMessage = l2Messages.hashMessage;
+
             // xDomainCalldataList = [];
             xDomainCalldataList.push(requestInfo);
         });
@@ -1007,16 +1136,23 @@ describe('Integrated Test', () => {
 
             let balancel1BridgeBefore = await deployed.ton.balanceOf(deployed.l1Bridge.address)
 
-            let key = await ethers.utils.keccak256(info.finalizeERC20WithdrawalData);
+            let key = info.parseMessage.hashMessage;
 
             const interface0 = deployed.fwReceipt.interface ;
             const topic0 = interface0.getEventTopic('ProvidedLiquidity');
             const receipt = await(
                 await snapshotGasCost(deployed.fwReceipt.connect(addr1).provideLiquidity(
+                    info.messageInfo.requestor,
+                    info.messageInfo.amount,
+                    info.messageInfo.amount,
+                    info.messageInfo.deadline,
                     false,
                     info.messageInfo.layerIndex,
-                    info.finalizeERC20WithdrawalData
-            ))).wait();
+                    info.messageInfo.feeRates,
+                    info.messageInfo.layerIndex,
+                    info.messageInfo.messageNonce,
+                    info.parseMessage.hashMessage
+                ))).wait();
 
             const log = receipt.logs.find(x => x.topics.indexOf(topic0) >= 0);
             const deployedEvent = interface0.parseLog(log);
@@ -1053,20 +1189,39 @@ describe('Integrated Test', () => {
             if (info.messageInfo.amount.gt(await deployed.ton.balanceOf(deployed.l1Bridge.address)))
                 await (await deployed.ton.connect(deployed.tonAdmin).mint(deployed.l1Bridge.address, info.messageInfo.amount)).wait();
 
-            let key = await ethers.utils.keccak256(info.finalizeERC20WithdrawalData);
+            let key = info.parseMessage.hashMessage;
 
-            const interface1 = deployed.fwReceipt.interface;
-            const topic = interface1.getEventTopic('FinalizedFastWithdrawal');
-
-            const receipt = await(
-                await snapshotGasCost(deployed.l1Bridge.connect(addr2).finalizeERC20Withdrawal(
+            // (1)  DTD 이후 브릿지에서 실행이 된다.
+            const receipt1 = await(
+                await snapshotGasCost(deployed.l1Bridge.connect(addr1).finalizeERC20Withdrawal(
                     info.l1ton,
                     info.layerInfo.l2ton,
                     info.messageInfo.requestor,
                     info.fwReceipt,
                     info.messageInfo.amount,
-                    info.fwReceiptData
+                    info.parseMessage.fwRequestBytes,
+                    info.messageInfo.messageNonce
             ))).wait();
+            // console.log('receipt',receipt)
+
+            // (2)  l1Messenger 의 successfulMessages 가 true 가 된다.
+            let successfulMessages = await deployed.l1Messenger.successfulMessages(key);
+            expect(successfulMessages).to.be.eq(true);
+
+            // (3)  누군가가 FwContract에서 별도로 실행을 해야 한다. 실행을 해주지 않으면 시뇨리지를 계속 받게 된다.
+            const interface1 = deployed.fwReceipt.interface ;
+            const topic = interface1.getEventTopic('FinalizedFastWithdrawal');
+            const receipt = await(
+                await snapshotGasCost(deployed.fwReceipt.connect(addr1).finalizeFastWithdraw(
+                    info.messageInfo.requestor,
+                    info.messageInfo.amount,
+                    info.messageInfo.deadline,
+                    info.messageInfo.feeRates,
+                    info.messageInfo.layerIndex,
+                    info.messageInfo.messageNonce,
+                    info.parseMessage.hashMessage
+            ))).wait();
+
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
 
             const deployedEvent = interface1.parseLog(log);
@@ -1511,7 +1666,8 @@ describe('Integrated Test', () => {
                     addr1.address,
                     addr1.address,
                     amount,
-                    '0x'
+                    '0x',
+                    ethers.constants.Zero
                 ))).wait();
 
             expect(await deployed.layer2Manager.curTotalLayer2Deposits()).to.eq(curTotalLayer2Deposits.sub(amount))
