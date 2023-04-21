@@ -1,27 +1,22 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "FwReceiptI",
-  "sourceName": "contracts/OptimismSequencer.sol",
+  "contractName": "L1BridgeI",
+  "sourceName": "contracts/Staking.sol",
   "abi": [
     {
       "inputs": [
         {
-          "internalType": "bool",
-          "name": "isCandidate",
-          "type": "bool"
-        },
-        {
-          "internalType": "uint32",
-          "name": "layerIndex",
-          "type": "uint32"
+          "internalType": "address",
+          "name": "l1token",
+          "type": "address"
         },
         {
           "internalType": "address",
-          "name": "account",
+          "name": "l2token",
           "type": "address"
         }
       ],
-      "name": "debtInStaked",
+      "name": "deposits",
       "outputs": [
         {
           "internalType": "uint256",

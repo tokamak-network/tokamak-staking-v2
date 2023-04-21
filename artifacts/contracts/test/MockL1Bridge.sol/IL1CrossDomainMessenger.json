@@ -1,30 +1,34 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "L1BridgeI",
-  "sourceName": "contracts/OptimismSequencer.sol",
+  "contractName": "IL1CrossDomainMessenger",
+  "sourceName": "contracts/test/MockL1Bridge.sol",
   "abi": [
     {
       "inputs": [
         {
           "internalType": "address",
-          "name": "l1token",
+          "name": "_target",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "l2token",
+          "name": "_sender",
           "type": "address"
-        }
-      ],
-      "name": "deposits",
-      "outputs": [
+        },
+        {
+          "internalType": "bytes",
+          "name": "_message",
+          "type": "bytes"
+        },
         {
           "internalType": "uint256",
-          "name": "",
+          "name": "_messageNonce",
           "type": "uint256"
         }
       ],
-      "stateMutability": "view",
+      "name": "relayMessage",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     }
   ],

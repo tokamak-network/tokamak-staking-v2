@@ -6,9 +6,19 @@
     {
       "inputs": [
         {
-          "internalType": "bytes",
-          "name": "_l2Messages",
-          "type": "bytes"
+          "internalType": "uint16",
+          "name": "feeRate",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint32",
+          "name": "deadline",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint32",
+          "name": "layerIndex",
+          "type": "uint32"
         }
       ],
       "name": "finalizeFastWithdraw",
