@@ -54,6 +54,11 @@
     {
       "inputs": [
         {
+          "internalType": "bytes32",
+          "name": "hashMessage",
+          "type": "bytes32"
+        },
+        {
           "internalType": "uint32",
           "name": "layerIndex",
           "type": "uint32"
@@ -87,6 +92,11 @@
     },
     {
       "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "hashMessage",
+          "type": "bytes32"
+        },
         {
           "internalType": "uint32",
           "name": "layerIndex",
