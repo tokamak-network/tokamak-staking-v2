@@ -789,7 +789,6 @@ describe('Integrated Test', () => {
                 await (await deployed.ton.connect(deployed.tonAdmin).mint(deployed.l1Bridge.address, info.messageInfo.amount)).wait();
 
             let key = info.parseMessage.hashMessage;
-            console.log('** key', key );
 
             // (1)  DTD 이후 브릿지에서 실행이 된다.
             const receipt1 = await(
