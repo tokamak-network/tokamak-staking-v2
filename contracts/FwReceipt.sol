@@ -62,11 +62,11 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
     /* ========== DEPENDENCIES ========== */
     event ProvidedLiquidity(bytes32 key, address provider, uint256 provideAmount, uint256 feeAmount, bool isCandidate, uint32 indexNo);
     event CanceledRequest(bytes32 key, address caller);
-    event InvalidMessageFastWithdrawal(bytes32 key, uint8 status);
+    // event InvalidMessageFastWithdrawal(bytes32 key, uint8 status);
     event NormalWithdrawal(bytes32 key, address from, address to, uint256 amount, uint8 status);
     event FinalizedFastWithdrawal(bytes32 key, address from, address to, uint256 providedAmount, uint256 feeAmount, bool isCandidate, uint32 indexNo);
     // event FailFinishFastWithdrawal(bytes32 key, address from, address to, uint256 providedAmount, uint256 feeAmount, uint8 status);
-    event AlreadyProcessed(bytes32 key, uint8 status);
+    // event AlreadyProcessed(bytes32 key, uint8 status);
 
     /* ========== CONSTRUCTOR ========== */
     constructor() {
@@ -168,12 +168,14 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
                 }
 
              } else {
-                emit InvalidMessageFastWithdrawal(hashMessage, uint8(LibFastWithdraw.STATUS.WRONG_MESSAGE));
-                return uint8(LibFastWithdraw.STATUS.WRONG_MESSAGE);
+                // emit InvalidMessageFastWithdrawal(hashMessage, uint8(LibFastWithdraw.STATUS.WRONG_MESSAGE));
+                // return uint8(LibFastWithdraw.STATUS.WRONG_MESSAGE);
+                require(false, "WRONG_MESSAGE");
             }
         } else {
-            emit AlreadyProcessed(hashMessage, uint8(LibFastWithdraw.STATUS.ALREADY_PROCESSED));
-            return uint8(LibFastWithdraw.STATUS.ALREADY_PROCESSED);
+            // emit AlreadyProcessed(hashMessage, uint8(LibFastWithdraw.STATUS.ALREADY_PROCESSED));
+            // return uint8(LibFastWithdraw.STATUS.ALREADY_PROCESSED);
+            require(false, "ALREADY_PROCESSED");
         }
 
         return _message.status;
