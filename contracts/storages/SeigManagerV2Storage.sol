@@ -5,6 +5,11 @@ import {IERC20} from "../interfaces/IERC20.sol";
 
 contract SeigManagerV2Storage {
 
+    struct Snapshots {
+        uint256[] ids;
+        uint256[] values;
+    }
+
     IERC20 public ton;
     address public wton;
     address public dao;
@@ -18,7 +23,6 @@ contract SeigManagerV2Storage {
     uint256 public seigPerBlock;
     uint256 public lastSeigBlock;
     uint256 public startBlock;
-    uint256 public indexLton; // for staker or bonder
 
     uint16 public ratesTonStakers; // divided ratesUnits
     uint16 public ratesDao;   // divided ratesUnits
@@ -27,6 +31,11 @@ contract SeigManagerV2Storage {
     uint16 public ratesUnits; // divided uint. 10000
     uint32 public minimumBlocksForUpdateSeig; // the number of block
     bool internal free = true;
+
+    uint256 internal _currentSnapshotId;
+    uint256 internal _indexLton; // for staker
+    Snapshots internal _indexLtonSnapshots;
+    uint32[] public snapshotTime;
 
     modifier nonZero(uint256 value) {
         require(value != 0, "Z1");

@@ -6,6 +6,11 @@ import "../libraries/LibStake.sol";
 
 contract StakingStorage {
 
+    struct Snapshots {
+        uint256[] ids;
+        uint256[] values;
+    }
+
     bytes4 constant ERC20_ONAPPROVE = 0x4273ca16;
      // As per the EIP-165 spec, no interface should ever match 0xffffffff
     bytes4 internal constant InterfaceId_Invalid = 0xffffffff;
@@ -19,12 +24,15 @@ contract StakingStorage {
     address public seigManagerV2;
     address public layer2Manager;
     address public fwReceipt;
-    uint256 public totalStakedLton;
+    uint256 internal _totalStakedLton;
+    Snapshots internal _totalStakedLtonSnapshot;
 
     mapping (uint32 => uint256) public layerStakedLton;
+    mapping (uint32 => Snapshots) internal _layerStakedLtonSnapshot;
 
     // layer2Index => account => StakeInfo
     mapping (uint32 => mapping(address => LibStake.StakeInfo)) public layerStakes; // ltos uint
+    mapping (uint32 => mapping(address => Snapshots)) internal _layerStakesSnapshot;
 
     // layer2Index => msg.sender => withdrawal requests (언스테이크시 등록 )
     mapping (uint32 => mapping (address => LibStake.WithdrawalReqeust[])) public withdrawalRequests;

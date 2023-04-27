@@ -6,6 +6,7 @@ import "./proxy/BaseProxyStorage.sol";
 import "./common/AccessibleCommon.sol";
 import "./libraries/SafeERC20.sol";
 import "./libraries/Layer2.sol";
+import "./libraries/LibArrays.sol";
 
 // import "hardhat/console.sol";
 
@@ -25,7 +26,9 @@ interface StakingI {
 contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Storage {
     /* ========== DEPENDENCIES ========== */
     using SafeERC20 for IERC20;
+    using LibArrays for uint256[];
 
+    event Snapshot(uint256 id, uint256 currentTime);
     event UpdatedSeigniorage(
                     uint256 lastSeigBlock_,
                     uint256 increaseSeig_,
@@ -101,6 +104,32 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
 
     /* ========== Anyone can execute ========== */
 
+    function snapshot() external virtual returns (uint256) {
+        return _snapshot();
+    }
+
+    function getCurrentSnapshotId() public view virtual returns (uint256) {
+        return _currentSnapshotId;
+    }
+
+    function getSnapshotTime() public view returns (uint32[] memory) {
+        return snapshotTime;
+    }
+
+    function indexLton() public view returns (uint256) {
+        return _indexLton;
+    }
+
+    function indexLtonAt(uint256 snapshotId) public view returns (uint256) {
+        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _indexLtonSnapshots);
+
+        return snapshotted ? value : indexLton();
+    }
+
+    function indexLtonAtSnapshot(uint256 snapshotId) public view returns (bool snapshotted, uint256 value) {
+        return _valueAt(snapshotId, _indexLtonSnapshots);
+    }
+
     function updateSeigniorage() external returns (bool res) {
         if (lastSeigBlock + uint256(minimumBlocksForUpdateSeig) < getCurrentBlockNumber()) {
             res = runUpdateSeigniorage();
@@ -110,12 +139,11 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
 
     function runUpdateSeigniorage() public ifFree nonZero(startBlock) returns (bool res) {
         // console.log('-------------------');
-        // console.log('lastSeigBlock %s',lastSeigBlock);
-        // console.log('getCurrentBlockNumber() %s',getCurrentBlockNumber());
 
         if (lastSeigBlock <  getCurrentBlockNumber() && lastSeigBlock != 0) {
             // 총 증가량  increaseSeig
             uint256 increaseSeig = (getCurrentBlockNumber() - lastSeigBlock) * seigPerBlock;
+            // console.log('increaseSeig %s',increaseSeig);
 
             // update L2 TVL
             // Layer2ManagerI(layer2Manager).updateLayer2Deposits();
@@ -132,11 +160,13 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
                 uint256 amountOfStosHolders
             ) = _distribute(increaseSeig, totalLton);
 
-            uint256 prevIndex = indexLton;
+            uint256 prevIndex = _indexLton;
 
             // 1. update indexLton
-            if (totalLton != 0 && amountOfstaker != 0)
-                indexLton = calculateIndex(indexLton, getLtonToTon(totalLton), amountOfstaker);
+            if (totalLton != 0 && amountOfstaker != 0){
+                _indexLton = calculateIndex(prevIndex, getLtonToTon(totalLton), amountOfstaker);
+
+            }
 
             // 2. mint increaseSeig of ton in address(this)
             if (increaseSeig != 0) ton.mint(address(this), increaseSeig);
@@ -157,7 +187,7 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
                 totalSupplyOfTon,
                 [amountOfstaker, amountOfsequencer, amountOfDao, amountOfStosHolders],
                 prevIndex,
-                indexLton
+                _indexLton
                 );
         }
         return true;
@@ -172,11 +202,19 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
     }
 
     function getTonToLton(uint256 _amount) public view returns (uint256 amount) {
-        if (_amount > 0) amount = (_amount * 1e18) / indexLton;
+        if (_amount > 0) amount = (_amount * 1e18) / indexLton();
+    }
+
+    function getTonToLtonAt(uint256 _amount, uint256 _snapshotId) public view returns (uint256 amount) {
+        if (_amount > 0) amount = (_amount * 1e18) / indexLtonAt(_snapshotId);
     }
 
     function getLtonToTon(uint256 lton) public view returns (uint256 amount) {
-        if (lton > 0) amount = (lton * indexLton) / 1e18;
+        if (lton > 0) amount = (lton * indexLton()) / 1e18;
+    }
+
+    function getLtonToTonAt(uint256 lton, uint256 _snapshotId) public view returns (uint256 amount) {
+        if (lton > 0) amount = (lton * indexLtonAt(_snapshotId)) / 1e18;
     }
 
     function getCurrentBlockNumber() public view returns (uint256) {
@@ -201,6 +239,7 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
     function getTotalLton() public view returns (uint256 amount) {
         amount = StakingI(optimismSequencer).getTotalLton() + StakingI(candidate).getTotalLton();
     }
+
     /* ========== internal ========== */
 
     function _distribute(uint256 amount, uint256 totalLton) internal view returns (
@@ -245,5 +284,46 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
         }
     }
 
+
+    function _snapshot() internal virtual returns (uint256) {
+        if (snapshotTime.length == 0) {
+            snapshotTime.push(uint32(0));
+            _indexLtonSnapshots.ids.push(0);
+            _indexLtonSnapshots.values.push(1 ether);
+        }
+
+        snapshotTime.push(uint32(block.timestamp));
+        _currentSnapshotId += 1;
+        _updateSnapshot(_indexLtonSnapshots, _indexLton);
+
+        emit Snapshot(_currentSnapshotId, block.timestamp);
+        return _currentSnapshotId;
+    }
+
+    function _valueAt(uint256 snapshotId, Snapshots storage snapshots) private view returns (bool, uint256) {
+        // require(snapshotId > 0, "Snapshot: id is 0");
+        require(snapshotId <= getCurrentSnapshotId(), "Snapshot: nonexistent id");
+
+        if (snapshots.ids.length > 0 && snapshotId > snapshots.ids[snapshots.ids.length-1])
+            return (false, snapshots.values[snapshots.ids.length-1]);
+
+        uint256 index = snapshots.ids.findIndex(snapshotId);
+        if (index == snapshots.ids.length) return (false, 0);
+        return (true, snapshots.values[index]);
+    }
+
+    function _updateSnapshot(Snapshots storage snapshots, uint256 currentValue) private {
+        uint256 currentId = getCurrentSnapshotId();
+        if (_lastSnapshotId(snapshots.ids) < currentId) {
+            snapshots.ids.push(currentId);
+            snapshots.values.push(currentValue);
+        }
+    }
+
+    function _lastSnapshotId(uint256[] storage ids) private view returns (uint256) {
+        if (ids.length == 0)  return 0;
+        return ids[ids.length - 1];
+
+    }
 
 }

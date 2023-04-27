@@ -6,6 +6,8 @@ import "../proxy/BaseProxy.sol";
 
 contract SeigManagerV2Proxy is BaseProxy, SeigManagerV2Storage {
 
+    event Snapshot(uint256 id);
+
     /* ========== onlyOwner ========== */
 
     function initialize(
@@ -50,6 +52,20 @@ contract SeigManagerV2Proxy is BaseProxy, SeigManagerV2Storage {
 
         seigPerBlock = _seigPerBlock;
         minimumBlocksForUpdateSeig = _minimumBlocksForUpdateSeig;
-        indexLton = 1 ether;
+        _indexLton = 1 ether;
+
+        // _indexLtonSnapshots.ids.push(_currentSnapshotId);
+        // _indexLtonSnapshots.values.push(1 ether);
+
+        // _snapshot();
     }
+
+    /* ========== internal ========== */
+    function _snapshot() internal virtual returns (uint256) {
+        _currentSnapshotId += 1;
+        snapshotTime.push(uint32(block.timestamp));
+        emit Snapshot(_currentSnapshotId);
+        return _currentSnapshotId;
+    }
+
 }

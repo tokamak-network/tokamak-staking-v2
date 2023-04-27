@@ -40,7 +40,6 @@ contract Candidate is Staking, CandidateStorage {
     }
 
     /* ========== only TON ========== */
-
     function onApprove(
         address sender,
         address spender,
