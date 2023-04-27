@@ -22,6 +22,19 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "getCurrentSnapshotId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "uint256",
@@ -44,11 +57,16 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "ston",
+          "name": "lton",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "snapshotId",
           "type": "uint256"
         }
       ],
-      "name": "getStonToTon",
+      "name": "getLtonToTonAt",
       "outputs": [
         {
           "internalType": "uint256",
@@ -84,9 +102,14 @@
           "internalType": "uint256",
           "name": "amount",
           "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "snapshotId",
+          "type": "uint256"
         }
       ],
-      "name": "getTonToSton",
+      "name": "getTonToLtonAt",
       "outputs": [
         {
           "internalType": "uint256",
@@ -95,6 +118,19 @@
         }
       ],
       "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "snapshot",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
