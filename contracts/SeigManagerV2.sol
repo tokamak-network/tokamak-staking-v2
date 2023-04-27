@@ -28,7 +28,7 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
     using SafeERC20 for IERC20;
     using LibArrays for uint256[];
 
-    event Snapshot(uint256 id, uint256 currentTime);
+    event Snapshot(uint256 id, uint256 snapshotTime);
     event UpdatedSeigniorage(
                     uint256 lastSeigBlock_,
                     uint256 increaseSeig_,
@@ -238,6 +238,10 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
 
     function getTotalLton() public view returns (uint256 amount) {
         amount = StakingI(optimismSequencer).getTotalLton() + StakingI(candidate).getTotalLton();
+    }
+
+    function getTotalLtonAt(uint256 _snapshotId) public view returns (uint256 amount) {
+        amount = StakingI(optimismSequencer).getTotalLtonAt(_snapshotId) + StakingI(candidate).getTotalLtonAt(_snapshotId);
     }
 
     /* ========== internal ========== */
