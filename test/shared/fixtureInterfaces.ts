@@ -22,6 +22,16 @@ import { MockL1Bridge } from '../../typechain-types/contracts/test/MockL1Bridge'
 import { MockL2Bridge } from '../../typechain-types/contracts/test/MockL2Bridge'
 import { TestERC20 } from '../../typechain-types/contracts/test/TestERC20'
 
+interface StakeSnapshotFixture  {
+    id: BigNumber,
+    layerIndex: number,
+    account: string,
+    indexLton: BigNumber,
+    totalStakedLton: BigNumber,
+    balanceOfLayer: BigNumber,
+    balanceOfAccount: BigNumber
+}
+
 interface ParseMessageFixture  {
     xDomainCalldata: string,
     finalizeERC20WithdrawalData: string,
@@ -98,4 +108,4 @@ interface TonStakingV2Fixture  {
 }
 
 
-export { ParseMessageFixture, DomainMessageFixture, FastWithdrawMessageFixture, Layer2Fixture, TonStakingV2Fixture, OperatorFixture }
+export { StakeSnapshotFixture, ParseMessageFixture, DomainMessageFixture, FastWithdrawMessageFixture, Layer2Fixture, TonStakingV2Fixture, OperatorFixture }

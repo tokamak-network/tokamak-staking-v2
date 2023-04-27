@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`FwReceipt # initialize initialize can be executed by only owner 1`] = `136989`;
+
+exports[`FwReceipt # setCandidate setCandidate can be executed by only owner  1`] = `38812`;
+
+exports[`FwReceipt # setCandidate setCandidate can be executed by only owner  2`] = `38812`;
+
+exports[`FwReceipt # setOptimismSequencer setOptimismSequencer can be executed by only owner  1`] = `38787`;
+
+exports[`FwReceipt # setOptimismSequencer setOptimismSequencer can be executed by only owner  2`] = `38787`;

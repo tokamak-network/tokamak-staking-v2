@@ -1,7 +1,6 @@
 import { expect } from './shared/expect'
 import { ethers, network } from 'hardhat'
-
-import { Signer } from 'ethers'
+import { Signer, BigNumber } from 'ethers'
 import {
     FW_STATUS,
     stakingV2Fixtures, getLayerKey, getCandidateKey,
@@ -9,6 +8,7 @@ import {
     bytesFastWithdrawMessage1
     } from './shared/fixtures'
 import {
+    StakeSnapshotFixture,
     Layer2Fixture, ParseMessageFixture,
     TonStakingV2Fixture, FastWithdrawMessageFixture, DomainMessageFixture} from './shared/fixtureInterfaces'
 import snapshotGasCost from './shared/snapshotGasCost'
@@ -62,6 +62,9 @@ describe('Integrated Test', () => {
         l2Bridge: "",
         l2ton: ""
     }
+
+    let snapshotListSequencer: Array<StakeSnapshotFixture> = [];
+    let snapshotListCandidate: Array<StakeSnapshotFixture> = [];
 
     before('create fixture loader', async () => {
         // deployed = await loadFixture(stakingV2Fixtures)
@@ -117,7 +120,6 @@ describe('Integrated Test', () => {
             expect(await deployed.seigManagerV2Proxy.minimumBlocksForUpdateSeig()).to.eq(seigManagerInfo.minimumBlocksForUpdateSeig)
 
         })
-
 
         it('Layer2Manager : initialize can be executed by only owner', async () => {
             await snapshotGasCost(deployed.layer2ManagerProxy.connect(deployer).initialize(
@@ -271,10 +273,6 @@ describe('Integrated Test', () => {
 
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
             const deployedEvent = deployed.layer2Manager.interface.parseLog(log);
-
-            // console.log('deployedEvent.args', deployedEvent.args);
-            // console.log('ethers.utils.formatBytes32String(name)', ethers.utils.formatBytes32String(name));
-            // console.log('deployedEvent.args', ethers.utils.parseBytes32String(deployedEvent.args._name));
 
             let sequencerIndex = deployedEvent.args._index;
 
@@ -540,6 +538,52 @@ describe('Integrated Test', () => {
             let lton = await deployed.seigManagerV2.getTonToLton(amount);
             expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)).to.eq(lton)
             expect(await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address)).to.eq(amount)
+
+        })
+
+        it('Anyone can take a snapshot.', async () => {
+
+            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let account = addr1
+            let block = await ethers.provider.getBlock('latest');
+            const snapshotIdBefore = await deployed.seigManagerV2.getCurrentSnapshotId()
+
+            const indexLton0 = await deployed.seigManagerV2.indexLton();
+            const totalStakedLton0 = await deployed.optimismSequencer.totalStakedLton();
+            const balanceOfLayer0 = await deployed.optimismSequencer["balanceOfLton(uint32)"](layerIndex);
+            const balanceOfAccount0 = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, account.address);
+
+            const interface1 = deployed.seigManagerV2.interface ;
+            const topic = interface1.getEventTopic('Snapshot');
+            const receipt = await(await snapshotGasCost(deployed.seigManagerV2.connect(addr1).snapshot())).wait();
+
+            const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
+            const deployedEvent = interface1.parseLog(log);
+            let snapshotId  = deployedEvent.args.id;
+            expect(snapshotId).to.be.eq(snapshotIdBefore.add(ethers.constants.One));
+            // console.log('snapshotId',snapshotId)
+
+            let snapshot:StakeSnapshotFixture = {
+                id: snapshotId,
+                layerIndex: layerIndex,
+                account: account.address,
+                totalStakedLton: totalStakedLton0,
+                indexLton: indexLton0,
+                balanceOfLayer: balanceOfLayer0,
+                balanceOfAccount: balanceOfAccount0
+            }
+            snapshotListSequencer.push(snapshot)
+            // console.log('snapshot',snapshot)
+
+            expect(await deployed.seigManagerV2.indexLtonAt(snapshot.id)).to.be.eq(snapshot.indexLton);
+            expect(await deployed.optimismSequencer.totalStakedLtonAt(snapshot.id)).to.be.eq(snapshot.totalStakedLton);
+            expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,uint256)"](snapshot.layerIndex, snapshot.id))
+                    .to.be.eq(snapshot.balanceOfLayer);
+            expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,address,uint256)"](snapshot.layerIndex, account.address, snapshot.id))
+                    .to.be.eq(snapshot.balanceOfAccount);
+
+            let snapshotTimeAfter = await deployed.seigManagerV2.getSnapshotTime()
+            expect(snapshotTimeAfter[snapshotId]).to.be.gt(block.timestamp);
         })
 
     });
@@ -606,6 +650,8 @@ describe('Integrated Test', () => {
                 .to.eq(balanceOfLton.add(lton))
             expect(await deployed.candidate.balanceOf(_index, addr1.address))
                 .to.eq(balanceOf.add(amount))
+
+
 
         })
     });
@@ -697,6 +743,61 @@ describe('Integrated Test', () => {
 
     });
 
+    describe('# snapshot', () => {
+
+        it('Anyone can take a snapshot.', async () => {
+            // console.log('------------- 2 ---------------')
+            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let account = addr1
+
+            let block = await ethers.provider.getBlock('latest');
+
+            const snapshotIdBefore = await deployed.seigManagerV2.getCurrentSnapshotId()
+            const indexLton0 = await deployed.seigManagerV2.indexLton();
+
+            const interface1 = deployed.seigManagerV2.interface ;
+            const topic = interface1.getEventTopic('Snapshot');
+            const receipt = await(await snapshotGasCost(deployed.seigManagerV2.connect(addr1).snapshot())).wait();
+
+            const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0 );
+            const deployedEvent = interface1.parseLog(log);
+            let snapshotId  = deployedEvent.args.id;
+            expect(snapshotId).to.be.eq(snapshotIdBefore.add(ethers.constants.One));
+
+            const indexLton1 = await deployed.seigManagerV2.indexLton();
+            const totalStakedLton1 = await deployed.optimismSequencer.totalStakedLton();
+            const balanceOfLayer1 = await deployed.optimismSequencer["balanceOfLton(uint32)"](layerIndex);
+            const balanceOfAccount1 = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, account.address);
+
+            let snapshot:StakeSnapshotFixture = {
+                id: snapshotId,
+                layerIndex: layerIndex,
+                account: account.address,
+                indexLton: indexLton1,
+                totalStakedLton: totalStakedLton1,
+                balanceOfLayer: balanceOfLayer1,
+                balanceOfAccount: balanceOfAccount1
+            }
+            snapshotListSequencer.push(snapshot)
+            // console.log(snapshotListSequencer);
+
+            expect(await deployed.seigManagerV2.indexLtonAt(snapshotIdBefore)).to.be.eq(indexLton0);
+            let snapshotTimeAfter = await deployed.seigManagerV2.getSnapshotTime()
+            expect(snapshotTimeAfter[snapshotId]).to.be.gt(block.timestamp);
+
+            let i=0;
+            for (i = 0; i < snapshotListSequencer.length; i++){
+                expect(await deployed.seigManagerV2.indexLtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].indexLton);
+                expect(await deployed.optimismSequencer.totalStakedLtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].totalStakedLton);
+                expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,uint256)"](snapshotListSequencer[i].layerIndex, snapshotListSequencer[i].id))
+                        .to.be.eq(snapshotListSequencer[i].balanceOfLayer);
+                expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,address,uint256)"](snapshotListSequencer[i].layerIndex, account.address, snapshotListSequencer[i].id))
+                        .to.be.eq(snapshotListSequencer[i].balanceOfAccount);
+            }
+
+        });
+
+    });
 
     /// l2 fast withdraw
     describe('# fast withdraw', () => {
@@ -1227,8 +1328,6 @@ describe('Integrated Test', () => {
 
             let fee = info.messageInfo.amount.mul(ethers.BigNumber.from(messageInfo.feeRates)).div(ethers.BigNumber.from("10000"));
             let provideAmount = info.messageInfo.amount.sub(fee);
-            // console.log('fee' , ethers.utils.parseUnits(fee), 'TON') ;
-            // console.log('provideAmount' , ethers.utils.parseUnits(provideAmount), 'TON') ;
 
             expect(deployedEvent.args.key).to.be.eq(key);
             expect(deployedEvent.args.from).to.be.eq(info.provider);
@@ -1302,6 +1401,55 @@ describe('Integrated Test', () => {
             expect(await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)).to.eq(prevBalanceLtonOfCandidate)
             expect(await deployed.candidate.balanceOf(candidateIndex, addr1.address)).to.gt(prevBalanceOfCandidate)
 
+        });
+
+        it('Anyone can take a snapshot.', async () => {
+            // console.log('------------- 3 ---------------')
+            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let account = addr1
+
+            let block = await ethers.provider.getBlock('latest');
+
+            const snapshotIdBefore = await deployed.seigManagerV2.getCurrentSnapshotId()
+
+            const interface1 = deployed.seigManagerV2.interface ;
+            const topic = interface1.getEventTopic('Snapshot');
+            const receipt = await(await snapshotGasCost(deployed.seigManagerV2.connect(addr1).snapshot())).wait();
+
+            const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0 );
+            const deployedEvent = interface1.parseLog(log);
+            let snapshotId  = deployedEvent.args.id;
+            expect(snapshotId).to.be.eq(snapshotIdBefore.add(ethers.constants.One));
+
+            const indexLton1 = await deployed.seigManagerV2.indexLton();
+            const totalStakedLton1 = await deployed.optimismSequencer.totalStakedLton();
+            const balanceOfLayer1 = await deployed.optimismSequencer["balanceOfLton(uint32)"](layerIndex);
+            const balanceOfAccount1 = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, account.address);
+
+
+            let snapshot:StakeSnapshotFixture = {
+                id: snapshotId,
+                layerIndex: layerIndex,
+                account: account.address,
+                indexLton: indexLton1,
+                totalStakedLton: totalStakedLton1,
+                balanceOfLayer: balanceOfLayer1,
+                balanceOfAccount: balanceOfAccount1
+            }
+            snapshotListSequencer.push(snapshot)
+            // console.log(snapshotListSequencer);
+            let snapshotTimeAfter = await deployed.seigManagerV2.getSnapshotTime()
+            expect(snapshotTimeAfter[snapshotId]).to.be.gt(block.timestamp);
+
+            let i=0;
+            for (i = 0; i < snapshotListSequencer.length; i++){
+                expect(await deployed.seigManagerV2.indexLtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].indexLton);
+                expect(await deployed.optimismSequencer.totalStakedLtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].totalStakedLton);
+                expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,uint256)"](snapshotListSequencer[i].layerIndex, snapshotListSequencer[i].id))
+                        .to.be.eq(snapshotListSequencer[i].balanceOfLayer);
+                expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,address,uint256)"](snapshotListSequencer[i].layerIndex, account.address, snapshotListSequencer[i].id))
+                        .to.be.eq(snapshotListSequencer[i].balanceOfAccount);
+            }
         });
 
         it("      pass blocks", async function () {

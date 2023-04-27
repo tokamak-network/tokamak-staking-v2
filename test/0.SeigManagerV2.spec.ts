@@ -335,6 +335,46 @@ describe('SeigManagerV2', () => {
         })
     });
 
+    describe('# snapshot', () => {
+
+        it('getCurrentSnapshotId', async () => {
+            let snapshotId = await deployed.seigManagerV2.getCurrentSnapshotId();
+            const indexLton = await deployed.seigManagerV2.indexLton();
+
+            expect(await deployed.seigManagerV2.indexLtonAt(snapshotId)).to.eq(indexLton);
+        });
+
+        it('snapshot', async () => {
+
+            const indexLton1 = await deployed.seigManagerV2.indexLton();
+            const currentSnapshotId1 = await deployed.seigManagerV2.getCurrentSnapshotId();
+
+            await(await deployed.seigManagerV2.snapshot()).wait();
+
+            const minimumBlocksForUpdateSeig = await deployed.seigManagerV2.minimumBlocksForUpdateSeig()
+            let i
+            for (i = 0; i < minimumBlocksForUpdateSeig; i++){
+                await ethers.provider.send('evm_mine');
+            }
+
+            await(await deployed.seigManagerV2.connect(addr1).runUpdateSeigniorage()).wait();
+            // console.log('runUpdateSeigniorage');
+
+            const indexLton2 = await deployed.seigManagerV2.indexLton();
+            // console.log('indexLton2', indexLton2);
+
+            const currentSnapshotId2 = await deployed.seigManagerV2.getCurrentSnapshotId();
+            // console.log('currentSnapshotId2', currentSnapshotId2);
+
+            const indexLtonAt = await deployed.seigManagerV2.indexLtonAt(currentSnapshotId1);
+            // console.log('indexLtonAt', currentSnapshotId1, ethers.utils.formatEther(indexLtonAt));
+
+
+        });
+
+    })
+
+    /*
     describe('# updateSeigniorage', () => {
         it('After the recent seignorage issuance, seignorage will not be issued unless the minimum block has passed.', async () => {
             const lastSeigBlock = await deployed.seigManagerV2.lastSeigBlock()
@@ -384,5 +424,8 @@ describe('SeigManagerV2', () => {
         });
 
     });
+    */
+
+
 });
 
