@@ -21,6 +21,7 @@ interface Layer2ManagerI {
 
 interface StakingI {
     function getTotalLton() external view returns (uint256) ;
+    function getTotalLtonAt(uint256 snapshotId) external view returns (uint256) ;
 }
 
 contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Storage {
