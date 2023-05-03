@@ -10,15 +10,15 @@ contract FwReceiptStorage {
     address public seigManagerV2;
     address public optimismSequencer;
     address public candidate;
-    uint256 public receiptNo;
 
-    // receiptKey keccak256(_l2Messages)
+    /// hashMessage keccak256(_l2Messages)
     mapping(bytes32 => LibFastWithdraw.Message) public messages;
 
-    // address - sum of tx's amount
+    /// account - layerIndex - sum of providing liquidity
     mapping(address => mapping(uint32 => uint256)) sumOfReceiptsOfSequencers;
     mapping(address => mapping(uint32 => uint256)) sumOfReceiptsOfCandidates;
 
+    /// account - hashMessages
     mapping(address => bytes32[]) txsOfProviders;
     bool internal free = true;
 

@@ -12,33 +12,40 @@ contract Layer2ManagerStorage {
     address public optimismSequencer;
     address public candidate;
 
-    uint256 public minimumDepositForSequencer;  // 초기 시퀀서의 최소 디파짓 금액,
-    uint256 public minimumDepositForCandidate;  // candidate의 최소 스테이킹 금액,
+    /// When creating a sequencer, the minimum deposit amount in TON
+    uint256 public minimumDepositForSequencer;
 
+    /// When Candidate is created, minimum staking amount in TON
+    uint256 public minimumDepositForCandidate;
+
+    /// Number of waiting blocks after unstaking request before withdrawal
     uint256 public delayBlocksForWithdraw;
+
+    /// Maximum number of sequencers we can create
     uint256 public maxLayer2Count;
 
-    uint256 public totalSecurityDeposit; //시퀀서의 담보금
-    uint256 public totalSeigs; //아직 배분되지 않은 시뇨리지
+    /// Sequencer's total security deposit amount
+    uint256 public totalSecurityDeposit;
 
-    //====================
+    /// SSeignorage not yet distributed to Sequencer
+    uint256 public totalSeigs;
+
     uint32[] public optimismSequencerIndexes ;
     mapping (uint32 => bytes32) public optimismSequencerNames;
     mapping (uint32 => bytes32) public candidateNames;
 
-    // 레이어2의 담보금(시퀀서가 입금한다.)
+    /// Sequencer's security deposit amount and seigniorage
     mapping (uint32 => Layer2.Layer2Holdings) public holdings;
 
+    /// hashMessage - (true or false)
     mapping (bytes32 => bool) public layerKeys;
 
-    //==================
     uint32[] public candidatesIndexes ; // 길이가 총 개수
     uint32 public indexSequencers ;  // 계속 증가만 함. 인덱스로 사용
     uint32 public indexCandidates ;  // 계속 증가만 함. 인덱스로 사용
 
+    // What percentage of Sequencer's layerer's TVL will be used as a minimum security deposit
     uint16 public ratioSecurityDepositOfTvl;
-
-    // minimumSecurityDeposit = max(minimumDepositForSequencer, tvl*ratioSecurityDepositOfTvl/10000)
 
     bool internal free = true;
 

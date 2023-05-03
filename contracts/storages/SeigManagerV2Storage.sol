@@ -20,9 +20,15 @@ contract SeigManagerV2Storage {
     address public optimismSequencer;
     address public candidate;
 
+    /// Amount of seigniorage issued per block
     uint256 public seigPerBlock;
+
+    /// Block number that was last seignorage issued
     uint256 public lastSeigBlock;
+
+    /// seigniorage issuance start block
     uint256 public startBlock;
+
 
     uint16 public ratesTonStakers; // divided ratesUnits
     uint16 public ratesDao;   // divided ratesUnits
