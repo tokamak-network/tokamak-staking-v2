@@ -65,7 +65,7 @@ describe('FwReceipt', () => {
         layerInfo.l2Messenger = deployed.l2Messenger.address
         layerInfo.l1Bridge= deployed.l1Bridge.address
         layerInfo.l2Bridge= deployed.l2Bridge.address
-        layerInfo.l2ton= deployed.l2ton.address
+        layerInfo.l2wton= deployed.l2wton.address
     })
 
     describe('# initialize', () => {

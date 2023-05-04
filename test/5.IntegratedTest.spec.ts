@@ -331,7 +331,6 @@ describe('Integrated Test', () => {
             let sequencerIndex = await deployed.layer2Manager.optimismSequencerIndexes(totalLayers.sub(ethers.constants.One))
 
             let amount = await deployed.layer2Manager.minimumDepositForCandidate();
-            console.log('amount', amount);
 
             if (amount.gt(await deployed.wton.balanceOf(addr1.address)))
                 await (await deployed.wton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
@@ -1861,7 +1860,6 @@ describe('Integrated Test', () => {
         it('When seignorage is updated, totalSeigs(the seignorage distributed to the sequencers) is increases.', async () => {
 
             let totalSeigs = await deployed.layer2Manager.totalSeigs()
-            console.log('totalSeigs', totalSeigs)
             await snapshotGasCost(deployed.seigManagerV2.connect(addr1).runUpdateSeigniorage())
             expect(await deployed.layer2Manager.totalSeigs()).to.gt(totalSeigs)
 
