@@ -7,15 +7,15 @@ import {LibOperator} from "../libraries/LibOperator.sol";
 
 contract Layer2ManagerStorage {
 
-    IERC20 public ton;
+    IERC20 public wton;
     address public seigManagerV2;
     address public optimismSequencer;
     address public candidate;
 
-    /// When creating a sequencer, the minimum deposit amount in TON
+    /// When creating a sequencer, the minimum deposit amount in WTON
     uint256 public minimumDepositForSequencer;
 
-    /// When Candidate is created, minimum staking amount in TON
+    /// When Candidate is created, minimum staking amount in WTON
     uint256 public minimumDepositForCandidate;
 
     /// Number of waiting blocks after unstaking request before withdrawal

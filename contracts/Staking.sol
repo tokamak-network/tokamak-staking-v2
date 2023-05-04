@@ -23,16 +23,16 @@ interface FwReceiptI {
 }
 
 interface SeigManagerV2I {
-    function getLtonToTon(uint256 lton) external view returns (uint256);
-    function getTonToLton(uint256 amount) external view returns (uint256);
+    function getLwtonToWton(uint256 lwton) external view returns (uint256);
+    function getWtonToLwton(uint256 amount) external view returns (uint256);
 
     function updateSeigniorage() external returns (bool);
     function claim(address to, uint256 amount) external;
 
     function getCurrentSnapshotId() external view returns (uint256);
     function snapshot() external returns (uint256);
-    function getLtonToTonAt(uint256 lton, uint256 snapshotId) external view returns (uint256);
-    function getTonToLtonAt(uint256 amount, uint256 snapshotId) external view returns (uint256);
+    function getLwtonToWtonAt(uint256 lwton, uint256 snapshotId) external view returns (uint256);
+    function getWtonToLwtonAt(uint256 amount, uint256 snapshotId) external view returns (uint256);
 }
 
 interface Layer2ManagerI {
@@ -55,12 +55,12 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
     using BytesParserLib for bytes;
     using LibArrays for uint256[];
 
-    event Staked(uint32 _index, address sender, uint256 amount, uint256 lton, address commissionTo, uint16 commission);
-    event Unstaked(uint32 _index, address sender, uint256 amount, uint256 lton);
-    event Restaked(uint32 _index, address sender, uint256 amount, uint256 lton);
+    event Staked(uint32 _index, address sender, uint256 amount, uint256 lwton, address commissionTo, uint16 commission);
+    event Unstaked(uint32 _index, address sender, uint256 amount, uint256 lwton);
+    event Restaked(uint32 _index, address sender, uint256 amount, uint256 lwton);
     event Withdrawal(uint32 _index, address sender, uint256 amount);
     event FastWithdrawalClaim(bytes32 hashMessage, uint32 layerIndex, address from, address to, uint256 amount);
-    event FastWithdrawalStaked(bytes32 hashMessage, uint32 layerIndex, address staker, uint256 amount, uint256 lton);
+    event FastWithdrawalStaked(bytes32 hashMessage, uint32 layerIndex, address staker, uint256 amount, uint256 lwton);
 
     /* ========== CONSTRUCTOR ========== */
     constructor() {
@@ -78,13 +78,13 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
         require(balanceOf(layerIndex, from) >= amount, "liquidity is insufficient");
         _beforeUpdate(layerIndex, from);
 
-        uint256 bal = IERC20(ton).balanceOf(address(this));
+        uint256 bal = IERC20(wton).balanceOf(address(this));
 
         if (bal < amount) {
-            if (bal > 0) IERC20(ton).safeTransfer(to, bal);
+            if (bal > 0) IERC20(wton).safeTransfer(to, bal);
             SeigManagerV2I(seigManagerV2).claim(to, (amount - bal));
         } else {
-            IERC20(ton).safeTransfer(to, amount);
+            IERC20(wton).safeTransfer(to, amount);
         }
 
         emit FastWithdrawalClaim(hashMessage, layerIndex, from, to, amount);
@@ -95,13 +95,13 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
         require(fwReceipt == msg.sender, "FW_CALLER_ERR");
         _beforeUpdate(layerIndex, staker);
 
-        uint256 lton_ = SeigManagerV2I(seigManagerV2).getTonToLton(_amount);
-        layerStakedLton[layerIndex] += lton_;
-        _totalStakedLton += lton_;
+        uint256 lwton_ = SeigManagerV2I(seigManagerV2).getWtonToLwton(_amount);
+        layerStakedLwton[layerIndex] += lwton_;
+        _totalStakedLwton += lwton_;
         LibStake.StakeInfo storage info_ = layerStakes[layerIndex][staker];
         info_.stakePrincipal += _amount;
-        info_.stakelton += lton_;
-        emit FastWithdrawalStaked(hashMessage, layerIndex, staker, _amount, lton_);
+        info_.stakelwton += lwton_;
+        emit FastWithdrawalStaked(hashMessage, layerIndex, staker, _amount, lwton_);
         return true;
     }
 
@@ -109,7 +109,7 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
 
     function stake_(uint32 _index, uint256 amount, address commissionTo, uint16 commission) internal
     {
-        IERC20(ton).safeTransferFrom(msg.sender, address(this), amount);
+        IERC20(wton).safeTransferFrom(msg.sender, address(this), amount);
         _stake(_index, msg.sender, amount, commissionTo, commission);
     }
 
@@ -117,9 +117,10 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
     {
         _beforeUpdate(_index, sender);
 
-        uint256 lton_ = SeigManagerV2I(seigManagerV2).getTonToLton(amount);
-        layerStakedLton[_index] += lton_;
-        _totalStakedLton += lton_;
+        uint256 lwton_ = SeigManagerV2I(seigManagerV2).getWtonToLwton(amount);
+
+        layerStakedLwton[_index] += lwton_;
+        _totalStakedLwton += lwton_;
 
         LibStake.StakeInfo storage info_ = layerStakes[_index][sender];
 
@@ -130,47 +131,47 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
 
         uint256 commissionLton = 0;
         if (commission != 0 && commissionTo != address(0) && commission < 10000) {
-            commissionLton = lton_ * commission / 10000;
-            lton_ -= commissionLton;
+            commissionLton = lwton_ * commission / 10000;
+            lwton_ -= commissionLton;
 
-            uint256 amount1 = SeigManagerV2I(seigManagerV2).getLtonToTon(lton_);
+            uint256 amount1 = SeigManagerV2I(seigManagerV2).getLwtonToWton(lwton_);
             info_.stakePrincipal += amount1;
-            info_.stakelton += lton_;
+            info_.stakelwton += lwton_;
 
             LibStake.StakeInfo storage commissionInfo_ = layerStakes[_index][commissionTo];
             commissionInfo_.stakePrincipal += (amount - amount1);
-            commissionInfo_.stakelton += commissionLton;
+            commissionInfo_.stakelwton += commissionLton;
 
         } else {
             info_.stakePrincipal += amount;
-            info_.stakelton += lton_;
+            info_.stakelwton += lwton_;
         }
 
-        emit Staked(_index, sender, amount, lton_, commissionTo, commission);
+        emit Staked(_index, sender, amount, lwton_, commissionTo, commission);
     }
 
-    function _unstake(uint32 _index, uint256 lton_, uint256 _debtTon) internal ifFree nonZero(lton_)
+    function _unstake(uint32 _index, uint256 lwton_, uint256 _debtWton) internal ifFree nonZero(lwton_)
     {
         // require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
         address sender = msg.sender;
         _beforeUpdate(_index, sender);
 
-        uint256 amount = SeigManagerV2I(seigManagerV2).getLtonToTon(lton_);
+        uint256 amount = SeigManagerV2I(seigManagerV2).getLwtonToWton(lwton_);
 
         LibStake.StakeInfo storage info_ = layerStakes[_index][sender];
 
-        if (_debtTon != 0) {
-            require(lton_ + SeigManagerV2I(seigManagerV2).getTonToLton(_debtTon) <= info_.stakelton,'unstake_err_1');
+        if (_debtWton != 0) {
+            require(lwton_ + SeigManagerV2I(seigManagerV2).getWtonToLwton(_debtWton) <= info_.stakelwton,'unstake_err_1');
         } else {
-            require(lton_ <= info_.stakelton,'unstake_err_2');
+            require(lwton_ <= info_.stakelwton,'unstake_err_2');
         }
 
-        info_.stakelton -= lton_;
+        info_.stakelwton -= lwton_;
         if (info_.stakePrincipal < amount) info_.stakePrincipal = 0;
         else info_.stakePrincipal -= amount;
 
-        layerStakedLton[_index] -= lton_;
-        _totalStakedLton -= lton_;
+        layerStakedLwton[_index] -= lwton_;
+        _totalStakedLwton -= lwton_;
 
         uint256 delay = Layer2ManagerI(layer2Manager).delayBlocksForWithdraw();
 
@@ -184,7 +185,7 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
         pendingUnstakedLayer2[_index] += amount;
         pendingUnstakedAccount[sender] += amount;
 
-        emit Unstaked(_index, sender, amount, lton_);
+        emit Unstaked(_index, sender, amount, lwton_);
     }
 
     function restake(uint32 _index) public
@@ -223,12 +224,12 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
         require(accAmount > 0, "no valid restake amount");
 
         // deposit-related storages
-        uint256 lton_ = SeigManagerV2I(seigManagerV2).getTonToLton(accAmount);
+        uint256 lwton_ = SeigManagerV2I(seigManagerV2).getWtonToLwton(accAmount);
         LibStake.StakeInfo storage info_ = layerStakes[_index][sender];
         info_.stakePrincipal += accAmount;
-        info_.stakelton += lton_;
-        layerStakedLton[_index] += lton_;
-        _totalStakedLton += lton_;
+        info_.stakelwton += lwton_;
+        layerStakedLwton[_index] += lwton_;
+        _totalStakedLwton += lwton_;
 
         // withdrawal-related storages
         pendingUnstaked[_index][sender] -= accAmount;
@@ -237,7 +238,7 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
 
         withdrawalRequestIndex[_index][sender] += nlength;
 
-        emit Restaked(_index, sender, accAmount, lton_);
+        emit Restaked(_index, sender, accAmount, lwton_);
         return true;
     }
 
@@ -265,13 +266,13 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
         pendingUnstakedLayer2[_index] -= amount;
         pendingUnstakedAccount[sender] -= amount;
 
-        uint256 bal = IERC20(ton).balanceOf(address(this));
+        uint256 bal = IERC20(wton).balanceOf(address(this));
 
         if (bal < amount) {
-            if (bal > 0) IERC20(ton).safeTransfer(sender, bal);
+            if (bal > 0) IERC20(wton).safeTransfer(sender, bal);
             SeigManagerV2I(seigManagerV2).claim(sender, (amount - bal));
         } else {
-            IERC20(ton).safeTransfer(sender, amount);
+            IERC20(wton).safeTransfer(sender, amount);
         }
 
         emit Withdrawal(_index, sender, amount);
@@ -320,44 +321,44 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
         }
     }
 
-    function totalStakedLton() public view returns (uint256 amount) {
-        return _totalStakedLton;
+    function totalStakedLwton() public view returns (uint256 amount) {
+        return _totalStakedLwton;
     }
 
-    function totalStakedLtonAt(uint256 snapshotId) public view returns (uint256 amount) {
-        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _totalStakedLtonSnapshot);
-        return snapshotted ? value : totalStakedLton();
+    function totalStakedLwtonAt(uint256 snapshotId) public view returns (uint256 amount) {
+        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _totalStakedLwtonSnapshot);
+        return snapshotted ? value : totalStakedLwton();
     }
 
-    function totalStakedLtonAtSnapshot(uint256 snapshotId) public view returns (bool snapshotted, uint256 amount) {
-        return _valueAt(snapshotId, _totalStakedLtonSnapshot);
+    function totalStakedLwtonAtSnapshot(uint256 snapshotId) public view returns (bool snapshotted, uint256 amount) {
+        return _valueAt(snapshotId, _totalStakedLwtonSnapshot);
     }
 
-    function balanceOfLton(uint32 _index) public view returns (uint256 amount) {
-        amount = layerStakedLton[_index];
+    function balanceOfLwton(uint32 _index) public view returns (uint256 amount) {
+        amount = layerStakedLwton[_index];
     }
 
-    function balanceOfLtonAt(uint32 _index, uint256 snapshotId) public view returns (uint256 amount) {
-        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _layerStakedLtonSnapshot[_index]);
+    function balanceOfLwtonAt(uint32 _index, uint256 snapshotId) public view returns (uint256 amount) {
+        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _layerStakedLwtonSnapshot[_index]);
 
-        return snapshotted ? value : balanceOfLton(_index);
+        return snapshotted ? value : balanceOfLwton(_index);
     }
 
-    function balanceOfLtonAtSnapshot(uint32 _index, uint256 snapshotId) public view returns (bool snapshotted, uint256 amount) {
-        return _valueAt(snapshotId, _layerStakedLtonSnapshot[_index]);
+    function balanceOfLwtonAtSnapshot(uint32 _index, uint256 snapshotId) public view returns (bool snapshotted, uint256 amount) {
+        return _valueAt(snapshotId, _layerStakedLwtonSnapshot[_index]);
     }
 
-    function balanceOfLton(uint32 _index, address account) public view returns (uint256 amount) {
+    function balanceOfLwton(uint32 _index, address account) public view returns (uint256 amount) {
         LibStake.StakeInfo memory info = layerStakes[_index][account];
-        amount = info.stakelton;
+        amount = info.stakelwton;
     }
 
-    function balanceOfLtonAt(uint32 _index, address account, uint256 snapshotId) public view returns (uint256 amount) {
+    function balanceOfLwtonAt(uint32 _index, address account, uint256 snapshotId) public view returns (uint256 amount) {
         (bool snapshotted, uint256 value) = _valueAt(snapshotId, _layerStakesSnapshot[_index][account]);
-        return snapshotted ? value :  balanceOfLton(_index, account);
+        return snapshotted ? value :  balanceOfLwton(_index, account);
     }
 
-     function balanceOfLtonAtSnapshot(uint32 _index, address account, uint256 snapshotId) public view returns (bool snapshotted, uint256 amount) {
+     function balanceOfLwtonAtSnapshot(uint32 _index, address account, uint256 snapshotId) public view returns (bool snapshotted, uint256 amount) {
         return _valueAt(snapshotId, _layerStakesSnapshot[_index][account]);
     }
 
@@ -366,11 +367,11 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
     }
 
     function balanceOf(uint32 _index, address account) public view returns (uint256 amount) {
-        amount = SeigManagerV2I(seigManagerV2).getLtonToTon(balanceOfLton(_index, account));
+        amount = SeigManagerV2I(seigManagerV2).getLwtonToWton(balanceOfLwton(_index, account));
     }
 
     function balanceOfAt(uint32 _index, address account, uint256 snapshotId) public view returns (uint256 amount) {
-        amount = SeigManagerV2I(seigManagerV2).getLtonToTonAt(balanceOfLtonAt(_index, account, snapshotId), snapshotId);
+        amount = SeigManagerV2I(seigManagerV2).getLwtonToWtonAt(balanceOfLwtonAt(_index, account, snapshotId), snapshotId);
     }
 
     function totalLayer2Deposits() public view returns (uint256 amount) {
@@ -385,8 +386,8 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
         return stakeAccountList.length;
     }
 
-    function getTotalLton() public view returns (uint256) {
-        return _totalStakedLton;
+    function getTotalLwton() public view returns (uint256) {
+        return _totalStakedLwton;
     }
 
     function getStakeAccountList() public view returns (address[] memory) {
@@ -404,9 +405,9 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
     /* ========== internal ========== */
 
     function _beforeUpdate(uint32 _layerIndex, address account) internal {
-        _updateSnapshot(_totalStakedLtonSnapshot, totalStakedLton());
-        _updateSnapshot(_layerStakedLtonSnapshot[_layerIndex], balanceOfLton(_layerIndex));
-        _updateSnapshot(_layerStakesSnapshot[_layerIndex][account], balanceOfLton(_layerIndex, account));
+        _updateSnapshot(_totalStakedLwtonSnapshot, totalStakedLwton());
+        _updateSnapshot(_layerStakedLwtonSnapshot[_layerIndex], balanceOfLwton(_layerIndex));
+        _updateSnapshot(_layerStakesSnapshot[_layerIndex][account], balanceOfLwton(_layerIndex, account));
     }
 
     function _valueAt(uint256 snapshotId, Snapshots storage snapshots) private view returns (bool, uint256) {

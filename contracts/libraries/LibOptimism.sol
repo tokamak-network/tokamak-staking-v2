@@ -11,16 +11,16 @@ library LibOptimism
         address addressManager;
         address l1Bridge;
         address l2Bridge;
-        address l2ton;
+        address l2wton;
     }
 
     function getKey(
         address addressManager,
         address l1Bridge,
         address l2Bridge,
-        address l2ton
+        address l2wton
     ) external pure returns (bytes32 key_) {
-        key_ = bytes32(keccak256(abi.encodePacked(addressManager, l1Bridge, l2Bridge, l2ton)));
+        key_ = bytes32(keccak256(abi.encodePacked(addressManager, l1Bridge, l2Bridge, l2wton)));
     }
 
     function parseKey(bytes memory data) public pure returns (Info memory info){
@@ -29,7 +29,7 @@ library LibOptimism
                 addressManager : data.toAddress(0),
                 l1Bridge : data.toAddress(20),
                 l2Bridge : data.toAddress(40),
-                l2ton : data.toAddress(60)
+                l2wton : data.toAddress(60)
             });
          }
     }

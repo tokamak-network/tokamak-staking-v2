@@ -20,15 +20,15 @@ contract StakingStorage {
     bool internal free = true;
     // bool public up;
 
-    address public ton;
+    address public wton;
     address public seigManagerV2;
     address public layer2Manager;
     address public fwReceipt;
-    uint256 internal _totalStakedLton;
-    Snapshots internal _totalStakedLtonSnapshot;
+    uint256 internal _totalStakedLwton;
+    Snapshots internal _totalStakedLwtonSnapshot;
 
-    mapping (uint32 => uint256) public layerStakedLton;
-    mapping (uint32 => Snapshots) internal _layerStakedLtonSnapshot;
+    mapping (uint32 => uint256) public layerStakedLwton;
+    mapping (uint32 => Snapshots) internal _layerStakedLwtonSnapshot;
 
     // layer2Index => account => StakeInfo
     mapping (uint32 => mapping(address => LibStake.StakeInfo)) public layerStakes; // ltos uint
@@ -40,11 +40,11 @@ contract StakingStorage {
     mapping (uint32 => mapping (address => uint256)) public withdrawalRequestIndex;
 
     // pending unstaked amount
-    // layer2Index => msg.sender => ton amount
+    // layer2Index => msg.sender => wton amount
     mapping (uint32 => mapping (address => uint256)) public pendingUnstaked;
-    // layer2Index => ton amount
+    // layer2Index => wton amount
     mapping (uint32 => uint256) public pendingUnstakedLayer2;
-    // msg.sender =>  ton amount
+    // msg.sender =>  wton amount
     mapping (address => uint256) public pendingUnstakedAccount;
 
     // layer2Index - info

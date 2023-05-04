@@ -10,8 +10,8 @@ contract SeigManagerV2Storage {
         uint256[] values;
     }
 
-    IERC20 public ton;
-    address public wton;
+    IERC20 public wton;
+    address public ton;
     address public dao;
     address public stosDistribute;
     address public seigManagerV1;
@@ -39,8 +39,8 @@ contract SeigManagerV2Storage {
     bool internal free = true;
 
     uint256 internal _currentSnapshotId;
-    uint256 internal _indexLton; // for staker
-    Snapshots internal _indexLtonSnapshots;
+    uint256 internal _indexLwton; // for staker
+    Snapshots internal _indexLwtonSnapshots;
     uint32[] public snapshotTime;
 
     modifier nonZero(uint256 value) {

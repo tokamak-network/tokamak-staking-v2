@@ -20,8 +20,8 @@ interface Layer2ManagerI {
 }
 
 interface StakingI {
-    function getTotalLton() external view returns (uint256) ;
-    function getTotalLtonAt(uint256 snapshotId) external view returns (uint256) ;
+    function getTotalLwton() external view returns (uint256) ;
+    function getTotalLwtonAt(uint256 snapshotId) external view returns (uint256) ;
 }
 
 contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Storage {
@@ -33,7 +33,7 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
     event UpdatedSeigniorage(
                     uint256 lastSeigBlock_,
                     uint256 increaseSeig_,
-                    uint256 totalSupplyOfTon_,
+                    uint256 totalSupplyOfWton_,
                     uint256[4] amount_,
                     uint256 prevIndex_,
                     uint256 index_
@@ -97,8 +97,8 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
             , "SM_E1"
         );
 
-        require(_amount <= ton.balanceOf(address(this)), 'insufficient TON balance');
-        ton.safeTransfer(_to, _amount);
+        require(_amount <= wton.balanceOf(address(this)), 'insufficient TON balance');
+        wton.safeTransfer(_to, _amount);
 
         emit Claimed(msg.sender, _to, _amount);
     }
@@ -117,18 +117,18 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
         return snapshotTime;
     }
 
-    function indexLton() public view returns (uint256) {
-        return _indexLton;
+    function indexLwton() public view returns (uint256) {
+        return _indexLwton;
     }
 
-    function indexLtonAt(uint256 snapshotId) public view returns (uint256) {
-        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _indexLtonSnapshots);
+    function indexLwtonAt(uint256 snapshotId) public view returns (uint256) {
+        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _indexLwtonSnapshots);
 
-        return snapshotted ? value : indexLton();
+        return snapshotted ? value : indexLwton();
     }
 
-    function indexLtonAtSnapshot(uint256 snapshotId) public view returns (bool snapshotted, uint256 value) {
-        return _valueAt(snapshotId, _indexLtonSnapshots);
+    function indexLwtonAtSnapshot(uint256 snapshotId) public view returns (bool snapshotted, uint256 value) {
+        return _valueAt(snapshotId, _indexLwtonSnapshots);
     }
 
     function updateSeigniorage() external returns (bool res) {
@@ -149,46 +149,46 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
             // update L2 TVL
             // Layer2ManagerI(layer2Manager).updateLayer2Deposits();
 
-            uint256 totalLton = getTotalLton();
-            // console.log('totalLton %s',totalLton);
+            uint256 totalLwton = getTotalLwton();
+            // console.log('totalLton %s',totalLwton);
 
             // calculate the increase amount of seig
             (
-                uint256 totalSupplyOfTon,
+                uint256 totalSupplyOfWton,
                 uint256 amountOfstaker,
                 uint256 amountOfsequencer,
                 uint256 amountOfDao,
                 uint256 amountOfStosHolders
-            ) = _distribute(increaseSeig, totalLton);
+            ) = _distribute(increaseSeig, totalLwton);
 
-            uint256 prevIndex = _indexLton;
+            uint256 prevIndex = _indexLwton;
 
             // 1. update indexLton
-            if (totalLton != 0 && amountOfstaker != 0){
-                _indexLton = calculateIndex(prevIndex, getLtonToTon(totalLton), amountOfstaker);
+            if (totalLwton != 0 && amountOfstaker != 0){
+                _indexLwton = calculateIndex(prevIndex, getLwtonToWton(totalLwton), amountOfstaker);
 
             }
 
-            // 2. mint increaseSeig of ton in address(this)
-            if (increaseSeig != 0) ton.mint(address(this), increaseSeig);
+            // 2. mint increaseSeig of wton in address(this)
+            if (increaseSeig != 0) wton.mint(address(this), increaseSeig);
 
             // 3. give amountOfsequencer
             if (amountOfsequencer != 0)
                 require(Layer2ManagerI(layer2Manager).addSeigs(amountOfsequencer),'FAIL addSeigs');
 
             // 3. transfer amountOfDao,amountOfStosHolders  (to dao, powerTON for tosHolders)
-            if (amountOfDao != 0 && dao != address(0)) ton.safeTransfer(dao, amountOfDao);
-            if (amountOfStosHolders != 0 && stosDistribute != address(0)) ton.safeTransfer(stosDistribute, amountOfStosHolders);
+            if (amountOfDao != 0 && dao != address(0)) wton.safeTransfer(dao, amountOfDao);
+            if (amountOfStosHolders != 0 && stosDistribute != address(0)) wton.safeTransfer(stosDistribute, amountOfStosHolders);
 
             lastSeigBlock = getCurrentBlockNumber();
 
             emit UpdatedSeigniorage(
                 lastSeigBlock,
                 increaseSeig,
-                totalSupplyOfTon,
+                totalSupplyOfWton,
                 [amountOfstaker, amountOfsequencer, amountOfDao, amountOfStosHolders],
                 prevIndex,
-                _indexLton
+                _indexLwton
                 );
         }
         return true;
@@ -202,20 +202,20 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
         }
     }
 
-    function getTonToLton(uint256 _amount) public view returns (uint256 amount) {
-        if (_amount > 0) amount = (_amount * 1e18) / indexLton();
+    function getWtonToLwton(uint256 _amount) public view returns (uint256 amount) {
+        if (_amount > 0) amount = (_amount * 1e27) / indexLwton();
     }
 
-    function getTonToLtonAt(uint256 _amount, uint256 _snapshotId) public view returns (uint256 amount) {
-        if (_amount > 0) amount = (_amount * 1e18) / indexLtonAt(_snapshotId);
+    function getWtonToLwtonAt(uint256 _amount, uint256 _snapshotId) public view returns (uint256 amount) {
+        if (_amount > 0) amount = (_amount * 1e27) / indexLwtonAt(_snapshotId);
     }
 
-    function getLtonToTon(uint256 lton) public view returns (uint256 amount) {
-        if (lton > 0) amount = (lton * indexLton()) / 1e18;
+    function getLwtonToWton(uint256 lton) public view returns (uint256 amount) {
+        if (lton > 0) amount = (lton * indexLwton()) / 1e27;
     }
 
-    function getLtonToTonAt(uint256 lton, uint256 _snapshotId) public view returns (uint256 amount) {
-        if (lton > 0) amount = (lton * indexLtonAt(_snapshotId)) / 1e18;
+    function getLwtonToWtonAt(uint256 lton, uint256 _snapshotId) public view returns (uint256 amount) {
+        if (lton > 0) amount = (lton * indexLwtonAt(_snapshotId)) / 1e27;
     }
 
     function getCurrentBlockNumber() public view returns (uint256) {
@@ -229,46 +229,55 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
         else nextIndex = curIndex;
     }
 
-    function totalSupplyTON() public view returns (uint256 amount) {
+    // function totalSupplyTON() public view returns (uint256 amount) {
+    //     // 톤의 총공급량 = ton.totalSupply() - ton.balacneOf(wton)
+    //     // + ((total staked amount in stakingV1)/1e-9)
+    //     amount = IERC20(ton).totalSupply() + IERC20(ton).balanceOf(address(wton)) + AutoRefactorCoinageI(tot).totalSupply();
+
+    //     // l2로 들어간것과 스테이킹 되는 것이 ton으로 이루어진다면 위의 총공급량으로만 집계 해도 된다.
+    // }
+
+    function totalSupplyTONinWTON() public view returns (uint256 amount) {
         // 톤의 총공급량 = ton.totalSupply() - ton.balacneOf(wton)
         // + ((total staked amount in stakingV1)/1e-9)
-        amount = ton.totalSupply() + ton.balanceOf(wton) + AutoRefactorCoinageI(tot).totalSupply();
+        amount = IERC20(ton).totalSupply()*1e9 + IERC20(ton).balanceOf(address(wton))*1e9 + AutoRefactorCoinageI(tot).totalSupply();
 
         // l2로 들어간것과 스테이킹 되는 것이 ton으로 이루어진다면 위의 총공급량으로만 집계 해도 된다.
     }
 
-    function getTotalLton() public view returns (uint256 amount) {
-        amount = StakingI(optimismSequencer).getTotalLton() + StakingI(candidate).getTotalLton();
+    function getTotalLwton() public view returns (uint256 amount) {
+        amount = StakingI(optimismSequencer).getTotalLwton() + StakingI(candidate).getTotalLwton();
     }
 
-    function getTotalLtonAt(uint256 _snapshotId) public view returns (uint256 amount) {
-        amount = StakingI(optimismSequencer).getTotalLtonAt(_snapshotId) + StakingI(candidate).getTotalLtonAt(_snapshotId);
+    function getTotalLwtonAt(uint256 _snapshotId) public view returns (uint256 amount) {
+        amount = StakingI(optimismSequencer).getTotalLwtonAt(_snapshotId) + StakingI(candidate).getTotalLwtonAt(_snapshotId);
     }
 
     /* ========== internal ========== */
 
-    function _distribute(uint256 amount, uint256 totalLton) internal view returns (
-        uint256 totalSupplyOfTon,
+    function _distribute(uint256 amount, uint256 totalLwton) internal view returns (
+        uint256 totalSupplyOfWton,
         uint256 amountOfstaker,
         uint256 amountOfsequencer,
         uint256 amountOfDao,
         uint256 amountOfStosHolders
     ){
-        totalSupplyOfTon = totalSupplyTON();
-        if (totalSupplyOfTon != 0) {
+        totalSupplyOfWton = totalSupplyTONinWTON() ;
+
+        if (totalSupplyOfWton != 0) {
             // console.log('amount %s', amount);
             // console.log('getLtonToTon(totalLton) %s', getLtonToTon(totalLton));
 
             // 1. (S/T) * TON seigniorage
             //    TON stakers
-            if (totalLton != 0) amountOfstaker = amount *  getLtonToTon(totalLton) / totalSupplyOfTon  ;
+            if (totalLwton != 0) amountOfstaker = amount *  getLwtonToWton(totalLwton) / totalSupplyOfWton  ;
 
             // 2. ((D+C)/T) * TON seigniorage
             //    to sequencer, D layer 2 reserve, C sequencer deposit
             uint256 amountOfCD = Layer2ManagerI(layer2Manager).curTotalAmountsLayer2();
 
             if (amountOfCD != 0){
-                amountOfsequencer = amount * amountOfCD / totalSupplyOfTon ;
+                amountOfsequencer = amount * (amountOfCD / 1e9) / totalSupplyOfWton ;
             }
 
             uint256 amount1 = amount - amountOfstaker - amountOfsequencer;
@@ -293,13 +302,13 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
     function _snapshot() internal virtual returns (uint256) {
         if (snapshotTime.length == 0) {
             snapshotTime.push(uint32(0));
-            _indexLtonSnapshots.ids.push(0);
-            _indexLtonSnapshots.values.push(1 ether);
+            _indexLwtonSnapshots.ids.push(0);
+            _indexLwtonSnapshots.values.push(1 ether);
         }
 
         snapshotTime.push(uint32(block.timestamp));
         _currentSnapshotId += 1;
-        _updateSnapshot(_indexLtonSnapshots, _indexLton);
+        _updateSnapshot(_indexLwtonSnapshots, _indexLwton);
 
         emit Snapshot(_currentSnapshotId, block.timestamp);
         return _currentSnapshotId;

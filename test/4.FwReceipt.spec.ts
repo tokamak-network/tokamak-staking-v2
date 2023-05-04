@@ -73,7 +73,7 @@ describe('FwReceipt', () => {
         it('initialize can not be executed by not owner', async () => {
             await expect(
                 deployed.fwReceiptProxy.connect(addr1).initialize(
-                    seigManagerInfo.ton,
+                    seigManagerInfo.wton,
                     deployed.l1Messenger.address,
                     deployed.seigManagerV2.address,
                     deployed.optimismSequencerProxy.address,
@@ -84,14 +84,14 @@ describe('FwReceipt', () => {
 
         it('initialize can be executed by only owner', async () => {
             await snapshotGasCost(deployed.fwReceiptProxy.connect(deployer).initialize(
-                    seigManagerInfo.ton,
+                    seigManagerInfo.wton,
                     deployed.l1Messenger.address,
                     deployed.seigManagerV2.address,
                     deployed.optimismSequencerProxy.address,
                     deployed.candidateProxy.address
                 ))
 
-            expect(await deployed.fwReceiptProxy.ton()).to.eq(seigManagerInfo.ton)
+            expect(await deployed.fwReceiptProxy.wton()).to.eq(seigManagerInfo.wton)
             expect(await deployed.fwReceiptProxy.optimismSequencer()).to.eq(deployed.optimismSequencerProxy.address)
 
         })
@@ -99,7 +99,7 @@ describe('FwReceipt', () => {
         it('can execute only once.', async () => {
             await expect(
                 deployed.fwReceiptProxy.connect(deployer).initialize(
-                    seigManagerInfo.ton,
+                    seigManagerInfo.wton,
                     deployed.l1Messenger.address,
                     deployed.seigManagerV2.address,
                     deployed.optimismSequencerProxy.address,

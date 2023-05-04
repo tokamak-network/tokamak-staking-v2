@@ -5,7 +5,7 @@ library LibStake
 {
     struct StakeInfo {
         uint256 stakePrincipal;
-        uint256 stakelton;
+        uint256 stakelwton;
         bool stake;
     }
 

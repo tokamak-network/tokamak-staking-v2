@@ -1,5 +1,6 @@
 import { ethers } from 'hardhat'
 import {  Wallet, Signer } from 'ethers'
+
 import { SeigManagerV2Proxy } from '../../typechain-types/contracts/proxy/SeigManagerV2Proxy'
 import { SeigManagerV2 } from '../../typechain-types/contracts/SeigManagerV2.sol'
 import { Layer2ManagerProxy } from '../../typechain-types/contracts/proxy/Layer2ManagerProxy'
@@ -13,6 +14,7 @@ import { FwReceiptProxy } from '../../typechain-types/contracts/proxy/FwReceiptP
 import { FwReceipt } from '../../typechain-types/contracts/FwReceipt.sol'
 
 import { TON } from '../../typechain-types/contracts/test/TON.sol'
+import { WTON } from '../../typechain-types/contracts/test/WTON.sol'
 import { Lib_AddressManager } from '../../typechain-types/contracts/test/Lib_AddressManager'
 import { MockL1Messenger } from '../../typechain-types/contracts/test/MockL1Messenger'
 import { MockL2Messenger } from '../../typechain-types/contracts/test/MockL2Messenger'
@@ -26,13 +28,18 @@ import { LibFastWithdraw } from '../../typechain-types/contracts/libraries/LibFa
 
 import Web3EthAbi from 'web3-eth-abi';
 import TON_ABI from '../../artifacts/contracts/test/TON.sol/TON.json'
+import WTON_ABI from '../abi/WTON.json'
+
 import {
     ParseMessageFixture,
     FastWithdrawMessageFixture, Layer2Fixture, TonStakingV2Fixture, OperatorFixture } from './fixtureInterfaces'
 import { keccak256 } from 'ethers/lib/utils'
 // mainnet
+let wtonAddress = "0xc4A11aaf6ea915Ed7Ac194161d2fC9384F15bff2";
 let tonAddress = "0x2be5e8c109e2197D077D13A82dAead6a9b3433C5";
 let tonAdminAddress = "0xDD9f0cCc044B0781289Ee318e5971b0139602C26";
+let seigManagerAddress = "0x710936500aC59e8551331871Cbad3D33d5e0D909";
+let depositManagerAddress = "0x56E465f654393fa48f007Ed7346105c7195CEe43";
 
 const ifwReceiptAbi = [{
     "inputs": [
@@ -142,6 +149,7 @@ const iL1CrossDomainMessengerAbi = [
         "type": "function"
       }
     ] ;
+
 export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture> {
 
     const [deployer, addr1, addr2, sequencer1, dao, stosDistribute ] = await ethers.getSigners();
@@ -218,13 +226,14 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
 
     //
     const ton = (await ethers.getContractAt(TON_ABI.abi, tonAddress, deployer)) as TON
+    const wton = (await ethers.getContractAt(WTON_ABI.abi, wtonAddress, deployer)) as WTON
 
     //
     await ethers.provider.send("hardhat_setBalance", [
         tonAdmin.address,
         "0x8ac7230489e80000",
       ]);
-    await ton.connect(tonAdmin).addMinter(seigManagerV2Proxy.address);
+    await wton.connect(tonAdmin).addMinter(seigManagerV2Proxy.address);
 
     //---------
 
@@ -250,7 +259,7 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
     await addressManager.connect(deployer).setAddress("Proxy__OVM_L1StandardBridge", l1Bridge.address);
 
     const TestERC20 = await ethers.getContractFactory('TestERC20')
-    const l2ton = (await TestERC20.connect(deployer).deploy()) as TestERC20
+    const l2wton = (await TestERC20.connect(deployer).deploy()) as TestERC20
 
     return  {
         seigManagerV2Proxy: seigManagerV2Proxy,
@@ -264,6 +273,7 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
         fwReceiptProxy: fwReceiptProxy,
         fwReceipt: fwReceipt,
         ton: ton,
+        wton: wton,
         deployer: deployer,
         addr1: addr1,
         addr2: addr2,
@@ -274,7 +284,7 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
         l2Messenger: l2Messenger,
         l1Bridge: l1Bridge,
         l2Bridge: l2Bridge,
-        l2ton: l2ton,
+        l2wton: l2wton,
         dao: dao,
         stosDistribute: stosDistribute
     }
@@ -287,7 +297,7 @@ export const getLayerKey = async function (info: Layer2Fixture): Promise<string>
             ethers.utils.arrayify(info.addressManager),
             ethers.utils.arrayify(info.l1Bridge),
             ethers.utils.arrayify(info.l2Bridge),
-            ethers.utils.arrayify(info.l2ton)
+            ethers.utils.arrayify(info.l2wton)
         ]
       )
    return ethers.utils.keccak256(constructorArgumentsEncoded) ;
@@ -390,7 +400,7 @@ export const getCandidateLayerKey = function (info: OperatorFixture): string {
 
 export const bytesFastWithdrawMessage1 = async function (
   fwReceiptContract: string,
-  l1ton: string,
+  l1wton: string,
   layerInfo: Layer2Fixture,
   info: FastWithdrawMessageFixture): Promise<ParseMessageFixture> {
 
@@ -416,8 +426,8 @@ export const bytesFastWithdrawMessage1 = async function (
   // 4+20+20+20+20+32+107 = 223
   let finalizeERC20WithdrawalData = iBridge.encodeFunctionData("finalizeERC20Withdrawal",
       [
-          l1ton,
-          layerInfo.l2ton,
+          l1wton,
+          layerInfo.l2wton,
           info.requestor,
           fwReceiptContract,
           info.amount,
@@ -543,3 +553,4 @@ export enum FW_STATUS {
         INVALID_FUNC_SIG,
         UNSUPPORTED_VERSION
 }
+

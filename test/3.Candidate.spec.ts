@@ -41,7 +41,7 @@ describe('Candidate', () => {
         it('initialize can not be executed by not owner', async () => {
             await expect(
                 deployed.candidateProxy.connect(addr1).initialize(
-                    seigManagerInfo.ton,
+                    seigManagerInfo.wton,
                     deployed.seigManagerV2Proxy.address,
                     deployed.layer2ManagerProxy.address,
                     deployed.fwReceiptProxy.address
@@ -51,13 +51,13 @@ describe('Candidate', () => {
 
         it('initialize can be executed by only owner', async () => {
             await snapshotGasCost(deployed.candidateProxy.connect(deployer).initialize(
-                seigManagerInfo.ton,
+                seigManagerInfo.wton,
                 deployed.seigManagerV2Proxy.address,
                 deployed.layer2ManagerProxy.address,
                 deployed.fwReceiptProxy.address
                 ))
 
-            expect(await deployed.candidateProxy.ton()).to.eq(seigManagerInfo.ton)
+            expect(await deployed.candidateProxy.wton()).to.eq(seigManagerInfo.wton)
             expect(await deployed.candidateProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
             expect(await deployed.candidateProxy.layer2Manager()).to.eq(deployed.layer2ManagerProxy.address)
             expect(await deployed.candidateProxy.fwReceipt()).to.eq(deployed.fwReceiptProxy.address)
@@ -67,7 +67,7 @@ describe('Candidate', () => {
         it('can execute only once.', async () => {
             await expect(
                 deployed.candidateProxy.connect(deployer).initialize(
-                    seigManagerInfo.ton,
+                    seigManagerInfo.wton,
                     deployed.seigManagerV2Proxy.address,
                     deployed.layer2ManagerProxy.address,
                     deployed.fwReceiptProxy.address

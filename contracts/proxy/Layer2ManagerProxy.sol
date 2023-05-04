@@ -7,7 +7,7 @@ import "../proxy/BaseProxy.sol";
 contract Layer2ManagerProxy is BaseProxy, Layer2ManagerStorage {
 
     function initialize(
-        address _ton,
+        address _wton,
         address _seigManagerV2,
         address _optimismSequencer,
         address _candidate,
@@ -16,15 +16,15 @@ contract Layer2ManagerProxy is BaseProxy, Layer2ManagerStorage {
         uint32 _delayBlocksForWithdraw
     )
         external onlyOwner
-        nonZeroAddress(_ton)
+        nonZeroAddress(_wton)
         nonZeroAddress(_seigManagerV2)
         nonZeroAddress(_optimismSequencer)
         nonZeroAddress(_candidate)
         nonZero(_delayBlocksForWithdraw)
     {
-        require(address(ton) == address(0), "already initialize");
+        require(address(wton) == address(0), "already initialize");
 
-        ton = IERC20(_ton);
+        wton = IERC20(_wton);
         seigManagerV2 = _seigManagerV2;
         optimismSequencer = _optimismSequencer;
         candidate = _candidate;

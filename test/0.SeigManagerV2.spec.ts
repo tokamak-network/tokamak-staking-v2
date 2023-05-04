@@ -339,14 +339,14 @@ describe('SeigManagerV2', () => {
 
         it('getCurrentSnapshotId', async () => {
             let snapshotId = await deployed.seigManagerV2.getCurrentSnapshotId();
-            const indexLton = await deployed.seigManagerV2.indexLton();
+            const indexLton = await deployed.seigManagerV2.indexLwton();
 
-            expect(await deployed.seigManagerV2.indexLtonAt(snapshotId)).to.eq(indexLton);
+            expect(await deployed.seigManagerV2.indexLwtonAt(snapshotId)).to.eq(indexLton);
         });
 
         it('snapshot', async () => {
 
-            const indexLton1 = await deployed.seigManagerV2.indexLton();
+            const indexLton1 = await deployed.seigManagerV2.indexLwton();
             const currentSnapshotId1 = await deployed.seigManagerV2.getCurrentSnapshotId();
 
             await(await deployed.seigManagerV2.snapshot()).wait();
@@ -360,71 +360,20 @@ describe('SeigManagerV2', () => {
             await(await deployed.seigManagerV2.connect(addr1).runUpdateSeigniorage()).wait();
             // console.log('runUpdateSeigniorage');
 
-            const indexLton2 = await deployed.seigManagerV2.indexLton();
-            // console.log('indexLton2', indexLton2);
+            const indexLwton2 = await deployed.seigManagerV2.indexLwton();
+            // console.log('indexLwton2', indexLwton2);
 
             const currentSnapshotId2 = await deployed.seigManagerV2.getCurrentSnapshotId();
             // console.log('currentSnapshotId2', currentSnapshotId2);
 
-            const indexLtonAt = await deployed.seigManagerV2.indexLtonAt(currentSnapshotId1);
-            // console.log('indexLtonAt', currentSnapshotId1, ethers.utils.formatEther(indexLtonAt));
+            const indexLwtonAt = await deployed.seigManagerV2.indexLwtonAt(currentSnapshotId1);
+            // console.log('indexLwtonAt', currentSnapshotId1, ethers.utils.formatEther(indexLwtonAt));
 
 
         });
 
     })
 
-    /*
-    describe('# updateSeigniorage', () => {
-        it('After the recent seignorage issuance, seignorage will not be issued unless the minimum block has passed.', async () => {
-            const lastSeigBlock = await deployed.seigManagerV2.lastSeigBlock()
-            const minimumBlocksForUpdateSeig = await deployed.seigManagerV2.minimumBlocksForUpdateSeig()
-            const block = await ethers.provider.getBlock('latest')
-
-            await snapshotGasCost(
-                deployed.seigManagerV2.connect(addr1).updateSeigniorage()
-            )
-
-            if (block.number - lastSeigBlock.toNumber() < minimumBlocksForUpdateSeig ) {
-                expect(await deployed.seigManagerV2.lastSeigBlock()).to.eq(lastSeigBlock)
-            } else {
-                expect(await deployed.seigManagerV2.lastSeigBlock()).to.gt(lastSeigBlock)
-            }
-        })
-
-        it("      pass blocks", async function () {
-            const minimumBlocksForUpdateSeig = await deployed.seigManagerV2.minimumBlocksForUpdateSeig()
-            let i
-            for (i = 0; i < minimumBlocksForUpdateSeig; i++){
-                await ethers.provider.send('evm_mine');
-            }
-        });
-
-        it('If the sum of the staking amount and the bonding liquidity amount is 0, indexLton does not change.', async () => {
-            expect(await deployed.seigManagerV2.getTotalLton()).to.eq(ethers.constants.Zero)
-            const indexLton = await deployed.seigManagerV2.indexLton();
-            await snapshotGasCost(deployed.seigManagerV2.connect(addr1).updateSeigniorage())
-            expect(await deployed.seigManagerV2.indexLton()).to.eq(indexLton)
-        });
-
-        it("      pass blocks", async function () {
-            const minimumBlocksForUpdateSeig = await deployed.seigManagerV2.minimumBlocksForUpdateSeig()
-            let i
-            for (i = 0; i < minimumBlocksForUpdateSeig; i++){
-                await ethers.provider.send('evm_mine');
-            }
-        });
-
-        it('If the TVL and deposit of L2 are 0, totalSeigs for sequencer is not increased.', async () => {
-            expect(await deployed.layer2Manager.curTotalLayer2Deposits()).to.eq(ethers.constants.Zero)
-            expect(await deployed.layer2Manager.totalSecurityDeposit()).to.eq(ethers.constants.Zero)
-            const totalSeigs = await deployed.layer2Manager.totalSeigs();
-            await snapshotGasCost(deployed.seigManagerV2.connect(addr1).updateSeigniorage())
-            expect(await deployed.layer2Manager.totalSeigs()).to.eq(totalSeigs)
-        });
-
-    });
-    */
 
 
 });

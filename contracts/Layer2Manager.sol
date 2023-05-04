@@ -19,13 +19,13 @@ interface SeigManagerV2I {
 }
 
 interface StakingLayer2I {
-    function balanceOfLton(uint32 layerKey, address account) external view returns (uint256 amount);
+    function balanceOfLwton(uint32 layerKey, address account) external view returns (uint256 amount);
 }
 
 interface SequencerI {
     function create(uint32 _index, bytes memory _layerInfo) external returns (bool);
     function getTvl(uint32 _index) external view returns (uint256);
-    function getTvl(address l1Bridge, address l2ton) external view returns (uint256 amount);
+    function getTvl(address l1Bridge, address l2wton) external view returns (uint256 amount);
     function sequencer(uint32 _index) external view returns (address);
     function sequencer(address addressManager) external view returns (address);
     function layerInfo(uint32 _index) external view returns (bytes memory);
@@ -44,7 +44,7 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
     using SafeERC20 for IERC20;
 
     event Claimed(uint32 _index, address _sequencer, uint256 amount);
-    event CreatedOptimismSequencer(uint32 _index, address _sequencer, bytes32 _name, address addressManager, address l1Bridge, address l2Bridge, address l2ton, uint256 depositAmount);
+    event CreatedOptimismSequencer(uint32 _index, address _sequencer, bytes32 _name, address addressManager, address l1Bridge, address l2Bridge, address l2wton, uint256 depositAmount);
     event CreatedCandidate(uint32 _index, address _operator, bytes32 _name, uint32 _sequencerIndex, uint16 _commission, uint256 depositAmount);
     event Distributed(uint256 _totalSeigs, uint256 _distributedAmount);
     event IncreasedSecurityDeposit(uint32 _index, address caller, uint256 amount);
@@ -110,7 +110,7 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         address addressManager,
         address l1Bridge,
         address l2Bridge,
-        address l2ton,
+        address l2wton,
         uint256 amount
     )
         external ifFree
@@ -121,16 +121,16 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
 
         require(
             addressManager != address(0) &&
-            l2ton != address(0), "zero address"
+            l2wton != address(0), "zero address"
         );
 
-        bytes32 _key = LibOptimism.getKey(addressManager, l1Bridge, l2Bridge, l2ton);
+        bytes32 _key = LibOptimism.getKey(addressManager, l1Bridge, l2Bridge, l2wton);
         require(!layerKeys[_key], 'already created');
 
         address _l1Bridge = SequencerI(optimismSequencer).L1StandardBridge(addressManager);
         require(l1Bridge == _l1Bridge, 'different l1Bridge');
 
-        require(amount >= minimumSecurityDepositAmount(l1Bridge, l2ton), 'security deposit is insufficent');
+        require(amount >= minimumSecurityDepositAmount(l1Bridge, l2wton), 'security deposit is insufficent');
 
         layerKeys[_key] = true;
         uint32 _index = ++indexSequencers;
@@ -144,14 +144,14 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         require(
             SequencerI(optimismSequencer).create(
                 _index,
-                abi.encodePacked(addressManager, l1Bridge, l2Bridge, l2ton)),
+                abi.encodePacked(addressManager, l1Bridge, l2Bridge, l2wton)),
             "Fail createOptimismSequencer"
         );
 
-        if (amount != 0) ton.safeTransferFrom(msg.sender, address(this), amount);
+        if (amount != 0) wton.safeTransferFrom(msg.sender, address(this), amount);
 
         emit CreatedOptimismSequencer(
-            _index, msg.sender, _name, addressManager, l1Bridge, l2Bridge, l2ton, amount);
+            _index, msg.sender, _name, addressManager, l1Bridge, l2Bridge, l2wton, amount);
     }
 
     function createCandidate(
@@ -172,12 +172,6 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
 
         candidatesIndexes.push(_index);
         candidateNames[_index] = _name;
-
-        if (amount != 0) ton.safeTransferFrom(msg.sender, address(this), amount);
-
-        if (ton.allowance(address(this), candidate) < amount) {
-            ton.approve(candidate, ton.totalSupply());
-        }
 
         require(
             CandidateI(candidate).create(
@@ -201,13 +195,13 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         address l1Bridge = SequencerI(optimismSequencer).L1StandardBridge(_layerInfo.addressManager);
         require(l1Bridge != address(0), 'zero l1Bridge');
 
-        uint256 minDepositAmount = minimumSecurityDepositAmount(l1Bridge, _layerInfo.l2ton);
+        uint256 minDepositAmount = minimumSecurityDepositAmount(l1Bridge, _layerInfo.l2wton);
         Layer2.Layer2Holdings storage holding = holdings[_sequencerIndex];
         require(amount + minDepositAmount <= holding.securityDeposit, "insufficient deposit");
 
         holding.securityDeposit -= amount;
         totalSecurityDeposit -= amount;
-        ton.safeTransfer(msg.sender, amount);
+        wton.safeTransfer(msg.sender, amount);
 
         emit DecreasedSecurityDeposit(_sequencerIndex, msg.sender, amount);
     }
@@ -218,7 +212,7 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         external ifFree nonZeroUint32(_sequencerIndex) nonZero(amount)
     {
         require(_sequencerIndex <= indexSequencers, "wrong index");
-        ton.safeTransferFrom(msg.sender, address(this), amount);
+        wton.safeTransferFrom(msg.sender, address(this), amount);
 
         Layer2.Layer2Holdings storage holding = holdings[_sequencerIndex];
         holding.securityDeposit += amount;
@@ -270,19 +264,19 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
     }
 
     /* ========== VIEW ========== */
-    function minimumSecurityDepositAmount(address l1Bridge, address l2ton) public view returns (uint256 amount) {
+    function minimumSecurityDepositAmount(address l1Bridge, address l2wton) public view returns (uint256 amount) {
         if (ratioSecurityDepositOfTvl == 0) amount = minimumDepositForSequencer;
         else {
             amount = Math.max(
-                SequencerI(optimismSequencer).getTvl(l1Bridge, l2ton) * ratioSecurityDepositOfTvl / 10000,
+                SequencerI(optimismSequencer).getTvl(l1Bridge, l2wton) * ratioSecurityDepositOfTvl / 10000,
                 minimumDepositForSequencer);
         }
     }
 
-    function balanceOfLton(address account) public view returns (uint256 amount) {
+    function balanceOfLwton(address account) public view returns (uint256 amount) {
         uint256 len = optimismSequencerIndexes.length;
         for(uint256 i = 0; i < len; i++){
-            amount += StakingLayer2I(optimismSequencer).balanceOfLton(optimismSequencerIndexes[i], account);
+            amount += StakingLayer2I(optimismSequencer).balanceOfLwton(optimismSequencerIndexes[i], account);
         }
     }
 

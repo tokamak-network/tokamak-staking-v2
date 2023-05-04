@@ -43,7 +43,7 @@ describe('Layer2Manager', () => {
         it('initialize can not be executed by not owner', async () => {
             await expect(
                 deployed.layer2ManagerProxy.connect(addr1).initialize(
-                    seigManagerInfo.ton,
+                    seigManagerInfo.wton,
                     deployed.seigManagerV2Proxy.address,
                     deployed.optimismSequencerProxy.address,
                     deployed.candidateProxy.address,
@@ -56,7 +56,7 @@ describe('Layer2Manager', () => {
 
         it('initialize can be executed by only owner', async () => {
             await snapshotGasCost(deployed.layer2ManagerProxy.connect(deployer).initialize(
-                    seigManagerInfo.ton,
+                    seigManagerInfo.wton,
                     deployed.seigManagerV2Proxy.address,
                     deployed.optimismSequencerProxy.address,
                     deployed.candidateProxy.address,
@@ -65,7 +65,7 @@ describe('Layer2Manager', () => {
                     layer2ManagerInfo.delayBlocksForWithdraw
                 ))
 
-            expect(await deployed.layer2ManagerProxy.ton()).to.eq(seigManagerInfo.ton)
+            expect(await deployed.layer2ManagerProxy.wton()).to.eq(seigManagerInfo.wton)
             expect(await deployed.layer2ManagerProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
             expect(await deployed.layer2ManagerProxy.optimismSequencer()).to.eq(deployed.optimismSequencerProxy.address)
             expect(await deployed.layer2ManagerProxy.candidate()).to.eq(deployed.candidateProxy.address)
@@ -79,7 +79,7 @@ describe('Layer2Manager', () => {
         it('can execute only once.', async () => {
             await expect(
                 deployed.layer2ManagerProxy.connect(deployer).initialize(
-                    seigManagerInfo.ton,
+                    seigManagerInfo.wton,
                     deployed.seigManagerV2Proxy.address,
                     deployed.optimismSequencerProxy.address,
                     deployed.candidateProxy.address,

@@ -30,7 +30,7 @@ describe('Integrated Test', () => {
         tot: "0x6FC20Ca22E67aAb397Adb977F092245525f7AeEf",
         seigManagerV1: "0x710936500aC59e8551331871Cbad3D33d5e0D909",
         layer2Manager: "",
-        seigPerBlock: ethers.BigNumber.from("3920000000000000000"),
+        seigPerBlock: ethers.BigNumber.from("3920000000000000000000000000"),
         minimumBlocksForUpdateSeig: 300,
         ratesTonStakers: 10000,
         ratesDao: 0,
@@ -60,7 +60,7 @@ describe('Integrated Test', () => {
         l2Messenger: "",
         l1Bridge: "",
         l2Bridge: "",
-        l2ton: ""
+        l2wton: ""
     }
 
     let snapshotListSequencer: Array<StakeSnapshotFixture> = [];
@@ -79,7 +79,7 @@ describe('Integrated Test', () => {
         layerInfo.l2Messenger = deployed.l2Messenger.address
         layerInfo.l1Bridge= deployed.l1Bridge.address
         layerInfo.l2Bridge= deployed.l2Bridge.address
-        layerInfo.l2ton= deployed.l2ton.address
+        layerInfo.l2wton= deployed.l2wton.address
         messageNonce = ethers.BigNumber.from("1000");
     })
 
@@ -123,7 +123,7 @@ describe('Integrated Test', () => {
 
         it('Layer2Manager : initialize can be executed by only owner', async () => {
             await snapshotGasCost(deployed.layer2ManagerProxy.connect(deployer).initialize(
-                    seigManagerInfo.ton,
+                    seigManagerInfo.wton,
                     deployed.seigManagerV2Proxy.address,
                     deployed.optimismSequencerProxy.address,
                     deployed.candidateProxy.address,
@@ -132,7 +132,7 @@ describe('Integrated Test', () => {
                     layer2ManagerInfo.delayBlocksForWithdraw
                 ))
 
-            expect(await deployed.layer2ManagerProxy.ton()).to.eq(seigManagerInfo.ton)
+            expect(await deployed.layer2ManagerProxy.wton()).to.eq(seigManagerInfo.wton)
             expect(await deployed.layer2ManagerProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
             expect(await deployed.layer2ManagerProxy.optimismSequencer()).to.eq(deployed.optimismSequencerProxy.address)
             expect(await deployed.layer2ManagerProxy.candidate()).to.eq(deployed.candidateProxy.address)
@@ -145,13 +145,13 @@ describe('Integrated Test', () => {
 
         it('OptimismSequencer : initialize can be executed by only owner', async () => {
             await snapshotGasCost(deployed.optimismSequencerProxy.connect(deployer).initialize(
-                seigManagerInfo.ton,
+                seigManagerInfo.wton,
                 deployed.seigManagerV2Proxy.address,
                 deployed.layer2ManagerProxy.address,
                 deployed.fwReceiptProxy.address
                 ))
 
-            expect(await deployed.optimismSequencerProxy.ton()).to.eq(seigManagerInfo.ton)
+            expect(await deployed.optimismSequencerProxy.wton()).to.eq(seigManagerInfo.wton)
             expect(await deployed.optimismSequencerProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
             expect(await deployed.optimismSequencerProxy.layer2Manager()).to.eq(deployed.layer2ManagerProxy.address)
             expect(await deployed.optimismSequencerProxy.fwReceipt()).to.eq(deployed.fwReceiptProxy.address)
@@ -160,13 +160,13 @@ describe('Integrated Test', () => {
 
         it('Candidate : initialize can be executed by only owner', async () => {
             await snapshotGasCost(deployed.candidateProxy.connect(deployer).initialize(
-                seigManagerInfo.ton,
+                seigManagerInfo.wton,
                 deployed.seigManagerV2Proxy.address,
                 deployed.layer2ManagerProxy.address,
                 deployed.fwReceiptProxy.address
                 ))
 
-            expect(await deployed.candidateProxy.ton()).to.eq(seigManagerInfo.ton)
+            expect(await deployed.candidateProxy.wton()).to.eq(seigManagerInfo.wton)
             expect(await deployed.candidateProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
             expect(await deployed.candidateProxy.layer2Manager()).to.eq(deployed.layer2ManagerProxy.address)
             expect(await deployed.candidateProxy.fwReceipt()).to.eq(deployed.fwReceiptProxy.address)
@@ -174,14 +174,14 @@ describe('Integrated Test', () => {
 
         it('FwReceipt : initialize can be executed by only owner', async () => {
             await snapshotGasCost(deployed.fwReceiptProxy.connect(deployer).initialize(
-                seigManagerInfo.ton,
+                seigManagerInfo.wton,
                 deployed.l1Messenger.address,
                 deployed.seigManagerV2.address,
                 deployed.optimismSequencerProxy.address,
                 deployed.candidateProxy.address
                 ))
 
-            expect(await deployed.fwReceiptProxy.ton()).to.eq(seigManagerInfo.ton)
+            expect(await deployed.fwReceiptProxy.wton()).to.eq(seigManagerInfo.wton)
             expect(await deployed.fwReceiptProxy.optimismSequencer()).to.eq(deployed.optimismSequencerProxy.address)
             expect(await deployed.fwReceiptProxy.candidate()).to.eq(deployed.candidateProxy.address)
 
@@ -223,7 +223,7 @@ describe('Integrated Test', () => {
                     deployed.addressManager.address,
                     deployed.l1Bridge.address,
                     deployed.l2Bridge.address,
-                    deployed.l2ton.address,
+                    deployed.l2wton.address,
                     amount
                 )
                 ).to.be.revertedWith("NOT Sequencer")
@@ -240,7 +240,7 @@ describe('Integrated Test', () => {
                     deployed.addressManager.address,
                     deployed.l1Bridge.address,
                     deployed.l2Bridge.address,
-                    deployed.l2ton.address,
+                    deployed.l2wton.address,
                     amount
                 )).to.be.reverted;
         })
@@ -254,11 +254,11 @@ describe('Integrated Test', () => {
             let totalSecurityDeposit = await deployed.layer2Manager.totalSecurityDeposit();
             let amount = await deployed.layer2Manager.minimumDepositForSequencer();
 
-            if (amount.gt(await deployed.ton.balanceOf(sequencer1.address)))
-                await (await deployed.ton.connect(deployed.tonAdmin).mint(sequencer1.address, amount)).wait();
+            if (amount.gt(await deployed.wton.balanceOf(sequencer1.address)))
+                await (await deployed.wton.connect(deployed.tonAdmin).mint(sequencer1.address, amount)).wait();
 
-            if (amount.gte(await deployed.ton.allowance(sequencer1.address, deployed.layer2Manager.address)))
-                await (await deployed.ton.connect(sequencer1).approve(deployed.layer2Manager.address, amount)).wait();
+            if (amount.gte(await deployed.wton.allowance(sequencer1.address, deployed.layer2Manager.address)))
+                await (await deployed.wton.connect(sequencer1).approve(deployed.layer2Manager.address, amount)).wait();
 
             const topic = deployed.layer2Manager.interface.getEventTopic('CreatedOptimismSequencer');
 
@@ -267,7 +267,7 @@ describe('Integrated Test', () => {
                     deployed.addressManager.address,
                     deployed.l1Bridge.address,
                     deployed.l2Bridge.address,
-                    deployed.l2ton.address,
+                    deployed.l2wton.address,
                     amount
                 ))).wait();
 
@@ -282,7 +282,7 @@ describe('Integrated Test', () => {
             expect(deployedEvent.args.l1Bridge).to.eq(deployed.l1Bridge.address);
             expect(deployedEvent.args.l2Bridge).to.eq(deployed.l2Bridge.address);
 
-            expect(deployedEvent.args.l2ton).to.eq(deployed.l2ton.address);
+            expect(deployedEvent.args.l2wton).to.eq(deployed.l2wton.address);
 
             expect(await deployed.layer2Manager.totalLayers()).to.eq(totalLayers.add(1))
             expect(await deployed.layer2Manager.totalSecurityDeposit()).to.eq(totalSecurityDeposit.add(amount))
@@ -293,7 +293,7 @@ describe('Integrated Test', () => {
                     l2Messenger: ethers.constants.AddressZero,
                     l1Bridge: deployed.l1Bridge.address,
                     l2Bridge: deployed.l2Bridge.address,
-                    l2ton: deployed.l2ton.address
+                    l2wton: deployed.l2wton.address
                 }
             );
 
@@ -304,7 +304,7 @@ describe('Integrated Test', () => {
             expect(layer.addressManager).to.eq(deployed.addressManager.address)
             expect(layer.l1Bridge).to.eq(deployed.l1Bridge.address)
             expect(layer.l2Bridge).to.eq(deployed.l2Bridge.address)
-            expect(layer.l2ton).to.eq(deployed.l2ton.address)
+            expect(layer.l2wton).to.eq(deployed.l2wton.address)
 
             expect(await deployed.layer2Manager.layerKeys(layerKey)).to.eq(true)
             expect(await deployed.layer2Manager.indexSequencers()).to.eq(sequencerIndex)
@@ -331,12 +331,13 @@ describe('Integrated Test', () => {
             let sequencerIndex = await deployed.layer2Manager.optimismSequencerIndexes(totalLayers.sub(ethers.constants.One))
 
             let amount = await deployed.layer2Manager.minimumDepositForCandidate();
+            console.log('amount', amount);
 
-            if (amount.gt(await deployed.ton.balanceOf(addr1.address)))
-                await (await deployed.ton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
+            if (amount.gt(await deployed.wton.balanceOf(addr1.address)))
+                await (await deployed.wton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
 
-            if (amount.gte(await deployed.ton.allowance(addr1.address, deployed.layer2Manager.address)))
-                await (await deployed.ton.connect(addr1).approve(deployed.layer2Manager.address, amount)).wait();
+            if (amount.gte(await deployed.wton.allowance(addr1.address, deployed.candidate.address)))
+                await (await deployed.wton.connect(addr1).approve(deployed.candidate.address, amount)).wait();
 
             const topic = deployed.layer2Manager.interface.getEventTopic('CreatedCandidate');
             const commission = 500;
@@ -357,8 +358,8 @@ describe('Integrated Test', () => {
             expect(deployedEvent.args._commission).to.eq(commission);
 
             expect(await deployed.layer2Manager.totalCandidates()).to.eq(totalCandidates.add(1))
-            expect(await deployed.candidate["balanceOfLton(uint32)"](candidateIndex)).to.eq(amount)
-            expect(await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)).to.eq(amount)
+            expect(await deployed.candidate["balanceOfLwton(uint32)"](candidateIndex)).to.eq(amount)
+            expect(await deployed.candidate["balanceOfLwton(uint32,address)"](candidateIndex, addr1.address)).to.eq(amount)
             expect(await deployed.candidate["balanceOf(uint32,address)"](candidateIndex, addr1.address)).to.eq(amount)
 
             let candidateKey = await getCandidateKey({
@@ -407,14 +408,14 @@ describe('Integrated Test', () => {
             let amount = ethers.utils.parseEther("100");
             let layerIndex = await deployed.layer2Manager.indexSequencers();
 
-            if (amount.gt(await deployed.ton.balanceOf(addr1.address)))
-                await (await deployed.ton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
+            if (amount.gt(await deployed.wton.balanceOf(addr1.address)))
+                await (await deployed.wton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
 
-            if (amount.gte(await deployed.ton.allowance(addr1.address, deployed.layer2Manager.address)))
-                await (await deployed.ton.connect(addr1).approve(deployed.layer2Manager.address, amount)).wait();
+            if (amount.gte(await deployed.wton.allowance(addr1.address, deployed.layer2Manager.address)))
+                await (await deployed.wton.connect(addr1).approve(deployed.layer2Manager.address, amount)).wait();
 
-            let balanceOfAccountBefore = await deployed.ton.balanceOf(addr1.address)
-            let balanceOfLayer2ManagerBefore = await deployed.ton.balanceOf(deployed.layer2Manager.address)
+            let balanceOfAccountBefore = await deployed.wton.balanceOf(addr1.address)
+            let balanceOfLayer2ManagerBefore = await deployed.wton.balanceOf(deployed.layer2Manager.address)
             let totalSecurityDepositBefore = await deployed.layer2Manager.totalSecurityDeposit()
             let depositBefore = await deployed.layer2Manager.layerHoldings(layerIndex)
             await snapshotGasCost(deployed.layer2Manager.connect(addr1).increaseSecurityDeposit(
@@ -424,8 +425,8 @@ describe('Integrated Test', () => {
 
             let depositAfter = await deployed.layer2Manager.layerHoldings(layerIndex)
 
-            expect(await deployed.ton.balanceOf(addr1.address)).to.eq(balanceOfAccountBefore.sub(amount))
-            expect(await deployed.ton.balanceOf(deployed.layer2Manager.address)).to.eq(balanceOfLayer2ManagerBefore.add(amount))
+            expect(await deployed.wton.balanceOf(addr1.address)).to.eq(balanceOfAccountBefore.sub(amount))
+            expect(await deployed.wton.balanceOf(deployed.layer2Manager.address)).to.eq(balanceOfLayer2ManagerBefore.add(amount))
             expect(depositAfter.securityDeposit).to.eq(depositBefore.securityDeposit.add(amount))
             expect(await  deployed.layer2Manager.totalSecurityDeposit()).to.eq(totalSecurityDepositBefore.add(amount))
 
@@ -463,8 +464,8 @@ describe('Integrated Test', () => {
             let depositBefore = await deployed.layer2Manager.layerHoldings(layerIndex)
             let amount = depositBefore.securityDeposit.sub(minimumDepositForSequencer);
 
-            let balanceOfAccountBefore = await deployed.ton.balanceOf(sequencer1.address)
-            let balanceOfLayer2ManagerBefore = await deployed.ton.balanceOf(deployed.layer2Manager.address)
+            let balanceOfAccountBefore = await deployed.wton.balanceOf(sequencer1.address)
+            let balanceOfLayer2ManagerBefore = await deployed.wton.balanceOf(deployed.layer2Manager.address)
             let totalSecurityDepositBefore = await deployed.layer2Manager.totalSecurityDeposit()
 
             await snapshotGasCost(deployed.layer2Manager.connect(sequencer1).decreaseSecurityDeposit(
@@ -474,8 +475,8 @@ describe('Integrated Test', () => {
 
             let depositAfter = await deployed.layer2Manager.layerHoldings(layerIndex)
 
-            expect(await deployed.ton.balanceOf(sequencer1.address)).to.eq(balanceOfAccountBefore.add(amount))
-            expect(await deployed.ton.balanceOf(deployed.layer2Manager.address)).to.eq(balanceOfLayer2ManagerBefore.sub(amount))
+            expect(await deployed.wton.balanceOf(sequencer1.address)).to.eq(balanceOfAccountBefore.add(amount))
+            expect(await deployed.wton.balanceOf(deployed.layer2Manager.address)).to.eq(balanceOfLayer2ManagerBefore.sub(amount))
             expect(depositAfter.securityDeposit).to.eq(depositBefore.securityDeposit.sub(amount))
 
             expect(await  deployed.layer2Manager.totalSecurityDeposit()).to.eq(totalSecurityDepositBefore.sub(amount))
@@ -516,14 +517,14 @@ describe('Integrated Test', () => {
             let layerIndex = await deployed.layer2Manager.indexSequencers();
 
             // let totalStakedPrincipal = await deployed.stakingLayer2.totalStakedPrincipal()
-            let totalStakedLton = await deployed.optimismSequencer.totalStakedLton()
+            let totalStakedLwton = await deployed.optimismSequencer.totalStakedLwton()
             let totalStakeAccountList = await deployed.optimismSequencer.totalStakeAccountList()
 
-            if (amount.gt(await deployed.ton.balanceOf(addr1.address)))
-                await (await deployed.ton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
+            if (amount.gt(await deployed.wton.balanceOf(addr1.address)))
+                await (await deployed.wton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
 
-            if (amount.gte(await deployed.ton.allowance(addr1.address, deployed.optimismSequencer.address)))
-                await (await deployed.ton.connect(addr1).approve(deployed.optimismSequencer.address, amount)).wait();
+            if (amount.gte(await deployed.wton.allowance(addr1.address, deployed.optimismSequencer.address)))
+                await (await deployed.wton.connect(addr1).approve(deployed.optimismSequencer.address, amount)).wait();
 
             await snapshotGasCost(deployed.optimismSequencer.connect(addr1).stake(
                     layerIndex,
@@ -531,12 +532,12 @@ describe('Integrated Test', () => {
                 ));
 
             // expect(await deployed.stakingLayer2.totalStakedPrincipal()).to.eq(totalStakedPrincipal.add(amount))
-            expect(await deployed.optimismSequencer.totalStakedLton()).to.gt(totalStakedLton)
+            expect(await deployed.optimismSequencer.totalStakedLwton()).to.gt(totalStakedLwton)
             expect(await deployed.optimismSequencer.totalStakeAccountList()).to.eq(totalStakeAccountList.add(1))
             expect(await deployed.optimismSequencer.stakeAccountList(totalStakeAccountList)).to.eq(addr1.address)
 
-            let lton = await deployed.seigManagerV2.getTonToLton(amount);
-            expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)).to.eq(lton)
+            let lwton = await deployed.seigManagerV2.getWtonToLwton(amount);
+            expect(await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](layerIndex, addr1.address)).to.eq(lwton)
             expect(await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address)).to.eq(amount)
 
         })
@@ -548,10 +549,10 @@ describe('Integrated Test', () => {
             let block = await ethers.provider.getBlock('latest');
             const snapshotIdBefore = await deployed.seigManagerV2.getCurrentSnapshotId()
 
-            const indexLton0 = await deployed.seigManagerV2.indexLton();
-            const totalStakedLton0 = await deployed.optimismSequencer.totalStakedLton();
-            const balanceOfLayer0 = await deployed.optimismSequencer["balanceOfLton(uint32)"](layerIndex);
-            const balanceOfAccount0 = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, account.address);
+            const indexLwton0 = await deployed.seigManagerV2.indexLwton();
+            const totalStakedLwton0 = await deployed.optimismSequencer.totalStakedLwton();
+            const balanceOfLayer0 = await deployed.optimismSequencer["balanceOfLwton(uint32)"](layerIndex);
+            const balanceOfAccount0 = await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](layerIndex, account.address);
 
             const interface1 = deployed.seigManagerV2.interface ;
             const topic = interface1.getEventTopic('Snapshot');
@@ -567,19 +568,19 @@ describe('Integrated Test', () => {
                 id: snapshotId,
                 layerIndex: layerIndex,
                 account: account.address,
-                totalStakedLton: totalStakedLton0,
-                indexLton: indexLton0,
+                totalStakedLwton: totalStakedLwton0,
+                indexLwton: indexLwton0,
                 balanceOfLayer: balanceOfLayer0,
                 balanceOfAccount: balanceOfAccount0
             }
             snapshotListSequencer.push(snapshot)
             // console.log('snapshot',snapshot)
 
-            expect(await deployed.seigManagerV2.indexLtonAt(snapshot.id)).to.be.eq(snapshot.indexLton);
-            expect(await deployed.optimismSequencer.totalStakedLtonAt(snapshot.id)).to.be.eq(snapshot.totalStakedLton);
-            expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,uint256)"](snapshot.layerIndex, snapshot.id))
+            expect(await deployed.seigManagerV2.indexLwtonAt(snapshot.id)).to.be.eq(snapshot.indexLwton);
+            expect(await deployed.optimismSequencer.totalStakedLwtonAt(snapshot.id)).to.be.eq(snapshot.totalStakedLwton);
+            expect(await deployed.optimismSequencer["balanceOfLwtonAt(uint32,uint256)"](snapshot.layerIndex, snapshot.id))
                     .to.be.eq(snapshot.balanceOfLayer);
-            expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,address,uint256)"](snapshot.layerIndex, account.address, snapshot.id))
+            expect(await deployed.optimismSequencer["balanceOfLwtonAt(uint32,address,uint256)"](snapshot.layerIndex, account.address, snapshot.id))
                     .to.be.eq(snapshot.balanceOfAccount);
 
             let snapshotTimeAfter = await deployed.seigManagerV2.getSnapshotTime()
@@ -620,23 +621,23 @@ describe('Integrated Test', () => {
 
             let _index = await deployed.layer2Manager.indexCandidates();
             let balanceOf = await deployed.candidate.balanceOf(_index, addr1.address);
-            let balanceOfLton = await deployed.candidate["balanceOfLton(uint32,address)"](_index, addr1.address);
+            let balanceOfLwton = await deployed.candidate["balanceOfLwton(uint32,address)"](_index, addr1.address);
 
-            let totalStakedLton = await deployed.candidate.totalStakedLton()
+            let totalStakedLwton = await deployed.candidate.totalStakedLwton()
             let totalStakeAccountList = await deployed.candidate.totalStakeAccountList()
 
-            if (amount.gt(await deployed.ton.balanceOf(addr1.address)))
-                await (await deployed.ton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
+            if (amount.gt(await deployed.wton.balanceOf(addr1.address)))
+                await (await deployed.wton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
 
-            if (amount.gte(await deployed.ton.allowance(addr1.address, deployed.candidate.address)))
-                await (await deployed.ton.connect(addr1).approve(deployed.candidate.address, amount)).wait();
+            if (amount.gte(await deployed.wton.allowance(addr1.address, deployed.candidate.address)))
+                await (await deployed.wton.connect(addr1).approve(deployed.candidate.address, amount)).wait();
 
             await snapshotGasCost(deployed.candidate.connect(addr1).stake(
                     _index,
                     amount
                 ));
 
-            expect(await deployed.candidate.totalStakedLton()).to.gt(totalStakedLton)
+            expect(await deployed.candidate.totalStakedLwton()).to.gt(totalStakedLwton)
 
             let getLayerStakes = await deployed.candidate.getLayerStakes(_index, addr1.address);
 
@@ -645,9 +646,9 @@ describe('Integrated Test', () => {
                 expect(await deployed.candidate.stakeAccountList(totalStakeAccountList)).to.eq(addr1.address)
             }
 
-            let lton = await deployed.seigManagerV2.getTonToLton(amount);
-            expect(await deployed.candidate["balanceOfLton(uint32,address)"](_index, addr1.address))
-                .to.eq(balanceOfLton.add(lton))
+            let lwton = await deployed.seigManagerV2.getWtonToLwton(amount);
+            expect(await deployed.candidate["balanceOfLwton(uint32,address)"](_index, addr1.address))
+                .to.eq(balanceOfLwton.add(lwton))
             expect(await deployed.candidate.balanceOf(_index, addr1.address))
                 .to.eq(balanceOf.add(amount))
 
@@ -662,26 +663,26 @@ describe('Integrated Test', () => {
             let amount = ethers.utils.parseEther("5000");
             let layerIndex = await deployed.layer2Manager.indexSequencers();
             let balanceOf = await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address);
-            let balanceOfLton = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address);
+            let balanceOfLwton = await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](layerIndex, addr1.address);
 
-            let totalStakedLton = await deployed.optimismSequencer.totalStakedLton()
+            let totalStakedLwton = await deployed.optimismSequencer.totalStakedLwton()
             let totalStakeAccountList = await deployed.optimismSequencer.totalStakeAccountList()
 
-            if (amount.gt(await deployed.ton.balanceOf(addr1.address)))
-                await (await deployed.ton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
+            if (amount.gt(await deployed.wton.balanceOf(addr1.address)))
+                await (await deployed.wton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
 
             const data = ethers.utils.solidityPack(
                 ["uint32"],
                 [layerIndex]
                 );
 
-            await snapshotGasCost(deployed.ton.connect(addr1).approveAndCall(
+            await snapshotGasCost(deployed.wton.connect(addr1).approveAndCall(
                 deployed.optimismSequencer.address,
                 amount,
                 data
             ));
 
-            expect(await deployed.optimismSequencer.totalStakedLton()).to.gt(totalStakedLton)
+            expect(await deployed.optimismSequencer.totalStakedLwton()).to.gt(totalStakedLwton)
 
             let getLayerStakes = await deployed.optimismSequencer.getLayerStakes(layerIndex, addr1.address);
 
@@ -690,9 +691,9 @@ describe('Integrated Test', () => {
                 expect(await deployed.optimismSequencer.stakeAccountList(totalStakeAccountList)).to.eq(addr1.address)
             }
 
-            let lton = await deployed.seigManagerV2.getTonToLton(amount);
-            expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address))
-                .to.eq(balanceOfLton.add(lton))
+            let lwton = await deployed.seigManagerV2.getWtonToLwton(amount);
+            expect(await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](layerIndex, addr1.address))
+                .to.eq(balanceOfLwton.add(lwton))
             expect(await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address))
                 .to.eq(balanceOf.add(amount))
         })
@@ -706,20 +707,20 @@ describe('Integrated Test', () => {
             let _index = await deployed.layer2Manager.indexCandidates();
 
             let balanceOf = await deployed.candidate.balanceOf(_index, addr1.address);
-            let balanceOfLton = await deployed.candidate["balanceOfLton(uint32,address)"](_index, addr1.address);
+            let balanceOfLwton = await deployed.candidate["balanceOfLwton(uint32,address)"](_index, addr1.address);
 
-            let totalStakedLton = await deployed.candidate.totalStakedLton()
+            let totalStakedLwton = await deployed.candidate.totalStakedLwton()
             let totalStakeAccountList = await deployed.candidate.totalStakeAccountList()
 
-            if (amount.gt(await deployed.ton.balanceOf(addr1.address)))
-                await (await deployed.ton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
+            if (amount.gt(await deployed.wton.balanceOf(addr1.address)))
+                await (await deployed.wton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
 
             const data = ethers.utils.solidityPack(
                 ["uint32"],
                 [_index]
                 );
 
-            await snapshotGasCost(deployed.ton.connect(addr1).approveAndCall(
+            await snapshotGasCost(deployed.wton.connect(addr1).approveAndCall(
                 deployed.candidate.address,
                 amount,
                 data
@@ -732,11 +733,11 @@ describe('Integrated Test', () => {
                 expect(await deployed.candidate.stakeAccountList(totalStakeAccountList)).to.eq(addr1.address)
             }
 
-            expect(await deployed.candidate.totalStakedLton()).to.gt(totalStakedLton)
+            expect(await deployed.candidate.totalStakedLwton()).to.gt(totalStakedLwton)
 
-            let lton = await deployed.seigManagerV2.getTonToLton(amount);
-            expect(await deployed.candidate["balanceOfLton(uint32,address)"](_index, addr1.address))
-                .to.eq(balanceOfLton.add(lton))
+            let lwton = await deployed.seigManagerV2.getWtonToLwton(amount);
+            expect(await deployed.candidate["balanceOfLwton(uint32,address)"](_index, addr1.address))
+                .to.eq(balanceOfLwton.add(lwton))
             expect(await deployed.candidate.balanceOf(_index, addr1.address))
                 .to.eq(balanceOf.add(amount))
         })
@@ -753,7 +754,7 @@ describe('Integrated Test', () => {
             let block = await ethers.provider.getBlock('latest');
 
             const snapshotIdBefore = await deployed.seigManagerV2.getCurrentSnapshotId()
-            const indexLton0 = await deployed.seigManagerV2.indexLton();
+            const indexLwton0 = await deployed.seigManagerV2.indexLwton();
 
             const interface1 = deployed.seigManagerV2.interface ;
             const topic = interface1.getEventTopic('Snapshot');
@@ -764,34 +765,34 @@ describe('Integrated Test', () => {
             let snapshotId  = deployedEvent.args.id;
             expect(snapshotId).to.be.eq(snapshotIdBefore.add(ethers.constants.One));
 
-            const indexLton1 = await deployed.seigManagerV2.indexLton();
-            const totalStakedLton1 = await deployed.optimismSequencer.totalStakedLton();
-            const balanceOfLayer1 = await deployed.optimismSequencer["balanceOfLton(uint32)"](layerIndex);
-            const balanceOfAccount1 = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, account.address);
+            const indexLwton1 = await deployed.seigManagerV2.indexLwton();
+            const totalStakedLwton1 = await deployed.optimismSequencer.totalStakedLwton();
+            const balanceOfLayer1 = await deployed.optimismSequencer["balanceOfLwton(uint32)"](layerIndex);
+            const balanceOfAccount1 = await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](layerIndex, account.address);
 
             let snapshot:StakeSnapshotFixture = {
                 id: snapshotId,
                 layerIndex: layerIndex,
                 account: account.address,
-                indexLton: indexLton1,
-                totalStakedLton: totalStakedLton1,
+                indexLwton: indexLwton1,
+                totalStakedLwton: totalStakedLwton1,
                 balanceOfLayer: balanceOfLayer1,
                 balanceOfAccount: balanceOfAccount1
             }
             snapshotListSequencer.push(snapshot)
             // console.log(snapshotListSequencer);
 
-            expect(await deployed.seigManagerV2.indexLtonAt(snapshotIdBefore)).to.be.eq(indexLton0);
+            expect(await deployed.seigManagerV2.indexLwtonAt(snapshotIdBefore)).to.be.eq(indexLwton0);
             let snapshotTimeAfter = await deployed.seigManagerV2.getSnapshotTime()
             expect(snapshotTimeAfter[snapshotId]).to.be.gt(block.timestamp);
 
             let i=0;
             for (i = 0; i < snapshotListSequencer.length; i++){
-                expect(await deployed.seigManagerV2.indexLtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].indexLton);
-                expect(await deployed.optimismSequencer.totalStakedLtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].totalStakedLton);
-                expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,uint256)"](snapshotListSequencer[i].layerIndex, snapshotListSequencer[i].id))
+                expect(await deployed.seigManagerV2.indexLwtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].indexLwton);
+                expect(await deployed.optimismSequencer.totalStakedLwtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].totalStakedLwton);
+                expect(await deployed.optimismSequencer["balanceOfLwtonAt(uint32,uint256)"](snapshotListSequencer[i].layerIndex, snapshotListSequencer[i].id))
                         .to.be.eq(snapshotListSequencer[i].balanceOfLayer);
-                expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,address,uint256)"](snapshotListSequencer[i].layerIndex, account.address, snapshotListSequencer[i].id))
+                expect(await deployed.optimismSequencer["balanceOfLwtonAt(uint32,address,uint256)"](snapshotListSequencer[i].layerIndex, account.address, snapshotListSequencer[i].id))
                         .to.be.eq(snapshotListSequencer[i].balanceOfAccount);
             }
 
@@ -824,7 +825,7 @@ describe('Integrated Test', () => {
             let requestInfo: DomainMessageFixture = {
                 messageNonce: messageNonce,
                 fwReceipt: deployed.fwReceiptProxy.address,
-                l1ton : seigManagerInfo.ton,
+                l1wton : seigManagerInfo.wton,
                 layerInfo: layerInfo,
                 messageInfo: messageInfo,
                 parseMessage: parseMessage
@@ -832,7 +833,7 @@ describe('Integrated Test', () => {
 
             const l2Messages = await bytesFastWithdrawMessage1(
                 deployed.fwReceiptProxy.address,
-                seigManagerInfo.ton,
+                seigManagerInfo.wton,
                 layerInfo,
                 messageInfo,
                 );
@@ -885,17 +886,17 @@ describe('Integrated Test', () => {
         it('If anyone don\'t provide liquidity to l2\'s request fw, L2 user withdraw the request amount by L1Bridge', async () => {
 
             let info: DomainMessageFixture = xDomainCalldataList[0];
-            let balanceBefore = await deployed.ton.balanceOf(info.messageInfo.requestor)
-            if (info.messageInfo.amount.gt(await deployed.ton.balanceOf(deployed.l1Bridge.address)))
-                await (await deployed.ton.connect(deployed.tonAdmin).mint(deployed.l1Bridge.address, info.messageInfo.amount)).wait();
+            let balanceBefore = await deployed.wton.balanceOf(info.messageInfo.requestor)
+            if (info.messageInfo.amount.gt(await deployed.wton.balanceOf(deployed.l1Bridge.address)))
+                await (await deployed.wton.connect(deployed.tonAdmin).mint(deployed.l1Bridge.address, info.messageInfo.amount)).wait();
 
             let key = info.parseMessage.hashMessage;
 
             // (1)  DTD 이후 브릿지에서 실행이 된다.
             const receipt1 = await(
                 await snapshotGasCost(deployed.l1Bridge.connect(addr1).finalizeERC20Withdrawal(
-                    info.l1ton,
-                    info.layerInfo.l2ton,
+                    info.l1wton,
+                    info.layerInfo.l2wton,
                     info.messageInfo.requestor,
                     info.fwReceipt,
                     info.messageInfo.amount,
@@ -930,7 +931,7 @@ describe('Integrated Test', () => {
             expect(deployedEvent.args.amount).to.be.eq(info.messageInfo.amount);
             expect(deployedEvent.args.status).to.be.eq(FW_STATUS.NORMAL_WITHDRAWAL);
 
-            expect(await deployed.ton.balanceOf(info.messageInfo.requestor)).to.be.eq(balanceBefore.add(info.messageInfo.amount));
+            expect(await deployed.wton.balanceOf(info.messageInfo.requestor)).to.be.eq(balanceBefore.add(info.messageInfo.amount));
 
         });
 
@@ -975,7 +976,7 @@ describe('Integrated Test', () => {
             let requestInfo: DomainMessageFixture = {
                 messageNonce: messageNonce,
                 fwReceipt: deployed.fwReceiptProxy.address,
-                l1ton : seigManagerInfo.ton,
+                l1wton : seigManagerInfo.wton,
                 layerInfo: layerInfo,
                 messageInfo: messageInfo,
                 provider: '',
@@ -984,7 +985,7 @@ describe('Integrated Test', () => {
 
             const l2Messages = await bytesFastWithdrawMessage1(
                 deployed.fwReceiptProxy.address,
-                seigManagerInfo.ton,
+                seigManagerInfo.wton,
                 layerInfo,
                 messageInfo,
                 );
@@ -1046,7 +1047,7 @@ describe('Integrated Test', () => {
             let requestInfo: DomainMessageFixture = {
                 messageNonce: messageNonce,
                 fwReceipt: deployed.fwReceiptProxy.address,
-                l1ton : seigManagerInfo.ton,
+                l1wton : seigManagerInfo.wton,
                 layerInfo: layerInfo,
                 messageInfo: messageInfo,
                 provider: '',
@@ -1055,7 +1056,7 @@ describe('Integrated Test', () => {
 
             const l2Messages = await bytesFastWithdrawMessage1(
                 deployed.fwReceiptProxy.address,
-                seigManagerInfo.ton,
+                seigManagerInfo.wton,
                 layerInfo,
                 messageInfo,
                 );
@@ -1121,17 +1122,17 @@ describe('Integrated Test', () => {
         it('The L2 request withdraw the fw amount for cases canceled by the L2 requester.', async () => {
 
             let info: DomainMessageFixture = xDomainCalldataList[2];
-            let balanceBefore = await deployed.ton.balanceOf(addr2.address)
-            if (info.messageInfo.amount.gt(await deployed.ton.balanceOf(deployed.l1Bridge.address)))
-                await (await deployed.ton.connect(deployed.tonAdmin).mint(deployed.l1Bridge.address, info.messageInfo.amount)).wait();
+            let balanceBefore = await deployed.wton.balanceOf(addr2.address)
+            if (info.messageInfo.amount.gt(await deployed.wton.balanceOf(deployed.l1Bridge.address)))
+                await (await deployed.wton.connect(deployed.tonAdmin).mint(deployed.l1Bridge.address, info.messageInfo.amount)).wait();
 
             let key = info.parseMessage.hashMessage;
 
             // (1)  DTD 이후 브릿지에서 실행이 된다.
             const receipt1 = await(
                 await snapshotGasCost(deployed.l1Bridge.connect(addr1).finalizeERC20Withdrawal(
-                    info.l1ton,
-                    info.layerInfo.l2ton,
+                    info.l1wton,
+                    info.layerInfo.l2wton,
                     info.messageInfo.requestor,
                     info.fwReceipt,
                     info.messageInfo.amount,
@@ -1166,7 +1167,7 @@ describe('Integrated Test', () => {
             expect(deployedEvent.args.amount).to.be.eq(info.messageInfo.amount);
             expect(deployedEvent.args.status).to.be.eq(FW_STATUS.CANCEL_WITHDRAWAL);
 
-            expect(await deployed.ton.balanceOf(addr2.address)).to.be.eq(balanceBefore.add(info.messageInfo.amount));
+            expect(await deployed.wton.balanceOf(addr2.address)).to.be.eq(balanceBefore.add(info.messageInfo.amount));
 
         });
 
@@ -1195,7 +1196,7 @@ describe('Integrated Test', () => {
             let requestInfo: DomainMessageFixture = {
                 messageNonce: messageNonce,
                 fwReceipt: deployed.fwReceiptProxy.address,
-                l1ton : seigManagerInfo.ton,
+                l1wton : seigManagerInfo.wton,
                 layerInfo: layerInfo,
                 messageInfo: messageInfo,
                 parseMessage: parseMessage
@@ -1203,7 +1204,7 @@ describe('Integrated Test', () => {
 
             const l2Messages = await bytesFastWithdrawMessage1(
                 deployed.fwReceiptProxy.address,
-                seigManagerInfo.ton,
+                seigManagerInfo.wton,
                 layerInfo,
                 messageInfo,
                 );
@@ -1224,17 +1225,17 @@ describe('Integrated Test', () => {
             xDomainCalldataList[3].indexNo  = xDomainCalldataList[3].messageInfo.layerIndex;
             let info: DomainMessageFixture = xDomainCalldataList[3];
 
-            let balanceAddr1Before = await deployed.ton.balanceOf(addr1.address)
-            let balanceAddr2Before = await deployed.ton.balanceOf(addr2.address)
-            let stakedAddr1Before = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](
+            let balanceAddr1Before = await deployed.wton.balanceOf(addr1.address)
+            let balanceAddr2Before = await deployed.wton.balanceOf(addr2.address)
+            let stakedAddr1Before = await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](
                 info.messageInfo.layerIndex, addr1.address);
             let debtInStakedAddr1Before = await deployed.fwReceipt.debtInStaked(
                 false, info.messageInfo.layerIndex, addr1.address);
 
-            if (info.messageInfo.amount.gt(await deployed.ton.balanceOf(deployed.l1Bridge.address)))
-                await (await deployed.ton.connect(deployed.tonAdmin).mint(deployed.l1Bridge.address, info.messageInfo.amount)).wait();
+            if (info.messageInfo.amount.gt(await deployed.wton.balanceOf(deployed.l1Bridge.address)))
+                await (await deployed.wton.connect(deployed.tonAdmin).mint(deployed.l1Bridge.address, info.messageInfo.amount)).wait();
 
-            let balancel1BridgeBefore = await deployed.ton.balanceOf(deployed.l1Bridge.address)
+            let balancel1BridgeBefore = await deployed.wton.balanceOf(deployed.l1Bridge.address)
 
             let key = info.parseMessage.hashMessage;
 
@@ -1264,11 +1265,11 @@ describe('Integrated Test', () => {
             expect(deployedEvent.args.provideAmount).to.be.eq(provideAmount);
             expect(deployedEvent.args.feeAmount).to.be.eq(fee);
 
-            expect(await deployed.ton.balanceOf(addr2.address)).to.be.eq(balanceAddr2Before.add(provideAmount));
-            expect(await deployed.ton.balanceOf(deployed.l1Bridge.address)).to.be.eq(balancel1BridgeBefore);
+            expect(await deployed.wton.balanceOf(addr2.address)).to.be.eq(balanceAddr2Before.add(provideAmount));
+            expect(await deployed.wton.balanceOf(deployed.l1Bridge.address)).to.be.eq(balancel1BridgeBefore);
 
             // 업데이트 시뇨리지시 이미 제공된 유동성에 대해서도 이자를 받을 수 있다.
-            expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](
+            expect(await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](
                 info.messageInfo.layerIndex, addr1.address
             )).to.be.eq(stakedAddr1Before);
 
@@ -1280,22 +1281,22 @@ describe('Integrated Test', () => {
 
         it('Fast withdrawals, normally provided with liquidity, are settled after DTD.', async () => {
             let info: DomainMessageFixture = xDomainCalldataList[3];
-            let balanceBeforeAddr1 = await deployed.ton.balanceOf(addr1.address)
-            let stakedAddr1Before = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](
+            let balanceBeforeAddr1 = await deployed.wton.balanceOf(addr1.address)
+            let stakedAddr1Before = await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](
                 info.messageInfo.layerIndex, addr1.address);
             let debtInStakedAddr1Before = await deployed.fwReceipt.debtInStaked(
                 false, info.messageInfo.layerIndex, addr1.address);
 
-            if (info.messageInfo.amount.gt(await deployed.ton.balanceOf(deployed.l1Bridge.address)))
-                await (await deployed.ton.connect(deployed.tonAdmin).mint(deployed.l1Bridge.address, info.messageInfo.amount)).wait();
+            if (info.messageInfo.amount.gt(await deployed.wton.balanceOf(deployed.l1Bridge.address)))
+                await (await deployed.wton.connect(deployed.tonAdmin).mint(deployed.l1Bridge.address, info.messageInfo.amount)).wait();
 
             let key = info.parseMessage.hashMessage;
 
             // (1)  DTD 이후 브릿지에서 실행이 된다.
             const receipt1 = await(
                 await snapshotGasCost(deployed.l1Bridge.connect(addr1).finalizeERC20Withdrawal(
-                    info.l1ton,
-                    info.layerInfo.l2ton,
+                    info.l1wton,
+                    info.layerInfo.l2wton,
                     info.messageInfo.requestor,
                     info.fwReceipt,
                     info.messageInfo.amount,
@@ -1337,10 +1338,10 @@ describe('Integrated Test', () => {
             expect(deployedEvent.args.isCandidate).to.be.eq(info.isCandidate);
             expect(deployedEvent.args.indexNo).to.be.eq(info.indexNo);
 
-            let feeLton = await deployed.seigManagerV2.getTonToLton(fee);
-            expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](
+            let feeLwton = await deployed.seigManagerV2.getWtonToLwton(fee);
+            expect(await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](
                 info.messageInfo.layerIndex, addr1.address
-            )).to.be.eq(stakedAddr1Before.add(feeLton));
+            )).to.be.eq(stakedAddr1Before.add(feeLwton));
 
             // 정산된다.
             expect(await deployed.fwReceipt.debtInStaked(
@@ -1374,31 +1375,31 @@ describe('Integrated Test', () => {
             }
         });
 
-        it('If the staked amount is greater than 0, indexLton increase.', async () => {
+        it('If the staked amount is greater than 0, indexLwton increase.', async () => {
             let layerIndex = await deployed.layer2Manager.indexSequencers();
             let candidateIndex = await deployed.layer2Manager.indexCandidates();
 
             let prevBalanceOfSequencer = await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address);
-            let prevBalanceLtonOfSequencer =await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)
+            let prevBalanceLwtonOfSequencer =await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](layerIndex, addr1.address)
 
             let prevBalanceOfCandidate = await deployed.candidate.balanceOf(candidateIndex, addr1.address);
-            let prevBalanceLtonOfCandidate =await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)
+            let prevBalanceLwtonOfCandidate =await deployed.candidate["balanceOfLwton(uint32,address)"](candidateIndex, addr1.address)
 
             expect(await deployed.seigManagerV2.ratesDao()).to.eq(seigManagerInfo.ratesDao)
             expect(await deployed.seigManagerV2.ratesStosHolders()).to.eq(seigManagerInfo.ratesStosHolders)
 
-            expect(await deployed.seigManagerV2.getTotalLton()).to.gt(ethers.constants.Zero)
-            const indexLton = await deployed.seigManagerV2.indexLton();
-            await snapshotGasCost(deployed.seigManagerV2.connect(addr1).updateSeigniorage())
-            expect(await deployed.seigManagerV2.indexLton()).to.gt(indexLton)
+            expect(await deployed.seigManagerV2.getTotalLwton()).to.gt(ethers.constants.Zero)
+            const indexLwton = await deployed.seigManagerV2.indexLwton();
+            await snapshotGasCost(deployed.seigManagerV2.connect(addr1).runUpdateSeigniorage())
+            expect(await deployed.seigManagerV2.indexLwton()).to.gt(indexLwton)
 
-            expect(await deployed.ton.balanceOf(deployed.dao.address)).to.eq(0)
-            expect(await deployed.ton.balanceOf(deployed.stosDistribute.address)).to.eq(0)
+            expect(await deployed.wton.balanceOf(deployed.dao.address)).to.eq(0)
+            expect(await deployed.wton.balanceOf(deployed.stosDistribute.address)).to.eq(0)
 
-            expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)).to.eq(prevBalanceLtonOfSequencer)
+            expect(await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](layerIndex, addr1.address)).to.eq(prevBalanceLwtonOfSequencer)
             expect(await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address)).to.gt(prevBalanceOfSequencer)
 
-            expect(await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)).to.eq(prevBalanceLtonOfCandidate)
+            expect(await deployed.candidate["balanceOfLwton(uint32,address)"](candidateIndex, addr1.address)).to.eq(prevBalanceLwtonOfCandidate)
             expect(await deployed.candidate.balanceOf(candidateIndex, addr1.address)).to.gt(prevBalanceOfCandidate)
 
         });
@@ -1421,18 +1422,18 @@ describe('Integrated Test', () => {
             let snapshotId  = deployedEvent.args.id;
             expect(snapshotId).to.be.eq(snapshotIdBefore.add(ethers.constants.One));
 
-            const indexLton1 = await deployed.seigManagerV2.indexLton();
-            const totalStakedLton1 = await deployed.optimismSequencer.totalStakedLton();
-            const balanceOfLayer1 = await deployed.optimismSequencer["balanceOfLton(uint32)"](layerIndex);
-            const balanceOfAccount1 = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, account.address);
+            const indexLwton1 = await deployed.seigManagerV2.indexLwton();
+            const totalStakedLwton1 = await deployed.optimismSequencer.totalStakedLwton();
+            const balanceOfLayer1 = await deployed.optimismSequencer["balanceOfLwton(uint32)"](layerIndex);
+            const balanceOfAccount1 = await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](layerIndex, account.address);
 
 
             let snapshot:StakeSnapshotFixture = {
                 id: snapshotId,
                 layerIndex: layerIndex,
                 account: account.address,
-                indexLton: indexLton1,
-                totalStakedLton: totalStakedLton1,
+                indexLwton: indexLwton1,
+                totalStakedLwton: totalStakedLwton1,
                 balanceOfLayer: balanceOfLayer1,
                 balanceOfAccount: balanceOfAccount1
             }
@@ -1443,11 +1444,11 @@ describe('Integrated Test', () => {
 
             let i=0;
             for (i = 0; i < snapshotListSequencer.length; i++){
-                expect(await deployed.seigManagerV2.indexLtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].indexLton);
-                expect(await deployed.optimismSequencer.totalStakedLtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].totalStakedLton);
-                expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,uint256)"](snapshotListSequencer[i].layerIndex, snapshotListSequencer[i].id))
+                expect(await deployed.seigManagerV2.indexLwtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].indexLwton);
+                expect(await deployed.optimismSequencer.totalStakedLwtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].totalStakedLwton);
+                expect(await deployed.optimismSequencer["balanceOfLwtonAt(uint32,uint256)"](snapshotListSequencer[i].layerIndex, snapshotListSequencer[i].id))
                         .to.be.eq(snapshotListSequencer[i].balanceOfLayer);
-                expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,address,uint256)"](snapshotListSequencer[i].layerIndex, account.address, snapshotListSequencer[i].id))
+                expect(await deployed.optimismSequencer["balanceOfLwtonAt(uint32,address,uint256)"](snapshotListSequencer[i].layerIndex, account.address, snapshotListSequencer[i].id))
                         .to.be.eq(snapshotListSequencer[i].balanceOfAccount);
             }
         });
@@ -1460,34 +1461,34 @@ describe('Integrated Test', () => {
             }
         });
 
-        it('runUpdateSeigniorage : If the sum of the staking amount and the bonding liquidity amount is greater than 0, indexLton increase.', async () => {
+        it('runUpdateSeigniorage : If the sum of the staking amount and the bonding liquidity amount is greater than 0, indexLwton increase.', async () => {
             let layerIndex = await deployed.layer2Manager.indexSequencers();
             let candidateIndex = await deployed.layer2Manager.indexCandidates();
 
 
             let prevBalanceOfSequencer = await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address);
-            let prevBalanceLtonOfSequencer =await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)
+            let prevBalanceLwtonOfSequencer =await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](layerIndex, addr1.address)
 
             let prevBalanceOfCandidate = await deployed.candidate.balanceOf(candidateIndex, addr1.address);
-            let prevBalanceLtonOfCandidate =await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)
+            let prevBalanceLwtonOfCandidate =await deployed.candidate["balanceOfLwton(uint32,address)"](candidateIndex, addr1.address)
 
 
             expect(await deployed.seigManagerV2.ratesDao()).to.eq(0)
             expect(await deployed.seigManagerV2.ratesStosHolders()).to.eq(0)
 
-            expect(await deployed.seigManagerV2.getTotalLton()).to.gt(ethers.constants.Zero)
-            const indexLton = await deployed.seigManagerV2.indexLton();
+            expect(await deployed.seigManagerV2.getTotalLwton()).to.gt(ethers.constants.Zero)
+            const indexLwton = await deployed.seigManagerV2.indexLwton();
             await snapshotGasCost(deployed.seigManagerV2.connect(addr1).runUpdateSeigniorage())
-            expect(await deployed.seigManagerV2.indexLton()).to.gt(indexLton)
+            expect(await deployed.seigManagerV2.indexLwton()).to.gt(indexLwton)
 
-            expect(await deployed.ton.balanceOf(deployed.dao.address)).to.eq(0)
-            expect(await deployed.ton.balanceOf(deployed.stosDistribute.address)).to.eq(0)
+            expect(await deployed.wton.balanceOf(deployed.dao.address)).to.eq(0)
+            expect(await deployed.wton.balanceOf(deployed.stosDistribute.address)).to.eq(0)
 
 
-            expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)).to.eq(prevBalanceLtonOfSequencer)
+            expect(await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](layerIndex, addr1.address)).to.eq(prevBalanceLwtonOfSequencer)
             expect(await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address)).to.gt(prevBalanceOfSequencer)
 
-            expect(await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)).to.eq(prevBalanceLtonOfCandidate)
+            expect(await deployed.candidate["balanceOfLwton(uint32,address)"](candidateIndex, addr1.address)).to.eq(prevBalanceLwtonOfCandidate)
             expect(await deployed.candidate.balanceOf(candidateIndex, addr1.address)).to.gt(prevBalanceOfCandidate)
 
         });
@@ -1536,27 +1537,27 @@ describe('Integrated Test', () => {
 
 
             let prevBalanceOfSequencer = await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address);
-            let prevBalanceLtonOfSequencer =await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)
+            let prevBalanceLwtonOfSequencer =await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](layerIndex, addr1.address)
 
             let prevBalanceOfCandidate = await deployed.candidate.balanceOf(candidateIndex, addr1.address);
-            let prevBalanceLtonOfCandidate =await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)
+            let prevBalanceLwtonOfCandidate =await deployed.candidate["balanceOfLwton(uint32,address)"](candidateIndex, addr1.address)
 
             const topic = deployed.seigManagerV2.interface.getEventTopic('UpdatedSeigniorage');
-            const balanceOfDao = await deployed.ton.balanceOf(deployed.dao.address)
-            const balanceOfStosDistribute = await deployed.ton.balanceOf(deployed.stosDistribute.address)
+            const balanceOfDao = await deployed.wton.balanceOf(deployed.dao.address)
+            const balanceOfStosDistribute = await deployed.wton.balanceOf(deployed.stosDistribute.address)
 
             expect(await deployed.seigManagerV2.ratesDao()).to.gt(0)
             expect(await deployed.seigManagerV2.ratesStosHolders()).to.gt(0)
 
-            expect(await deployed.seigManagerV2.getTotalLton()).to.gt(ethers.constants.Zero)
-            const indexLton = await deployed.seigManagerV2.indexLton();
-            const receipt = await (await deployed.seigManagerV2.connect(addr1).updateSeigniorage()).wait();
+            expect(await deployed.seigManagerV2.getTotalLwton()).to.gt(ethers.constants.Zero)
+            const indexLwton = await deployed.seigManagerV2.indexLwton();
+            const receipt = await (await deployed.seigManagerV2.connect(addr1).runUpdateSeigniorage()).wait();
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
             const deployedEvent = deployed.seigManagerV2.interface.parseLog(log);
 
-            expect(await deployed.seigManagerV2.indexLton()).to.gt(indexLton)
-            expect(await deployed.ton.balanceOf(deployed.dao.address)).to.eq(balanceOfDao.add(deployedEvent.args.amount_[2]))
-            expect(await deployed.ton.balanceOf(deployed.stosDistribute.address)).to.eq(balanceOfStosDistribute.add(deployedEvent.args.amount_[3]))
+            expect(await deployed.seigManagerV2.indexLwton()).to.gt(indexLwton)
+            expect(await deployed.wton.balanceOf(deployed.dao.address)).to.eq(balanceOfDao.add(deployedEvent.args.amount_[2]))
+            expect(await deployed.wton.balanceOf(deployed.stosDistribute.address)).to.eq(balanceOfStosDistribute.add(deployedEvent.args.amount_[3]))
 
             expect(deployedEvent.args.increaseSeig_).to.gte(
                 deployedEvent.args.amount_[0]
@@ -1564,10 +1565,10 @@ describe('Integrated Test', () => {
                 .add(deployedEvent.args.amount_[2])
                 .add(deployedEvent.args.amount_[3])
             )
-            expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)).to.eq(prevBalanceLtonOfSequencer)
+            expect(await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](layerIndex, addr1.address)).to.eq(prevBalanceLwtonOfSequencer)
             expect(await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address)).to.gt(prevBalanceOfSequencer)
 
-            expect(await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)).to.eq(prevBalanceLtonOfCandidate)
+            expect(await deployed.candidate["balanceOfLwton(uint32,address)"](candidateIndex, addr1.address)).to.eq(prevBalanceLwtonOfCandidate)
             expect(await deployed.candidate.balanceOf(candidateIndex, addr1.address)).to.gt(prevBalanceOfCandidate)
 
         });
@@ -1582,14 +1583,14 @@ describe('Integrated Test', () => {
             let layerIndex = await deployed.layer2Manager.indexSequencers();
             let candidateIndex = await deployed.layer2Manager.indexCandidates();
 
-            const balanceOfStaker = await deployed.ton.balanceOf(addr1.address)
+            const balanceOfStaker = await deployed.wton.balanceOf(addr1.address)
             const availableWithdrawOfStaker = await deployed.optimismSequencer.availableWithdraw(layerIndex, addr1.address)
             const amountOfPendings = await deployed.optimismSequencer.amountOfPendings(layerIndex, addr1.address)
 
-            let amountLton = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)
-            let amount = await deployed.seigManagerV2.getLtonToTon(amountLton)
+            let amountLwton = await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](layerIndex, addr1.address)
+            let amount = await deployed.seigManagerV2.getLwtonToWton(amountLwton)
 
-            let totalStakedLton = await deployed.optimismSequencer.totalStakedLton()
+            let totalStakedLwton = await deployed.optimismSequencer.totalStakedLwton()
 
             const block = await ethers.provider.getBlock('latest')
             const delay = await deployed.layer2Manager.delayBlocksForWithdraw();
@@ -1598,20 +1599,20 @@ describe('Integrated Test', () => {
 
             const receipt = await (await snapshotGasCost(deployed.optimismSequencer.connect(addr1).unstake(
                     layerIndex,
-                    amountLton
+                    amountLwton
                 ))).wait();
 
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
             const deployedEvent = deployed.optimismSequencer.interface.parseLog(log);
-            expect(deployedEvent.args.lton).to.eq(amountLton)
+            expect(deployedEvent.args.lwton).to.eq(amountLwton)
             expect(deployedEvent.args.amount).to.gte(amount)
 
-            expect(await deployed.optimismSequencer.totalStakedLton()).to.eq(totalStakedLton.sub(amountLton))
+            expect(await deployed.optimismSequencer.totalStakedLwton()).to.eq(totalStakedLwton.sub(amountLwton))
 
-            expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)).to.eq(0)
+            expect(await deployed.optimismSequencer["balanceOfLwton(uint32,address)"](layerIndex, addr1.address)).to.eq(0)
             expect(await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address)).to.eq(0)
 
-            expect(await deployed.ton.balanceOf(addr1.address)).to.eq(balanceOfStaker)
+            expect(await deployed.wton.balanceOf(addr1.address)).to.eq(balanceOfStaker)
 
             pendings = await deployed.optimismSequencer.amountOfPendings(layerIndex, addr1.address)
             availableWithdraw = await deployed.optimismSequencer.availableWithdraw(layerIndex, addr1.address)
@@ -1632,12 +1633,12 @@ describe('Integrated Test', () => {
             let candidateIndex = await deployed.layer2Manager.indexCandidates();
             expect(await deployed.candidate.operator(candidateIndex)).to.eq(addr1.address)
 
-            let amountLton = await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)
+            let amountLwton = await deployed.candidate["balanceOfLwton(uint32,address)"](candidateIndex, addr1.address)
 
             await expect(
                 deployed.candidate.connect(addr1)["unstake(uint32,uint256)"](
                     candidateIndex,
-                    amountLton
+                    amountLwton
                 )).to.be.revertedWith("unstake_err_1");
         })
 
@@ -1646,21 +1647,21 @@ describe('Integrated Test', () => {
             let layerIndex = await deployed.layer2Manager.indexSequencers();
             let candidateIndex = await deployed.layer2Manager.indexCandidates();
 
-            const balanceOfStaker = await deployed.ton.balanceOf(addr1.address)
+            const balanceOfStaker = await deployed.wton.balanceOf(addr1.address)
             const availableWithdrawOfStaker = await deployed.candidate.availableWithdraw(candidateIndex, addr1.address)
             const amountOfPendings = await deployed.candidate.amountOfPendings(candidateIndex, addr1.address)
 
-            let amountLton = await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)
+            let amountLwton = await deployed.candidate["balanceOfLwton(uint32,address)"](candidateIndex, addr1.address)
 
             let minimumDepositForCandidate = await deployed.layer2Manager.minimumDepositForCandidate();
-            let minimumDepositForCandidateLton = await deployed.seigManagerV2.getTonToLton(minimumDepositForCandidate)
+            let minimumDepositForCandidateLwton = await deployed.seigManagerV2.getWtonToLwton(minimumDepositForCandidate)
 
-            let unstakeAmountLton = amountLton.sub(minimumDepositForCandidateLton).sub(ethers.constants.One);
-            let remainedAmountLton = amountLton.sub(unstakeAmountLton);
+            let unstakeAmountLwton = amountLwton.sub(minimumDepositForCandidateLwton).sub(ethers.constants.One);
+            let remainedAmountLwton = amountLwton.sub(unstakeAmountLwton);
 
-            let amount = await deployed.seigManagerV2.getLtonToTon(unstakeAmountLton);
+            let amount = await deployed.seigManagerV2.getLwtonToWton(unstakeAmountLwton);
 
-            let totalStakedLton = await deployed.candidate.totalStakedLton()
+            let totalStakedLwton = await deployed.candidate.totalStakedLwton()
 
             const block = await ethers.provider.getBlock('latest')
             const delay = await deployed.layer2Manager.delayBlocksForWithdraw();
@@ -1669,20 +1670,20 @@ describe('Integrated Test', () => {
 
             const receipt = await (await snapshotGasCost(deployed.candidate.connect(addr1).unstake(
                     candidateIndex,
-                    unstakeAmountLton
+                    unstakeAmountLwton
                 ))).wait();
 
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
             const deployedEvent = deployed.candidate.interface.parseLog(log);
-            expect(deployedEvent.args.lton).to.eq(unstakeAmountLton)
+            expect(deployedEvent.args.lwton).to.eq(unstakeAmountLwton)
             expect(deployedEvent.args.amount).to.gte(amount)
 
-            expect(await deployed.candidate.totalStakedLton()).to.eq(totalStakedLton.sub(unstakeAmountLton))
+            expect(await deployed.candidate.totalStakedLwton()).to.eq(totalStakedLwton.sub(unstakeAmountLwton))
 
-            expect(await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)).to.eq(remainedAmountLton)
+            expect(await deployed.candidate["balanceOfLwton(uint32,address)"](candidateIndex, addr1.address)).to.eq(remainedAmountLwton)
             // expect(await deployed.candidate.balanceOf(candidateIndex, addr1.address)).to.eq(0)
 
-            expect(await deployed.ton.balanceOf(addr1.address)).to.eq(balanceOfStaker)
+            expect(await deployed.wton.balanceOf(addr1.address)).to.eq(balanceOfStaker)
 
             pendings = await deployed.candidate.amountOfPendings(candidateIndex, addr1.address)
             availableWithdraw = await deployed.candidate.availableWithdraw(candidateIndex, addr1.address)
@@ -1730,7 +1731,7 @@ describe('Integrated Test', () => {
 
             let layerIndex = await deployed.layer2Manager.indexSequencers();
 
-            const balanceOfStaker = await deployed.ton.balanceOf(addr1.address)
+            const balanceOfStaker = await deployed.wton.balanceOf(addr1.address)
             const availableWithdrawOfStaker = await deployed.optimismSequencer.availableWithdraw(layerIndex, addr1.address)
 
             expect(availableWithdrawOfStaker.amount).to.gt(ethers.constants.Zero)
@@ -1745,14 +1746,14 @@ describe('Integrated Test', () => {
 
             const availableWithdraw = await deployed.optimismSequencer.availableWithdraw(layerIndex, addr1.address)
             expect(availableWithdraw.amount).to.eq(ethers.constants.Zero)
-            expect(await deployed.ton.balanceOf(addr1.address)).to.eq(balanceOfStaker.add(availableWithdrawOfStaker.amount))
+            expect(await deployed.wton.balanceOf(addr1.address)).to.eq(balanceOfStaker.add(availableWithdrawOfStaker.amount))
         })
 
         it('[at Candidate] You can withdraw if there is amount available for withdrawal.', async () => {
 
             let _index = await deployed.layer2Manager.indexCandidates();
 
-            const balanceOfStaker = await deployed.ton.balanceOf(addr1.address)
+            const balanceOfStaker = await deployed.wton.balanceOf(addr1.address)
             const availableWithdrawOfStaker = await deployed.candidate.availableWithdraw(_index, addr1.address)
 
             expect(availableWithdrawOfStaker.amount).to.gt(ethers.constants.Zero)
@@ -1767,7 +1768,7 @@ describe('Integrated Test', () => {
 
             const availableWithdraw = await deployed.candidate.availableWithdraw(_index, addr1.address)
             expect(availableWithdraw.amount).to.eq(ethers.constants.Zero)
-            expect(await deployed.ton.balanceOf(addr1.address)).to.eq(balanceOfStaker.add(availableWithdrawOfStaker.amount))
+            expect(await deployed.wton.balanceOf(addr1.address)).to.eq(balanceOfStaker.add(availableWithdrawOfStaker.amount))
         })
     });
 
@@ -1779,15 +1780,15 @@ describe('Integrated Test', () => {
             let amount = ethers.utils.parseEther("300");
             let curTotalLayer2Deposits = await deployed.layer2Manager.curTotalLayer2Deposits()
 
-            if (amount.gt(await deployed.ton.balanceOf(addr1.address)))
-            await (await deployed.ton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
+            if (amount.gt(await deployed.wton.balanceOf(addr1.address)))
+            await (await deployed.wton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
 
-            if (amount.gte(await deployed.ton.allowance(addr1.address, deployed.l1Bridge.address)))
-                await (await deployed.ton.connect(addr1).approve(deployed.l1Bridge.address, amount)).wait();
+            if (amount.gte(await deployed.wton.allowance(addr1.address, deployed.l1Bridge.address)))
+                await (await deployed.wton.connect(addr1).approve(deployed.l1Bridge.address, amount)).wait();
 
             await (await deployed.l1Bridge.connect(addr1).depositERC20To(
-                    deployed.ton.address,
-                    deployed.l2ton.address,
+                    deployed.wton.address,
+                    deployed.l2wton.address,
                     addr1.address,
                     amount,
                     20000,
@@ -1803,13 +1804,13 @@ describe('Integrated Test', () => {
             let amount = ethers.utils.parseEther("100");
 
             let curTotalLayer2Deposits = await deployed.layer2Manager.curTotalLayer2Deposits()
-            let balanceOfUser = await deployed.ton.balanceOf(addr1.address)
+            let balanceOfUser = await deployed.wton.balanceOf(addr1.address)
             // console.log('balanceOfUser', ethers.utils.formatUnits(balanceOfUser), "TON")
             // console.log('curTotalLayer2Deposits', ethers.utils.formatUnits(curTotalLayer2Deposits), "TON")
 
             await (await snapshotGasCost(deployed.l1Bridge.connect(addr1).finalizeERC20Withdrawal(
-                    deployed.ton.address,
-                    deployed.l2ton.address,
+                    deployed.wton.address,
+                    deployed.l2wton.address,
                     addr1.address,
                     addr1.address,
                     amount,
@@ -1818,7 +1819,7 @@ describe('Integrated Test', () => {
                 ))).wait();
 
             expect(await deployed.layer2Manager.curTotalLayer2Deposits()).to.eq(curTotalLayer2Deposits.sub(amount))
-            expect(await deployed.ton.balanceOf(addr1.address)).to.eq(balanceOfUser.add(amount))
+            expect(await deployed.wton.balanceOf(addr1.address)).to.eq(balanceOfUser.add(amount))
 
         })
 
@@ -1831,15 +1832,15 @@ describe('Integrated Test', () => {
             let amount = ethers.utils.parseEther("300");
             let curTotalLayer2Deposits = await deployed.layer2Manager.curTotalLayer2Deposits()
 
-            if (amount.gt(await deployed.ton.balanceOf(addr1.address)))
-            await (await deployed.ton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
+            if (amount.gt(await deployed.wton.balanceOf(addr1.address)))
+            await (await deployed.wton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
 
-            if (amount.gte(await deployed.ton.allowance(addr1.address, deployed.l1Bridge.address)))
-                await (await deployed.ton.connect(addr1).approve(deployed.l1Bridge.address, amount)).wait();
+            if (amount.gte(await deployed.wton.allowance(addr1.address, deployed.l1Bridge.address)))
+                await (await deployed.wton.connect(addr1).approve(deployed.l1Bridge.address, amount)).wait();
 
             await (await snapshotGasCost(deployed.l1Bridge.connect(addr1).depositERC20To(
-                    deployed.ton.address,
-                    deployed.l2ton.address,
+                    deployed.wton.address,
+                    deployed.l2wton.address,
                     addr1.address,
                     amount,
                     20000,
@@ -1860,7 +1861,8 @@ describe('Integrated Test', () => {
         it('When seignorage is updated, totalSeigs(the seignorage distributed to the sequencers) is increases.', async () => {
 
             let totalSeigs = await deployed.layer2Manager.totalSeigs()
-            await snapshotGasCost(deployed.seigManagerV2.connect(addr1).updateSeigniorage())
+            console.log('totalSeigs', totalSeigs)
+            await snapshotGasCost(deployed.seigManagerV2.connect(addr1).runUpdateSeigniorage())
             expect(await deployed.layer2Manager.totalSeigs()).to.gt(totalSeigs)
 
         })
@@ -1894,14 +1896,14 @@ describe('Integrated Test', () => {
             let layerIndex = await deployed.layer2Manager.indexSequencers();
 
             expect(await deployed.layer2Manager.sequencer(layerIndex)).to.eq(sequencer1.address);
-            let balanceOfTon = await deployed.ton.balanceOf(sequencer1.address);
+            let balanceOfWton = await deployed.wton.balanceOf(sequencer1.address);
             let holdings = (await deployed.layer2Manager.holdings(layerIndex)) ;
 
             expect(holdings.seigs).to.gt(ethers.constants.Zero)
 
             await snapshotGasCost(deployed.layer2Manager.connect(addr1).claim(layerIndex))
             expect((await deployed.layer2Manager.holdings(layerIndex)).seigs).to.eq(ethers.constants.Zero)
-            expect(await deployed.ton.balanceOf(sequencer1.address)).to.eq(balanceOfTon.add(holdings.seigs))
+            expect(await deployed.wton.balanceOf(sequencer1.address)).to.eq(balanceOfWton.add(holdings.seigs))
         })
     });
 

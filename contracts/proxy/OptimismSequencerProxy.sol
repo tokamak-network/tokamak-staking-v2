@@ -14,21 +14,21 @@ contract OptimismSequencerProxy is BaseProxy, StakingStorage, OptimismSequencerS
 
     /* ========== onlyOwner ========== */
     function initialize(
-        address _ton,
+        address _wton,
         address _seigManagerV2,
         address _layer2Manager,
         address _fwReceipt
     )
         external onlyOwner
-        nonZeroAddress(_ton)
+        nonZeroAddress(_wton)
         nonZeroAddress(_seigManagerV2)
         nonZeroAddress(_layer2Manager)
         nonZeroAddress(_fwReceipt)
     {
-        require(address(ton) == address(0), "already initialize");
+        require(address(wton) == address(0), "already initialize");
 
         seigManagerV2 = _seigManagerV2;
-        ton = _ton;
+        wton = _wton;
         layer2Manager =_layer2Manager;
         fwReceipt = _fwReceipt;
 

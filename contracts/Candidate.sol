@@ -32,26 +32,27 @@ contract Candidate is Staking, CandidateStorage {
         operators[info.sequencerIndex][info.operator] = _candidateIndex;
 
         if(amount != 0) {
-            IERC20(ton).safeTransferFrom(layer2Manager, address(this), amount);
+            // IERC20(wton).safeTransferFrom(layer2Manager, address(this), amount);
+            IERC20(wton).safeTransferFrom(info.operator, address(this), amount);
             _stake(_candidateIndex, info.operator, amount, address(0), 0);
         }
 
         return true;
     }
 
-    /* ========== only TON ========== */
+    /* ========== only WTON ========== */
     function onApprove(
         address sender,
         address spender,
         uint256 amount,
         bytes calldata data
     ) external returns (bool) {
-        require(ton == msg.sender, "EA");
+        require(wton == msg.sender, "EA");
         require(existedIndex(data.toUint32(0)), 'non-registered candidate');
 
         // data : (32 bytes) index
         uint32 _index = data.toUint32(0);
-        if (amount != 0) IERC20(ton).safeTransferFrom(sender, address(this), amount);
+        if (amount != 0) IERC20(wton).safeTransferFrom(sender, address(this), amount);
 
         LibOperator.Info memory _layerInfo = getCandidateInfo(_index);
         if (_layerInfo.commission == 0 || sender == _layerInfo.operator) {
@@ -76,13 +77,13 @@ contract Candidate is Staking, CandidateStorage {
         }
     }
 
-    function unstake(uint32 _index, uint256 lton_) external
+    function unstake(uint32 _index, uint256 lwton_) external
     {
         uint256 debt_ = FwReceiptI(fwReceipt).debtInStaked(true, _index, msg.sender);
         if(msg.sender == operator(_index)) {
-            _unstake(_index, lton_, debt_ + Layer2ManagerI(layer2Manager).minimumDepositForCandidate());
+            _unstake(_index, lwton_, debt_ + Layer2ManagerI(layer2Manager).minimumDepositForCandidate());
         } else {
-            _unstake(_index, lton_, debt_);
+            _unstake(_index, lwton_, debt_);
         }
     }
 

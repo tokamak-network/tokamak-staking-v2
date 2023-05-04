@@ -32,7 +32,7 @@ contract SeigManagerV2Proxy is BaseProxy, SeigManagerV2Storage {
             _seigPerBlock != 0
             , "P1");
 
-        require(address(ton) == address(0), "already initialize");
+        require(address(wton) == address(0), "already initialize");
 
         require(_rates[3] != 0, "wrong ratesUnits");
         require((_rates[0] + _rates[1] + _rates[2]) ==  _rates[3], 'sum of ratio is wrong');
@@ -43,8 +43,8 @@ contract SeigManagerV2Proxy is BaseProxy, SeigManagerV2Storage {
         ratesStosHolders = _rates[2];
 
         seigManagerV1 = addr[0];
-        ton = IERC20(_ton);
-        wton = _wton;
+        wton = IERC20(_wton);
+        ton = _ton;
         tot = _tot;
         layer2Manager =addr[1];
         optimismSequencer = addr[2];
@@ -52,12 +52,8 @@ contract SeigManagerV2Proxy is BaseProxy, SeigManagerV2Storage {
 
         seigPerBlock = _seigPerBlock;
         minimumBlocksForUpdateSeig = _minimumBlocksForUpdateSeig;
-        _indexLton = 1 ether;
+        _indexLwton = 1e27;
 
-        // _indexLtonSnapshots.ids.push(_currentSnapshotId);
-        // _indexLtonSnapshots.values.push(1 ether);
-
-        // _snapshot();
     }
 
     /* ========== internal ========== */

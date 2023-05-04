@@ -32,19 +32,19 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
         return true;
     }
 
-    /* ========== only TON ========== */
+    /* ========== only WTON ========== */
     function onApprove(
         address sender,
         address spender,
         uint256 amount,
         bytes calldata data
     ) external override returns (bool) {
-        require(ton == msg.sender, "EA");
+        require(wton == msg.sender, "EA");
         require(existedIndex(data.toUint32(0)), 'non-registered layer');
 
         // data : (32 bytes) index
         uint32 _index = data.toUint32(0);
-        if(amount != 0) IERC20(ton).safeTransferFrom(sender, address(this), amount);
+        if(amount != 0) IERC20(wton).safeTransferFrom(sender, address(this), amount);
         _stake(_index, sender, amount, address(0), 0);
 
         return true;
@@ -58,9 +58,9 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
         stake_(_index, amount, address(0), 0);
     }
 
-    function unstake(uint32 _index, uint256 lton_) external
+    function unstake(uint32 _index, uint256 lwton_) external
     {
-        _unstake(_index, lton_, FwReceiptI(fwReceipt).debtInStaked(false, _index, msg.sender));
+        _unstake(_index, lwton_, FwReceiptI(fwReceipt).debtInStaked(false, _index, msg.sender));
     }
 
     function existedIndex(uint32 _index) public view override returns (bool) {
@@ -82,16 +82,16 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage {
 
         LibOptimism.Info memory _layerInfo = getLayerInfo(_index);
         try
-            L1BridgeI(L1StandardBridge(_layerInfo.addressManager)).deposits(ton, _layerInfo.l2ton) returns (uint256 a) {
+            L1BridgeI(L1StandardBridge(_layerInfo.addressManager)).deposits(wton, _layerInfo.l2wton) returns (uint256 a) {
                 amount = a;
         } catch (bytes memory ) {
             amount = 0;
         }
     }
 
-    function getTvl(address l1Bridge, address l2ton) public view returns (uint256 amount) {
+    function getTvl(address l1Bridge, address l2wton) public view returns (uint256 amount) {
         try
-            L1BridgeI(l1Bridge).deposits(ton, l2ton) returns (uint256 a) {
+            L1BridgeI(l1Bridge).deposits(wton, l2wton) returns (uint256 a) {
                 amount = a;
         } catch (bytes memory ) {
             amount = 0;

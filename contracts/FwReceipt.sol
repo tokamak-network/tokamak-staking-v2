@@ -119,12 +119,12 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
 
         if (_message.status == uint8(LibFastWithdraw.STATUS.NONE) ){
             _message.status = uint8(LibFastWithdraw.STATUS.NORMAL_WITHDRAWAL);
-            IERC20(ton).safeTransfer(requestor, requestAmount);
+            IERC20(wton).safeTransfer(requestor, requestAmount);
             emit NormalWithdrawal(hashMessage, requestor, requestor, requestAmount, _message.status);
 
         } else if (_message.status == uint8(LibFastWithdraw.STATUS.CANCELED)) {
             _message.status = uint8(LibFastWithdraw.STATUS.CANCEL_WITHDRAWAL);
-            IERC20(ton).safeTransfer(requestor, requestAmount);
+            IERC20(wton).safeTransfer(requestor, requestAmount);
             emit NormalWithdrawal(hashMessage, requestor, requestor, requestAmount, _message.status);
 
         } else if (_message.status == uint8(LibFastWithdraw.STATUS.PROVIDE_LIQUIDITY)) {
@@ -159,11 +159,11 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
 
                 _message.status = uint8(LibFastWithdraw.STATUS.FINALIZE_WITHDRAWAL);
 
-                if (sumOfProvidedOfSequencer != 0) IERC20(ton).safeTransfer(optimismSequencer, sumOfProvidedOfSequencer);
-                if (sumOfProvidedOfCandidate != 0) IERC20(ton).safeTransfer(candidate, sumOfProvidedOfCandidate);
+                if (sumOfProvidedOfSequencer != 0) IERC20(wton).safeTransfer(optimismSequencer, sumOfProvidedOfSequencer);
+                if (sumOfProvidedOfCandidate != 0) IERC20(wton).safeTransfer(candidate, sumOfProvidedOfCandidate);
 
                 if ((sumOfProvidedOfSequencer + sumOfProvidedOfCandidate) < _requestAmount) {
-                     IERC20(ton).safeTransfer(_requestor, _requestAmount-(sumOfProvidedOfSequencer + sumOfProvidedOfCandidate));
+                     IERC20(wton).safeTransfer(_requestor, _requestAmount-(sumOfProvidedOfSequencer + sumOfProvidedOfCandidate));
                      emit FinalizedFastWithdrawal(hashMessage, _requestor, _requestor, _requestAmount-(sumOfProvidedOfSequencer + sumOfProvidedOfCandidate), 0, false, 0);
                 }
 
@@ -195,8 +195,8 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
 
         bytes memory _l1BridgeMessage = abi.encodeWithSelector(
                 L1BridgeI.finalizeERC20Withdrawal.selector,
-                ton,
-                _layerInfo.l2ton,
+                wton,
+                _layerInfo.l2wton,
                 requestor,
                 address(this),
                 amount,

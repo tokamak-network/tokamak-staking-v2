@@ -15,6 +15,7 @@ import { FwReceiptProxy } from '../../typechain-types/contracts/proxy/FwReceiptP
 import { FwReceipt } from '../../typechain-types/contracts/FwReceipt.sol'
 
 import { TON } from '../../typechain-types/contracts/test/TON.sol'
+import { WTON } from '../../typechain-types/contracts/test/WTON.sol'
 import { Lib_AddressManager } from '../../typechain-types/contracts/test/Lib_AddressManager'
 import { MockL1Messenger } from '../../typechain-types/contracts/test/MockL1Messenger'
 import { MockL2Messenger } from '../../typechain-types/contracts/test/MockL2Messenger'
@@ -26,8 +27,8 @@ interface StakeSnapshotFixture  {
     id: BigNumber,
     layerIndex: number,
     account: string,
-    indexLton: BigNumber,
-    totalStakedLton: BigNumber,
+    indexLwton: BigNumber,
+    totalStakedLwton: BigNumber,
     balanceOfLayer: BigNumber,
     balanceOfAccount: BigNumber
 }
@@ -43,7 +44,7 @@ interface ParseMessageFixture  {
 interface DomainMessageFixture  {
     messageNonce: number,
     fwReceipt: string,
-    l1ton: string,
+    l1wton: string,
     layerInfo: Layer2Fixture,
     messageInfo: FastWithdrawMessageFixture,
     provider: string,
@@ -71,7 +72,7 @@ interface Layer2Fixture  {
     l2Messenger: string,
     l1Bridge: string,
     l2Bridge: string,
-    l2ton: string
+    l2wton: string
 }
 
 interface OperatorFixture  {
@@ -92,6 +93,7 @@ interface TonStakingV2Fixture  {
     fwReceiptProxy: FwReceiptProxy
     fwReceipt: FwReceipt
     ton: TON,
+    wton: WTON,
     deployer: Signer,
     addr1: Signer,
     addr2: Signer,
@@ -102,10 +104,9 @@ interface TonStakingV2Fixture  {
     l2Messenger: MockL2Messenger,
     l1Bridge: MockL1Bridge,
     l2Bridge: MockL2Bridge,
-    l2ton: TestERC20,
+    l2wton: TestERC20,
     dao: Signer,
     stosDistribute: Signer
 }
-
 
 export { StakeSnapshotFixture, ParseMessageFixture, DomainMessageFixture, FastWithdrawMessageFixture, Layer2Fixture, TonStakingV2Fixture, OperatorFixture }
