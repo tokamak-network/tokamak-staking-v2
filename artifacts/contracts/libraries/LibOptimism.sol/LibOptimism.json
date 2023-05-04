@@ -41,7 +41,7 @@
         },
         {
           "internalType": "address",
-          "name": "l2ton",
+          "name": "l2wton",
           "type": "address"
         }
       ],
@@ -85,7 +85,7 @@
             },
             {
               "internalType": "address",
-              "name": "l2ton",
+              "name": "l2wton",
               "type": "address"
             }
           ],

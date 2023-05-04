@@ -16,7 +16,7 @@
           "type": "address"
         }
       ],
-      "name": "balanceOfLton",
+      "name": "balanceOfLwton",
       "outputs": [
         {
           "internalType": "uint256",

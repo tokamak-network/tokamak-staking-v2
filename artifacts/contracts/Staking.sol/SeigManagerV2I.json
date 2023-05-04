@@ -38,11 +38,11 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "lton",
+          "name": "lwton",
           "type": "uint256"
         }
       ],
-      "name": "getLtonToTon",
+      "name": "getLwtonToWton",
       "outputs": [
         {
           "internalType": "uint256",
@@ -57,7 +57,7 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "lton",
+          "name": "lwton",
           "type": "uint256"
         },
         {
@@ -66,7 +66,7 @@
           "type": "uint256"
         }
       ],
-      "name": "getLtonToTonAt",
+      "name": "getLwtonToWtonAt",
       "outputs": [
         {
           "internalType": "uint256",
@@ -85,7 +85,7 @@
           "type": "uint256"
         }
       ],
-      "name": "getTonToLton",
+      "name": "getWtonToLwton",
       "outputs": [
         {
           "internalType": "uint256",
@@ -109,7 +109,7 @@
           "type": "uint256"
         }
       ],
-      "name": "getTonToLtonAt",
+      "name": "getWtonToLwtonAt",
       "outputs": [
         {
           "internalType": "uint256",
