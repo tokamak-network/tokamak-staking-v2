@@ -21,7 +21,7 @@ contract SeigManagerV2Storage {
     address public candidate;
 
     /// Amount of seigniorage issued per block
-    uint256 public seigPerBlock;
+    uint256 public seigPerBlock;  // 3920000000000000000000000000
 
     /// Block number that was last seignorage issued
     uint256 public lastSeigBlock;
@@ -29,12 +29,12 @@ contract SeigManagerV2Storage {
     /// seigniorage issuance start block
     uint256 public startBlock;
 
+    ///  ratesTonStakers + ratesDao + ratesStosHolders = ratesUnits
+    uint16 public ratesTonStakers; // divided ratesUnits when using
+    uint16 public ratesDao;   // divided ratesUnits when using
+    uint16 public ratesStosHolders; // divided ratesUnits when using
 
-    uint16 public ratesTonStakers; // divided ratesUnits
-    uint16 public ratesDao;   // divided ratesUnits
-    uint16 public ratesStosHolders; // divided ratesUnits
-
-    uint16 public ratesUnits; // divided uint. 10000
+    uint16 public ratesUnits; // 10000
     uint32 public minimumBlocksForUpdateSeig; // the number of block
     bool internal free = true;
 

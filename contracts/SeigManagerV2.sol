@@ -7,7 +7,7 @@ import "./common/AccessibleCommon.sol";
 import "./libraries/SafeERC20.sol";
 import "./libraries/Layer2.sol";
 import "./libraries/LibArrays.sol";
-
+import "./interfaces/ISeigManagerV2.sol";
 // import "hardhat/console.sol";
 
 interface AutoRefactorCoinageI {
@@ -24,7 +24,7 @@ interface StakingI {
     function getTotalLtonAt(uint256 snapshotId) external view returns (uint256) ;
 }
 
-contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Storage {
+contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Storage, ISeigManagerV2 {
     /* ========== DEPENDENCIES ========== */
     using SafeERC20 for IERC20;
     using LibArrays for uint256[];
@@ -47,23 +47,27 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
 
     /* ========== onlyOwner ========== */
 
-    function setSeigPerBlock(uint256 _seigPerBlock) external onlyOwner {
+    /// @inheritdoc ISeigManagerV2
+    function setSeigPerBlock(uint256 _seigPerBlock) external override onlyOwner {
         require(seigPerBlock != _seigPerBlock, "same");
         seigPerBlock = _seigPerBlock;
     }
 
-    function setMinimumBlocksForUpdateSeig(uint32 _minimumBlocksForUpdateSeig) external onlyOwner {
+    /// @inheritdoc ISeigManagerV2
+    function setMinimumBlocksForUpdateSeig(uint32 _minimumBlocksForUpdateSeig) external override onlyOwner {
         require(minimumBlocksForUpdateSeig != _minimumBlocksForUpdateSeig, "same");
         minimumBlocksForUpdateSeig = _minimumBlocksForUpdateSeig;
     }
 
-    function setLastSeigBlock(uint256 _lastSeigBlock) external onlyOwner nonZero(_lastSeigBlock) {
+    /// @inheritdoc ISeigManagerV2
+    function setLastSeigBlock(uint256 _lastSeigBlock) external override onlyOwner nonZero(_lastSeigBlock) {
         require(lastSeigBlock != _lastSeigBlock, "same");
         lastSeigBlock = _lastSeigBlock;
         if (startBlock == 0) startBlock = _lastSeigBlock;
     }
 
-    function setDividendRates(uint16 _ratesDao, uint16 _ratesStosHolders, uint16 _ratesTonStakers, uint16 _ratesUnits) external onlyOwner {
+    /// @inheritdoc ISeigManagerV2
+    function setDividendRates(uint16 _ratesDao, uint16 _ratesStosHolders, uint16 _ratesTonStakers, uint16 _ratesUnits) external override onlyOwner {
         require(
             !(ratesDao == _ratesDao  &&
             ratesStosHolders == _ratesStosHolders &&
@@ -78,7 +82,8 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
         ratesUnits = _ratesUnits;
     }
 
-    function setAddress(address _dao, address _stosDistribute) external onlyOwner {
+    /// @inheritdoc ISeigManagerV2
+    function setAddress(address _dao, address _stosDistribute) external override onlyOwner {
         require(!(dao == _dao && stosDistribute == _stosDistribute), "same");
 
         dao = _dao;
@@ -87,7 +92,8 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
 
     /* ========== only Layer2Manager Or Optimism ========== */
 
-    function claim(address _to, uint256 _amount) external {
+    /// @inheritdoc ISeigManagerV2
+    function claim(address _to, uint256 _amount) external override {
 
         require(
             msg.sender != address(0) ||
@@ -105,40 +111,21 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
 
     /* ========== Anyone can execute ========== */
 
-    function snapshot() external virtual returns (uint256) {
+    /// @inheritdoc ISeigManagerV2
+    function snapshot() external virtual override returns (uint256) {
         return _snapshot();
     }
 
-    function getCurrentSnapshotId() public view virtual returns (uint256) {
-        return _currentSnapshotId;
-    }
-
-    function getSnapshotTime() public view returns (uint32[] memory) {
-        return snapshotTime;
-    }
-
-    function indexLton() public view returns (uint256) {
-        return _indexLton;
-    }
-
-    function indexLtonAt(uint256 snapshotId) public view returns (uint256) {
-        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _indexLtonSnapshots);
-
-        return snapshotted ? value : indexLton();
-    }
-
-    function indexLtonAtSnapshot(uint256 snapshotId) public view returns (bool snapshotted, uint256 value) {
-        return _valueAt(snapshotId, _indexLtonSnapshots);
-    }
-
-    function updateSeigniorage() external returns (bool res) {
+    /// @inheritdoc ISeigManagerV2
+    function updateSeigniorage() external override returns (bool res) {
         if (lastSeigBlock + uint256(minimumBlocksForUpdateSeig) < getCurrentBlockNumber()) {
             res = runUpdateSeigniorage();
         }
         return true;
     }
 
-    function runUpdateSeigniorage() public ifFree nonZero(startBlock) returns (bool res) {
+    /// @inheritdoc ISeigManagerV2
+    function runUpdateSeigniorage() public override ifFree nonZero(startBlock) returns (bool res) {
         // console.log('-------------------');
 
         if (lastSeigBlock <  getCurrentBlockNumber() && lastSeigBlock != 0) {
@@ -196,40 +183,47 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
 
     /* ========== VIEW ========== */
 
-    function mintableSeigsAmount() external view returns (uint256 amount) {
+    /// @inheritdoc ISeigManagerV2
+    function mintableSeigsAmount() external view override returns (uint256 amount) {
         if (lastSeigBlock <  getCurrentBlockNumber() && lastSeigBlock != 0) {
             amount = (getCurrentBlockNumber() - lastSeigBlock) * seigPerBlock;
         }
     }
 
-    function getTonToLton(uint256 _amount) public view returns (uint256 amount) {
+    /// @inheritdoc ISeigManagerV2
+    function getTonToLton(uint256 _amount) public view override returns (uint256 amount) {
         if (_amount > 0) amount = (_amount * 1e18) / indexLton();
     }
 
-    function getTonToLtonAt(uint256 _amount, uint256 _snapshotId) public view returns (uint256 amount) {
+    /// @inheritdoc ISeigManagerV2
+    function getTonToLtonAt(uint256 _amount, uint256 _snapshotId) public view override returns (uint256 amount) {
         if (_amount > 0) amount = (_amount * 1e18) / indexLtonAt(_snapshotId);
     }
 
-    function getLtonToTon(uint256 lton) public view returns (uint256 amount) {
+    /// @inheritdoc ISeigManagerV2
+    function getLtonToTon(uint256 lton) public view override returns (uint256 amount) {
         if (lton > 0) amount = (lton * indexLton()) / 1e18;
     }
 
-    function getLtonToTonAt(uint256 lton, uint256 _snapshotId) public view returns (uint256 amount) {
+    /// @inheritdoc ISeigManagerV2
+    function getLtonToTonAt(uint256 lton, uint256 _snapshotId) public view override returns (uint256 amount) {
         if (lton > 0) amount = (lton * indexLtonAt(_snapshotId)) / 1e18;
     }
 
+    /// @inheritdoc ISeigManagerV2
     function getCurrentBlockNumber() public view returns (uint256) {
         return block.number;
     }
 
     function calculateIndex(uint256 curIndex, uint256 curTotal, uint256 increaseAmount)
-        public pure returns (uint256 nextIndex)
+        public pure override returns (uint256 nextIndex)
     {
         if (curTotal != 0 && increaseAmount !=0) nextIndex = curIndex * (curTotal + increaseAmount) / curTotal;
         else nextIndex = curIndex;
     }
 
-    function totalSupplyTON() public view returns (uint256 amount) {
+    /// @inheritdoc ISeigManagerV2
+    function totalSupplyTON() public view override returns (uint256 amount) {
         // 톤의 총공급량 = ton.totalSupply() - ton.balacneOf(wton)
         // + ((total staked amount in stakingV1)/1e-9)
         amount = ton.totalSupply() + ton.balanceOf(wton) + AutoRefactorCoinageI(tot).totalSupply();
@@ -237,12 +231,41 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
         // l2로 들어간것과 스테이킹 되는 것이 ton으로 이루어진다면 위의 총공급량으로만 집계 해도 된다.
     }
 
-    function getTotalLton() public view returns (uint256 amount) {
+    /// @inheritdoc ISeigManagerV2
+    function getTotalLton() public view override returns (uint256 amount) {
         amount = StakingI(optimismSequencer).getTotalLton() + StakingI(candidate).getTotalLton();
     }
 
-    function getTotalLtonAt(uint256 _snapshotId) public view returns (uint256 amount) {
+    /// @inheritdoc ISeigManagerV2
+    function getTotalLtonAt(uint256 _snapshotId) public view override returns (uint256 amount) {
         amount = StakingI(optimismSequencer).getTotalLtonAt(_snapshotId) + StakingI(candidate).getTotalLtonAt(_snapshotId);
+    }
+
+    /// @inheritdoc ISeigManagerV2
+    function getCurrentSnapshotId() public view virtual override returns (uint256) {
+        return _currentSnapshotId;
+    }
+
+    /// @inheritdoc ISeigManagerV2
+    function getSnapshotTime() public view override returns (uint32[] memory) {
+        return snapshotTime;
+    }
+
+    /// @inheritdoc ISeigManagerV2
+    function indexLton() public view override returns (uint256) {
+        return _indexLton;
+    }
+
+    /// @inheritdoc ISeigManagerV2
+    function indexLtonAt(uint256 snapshotId) public view override returns (uint256) {
+        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _indexLtonSnapshots);
+
+        return snapshotted ? value : indexLton();
+    }
+
+    /// @inheritdoc ISeigManagerV2
+    function indexLtonAtSnapshot(uint256 snapshotId) public view override returns (bool snapshotted, uint256 value) {
+        return _valueAt(snapshotId, _indexLtonSnapshots);
     }
 
     /* ========== internal ========== */
