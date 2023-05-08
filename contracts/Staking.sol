@@ -380,6 +380,7 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage, IStaking
 
         emit Unstaked(_index, sender, amount, lton_);
     }
+
     function _restake(uint32 _index, address sender, uint256 i, uint256 nlength) internal ifFree returns (bool) {
 
         _beforeUpdate(_index, sender);
