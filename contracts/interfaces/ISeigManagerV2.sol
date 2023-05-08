@@ -8,7 +8,25 @@ pragma solidity ^0.8.4;
  */
 interface ISeigManagerV2 {
 
+    /**
+     * @dev                     an event that occurs when snapshot is executed
+     * @param id                the snapshot id
+     * @param snapshotTime      the snapshot timestamp
+     */
     event Snapshot(uint256 id, uint256 snapshotTime);
+
+    /**
+     * @dev                         an event that occurs when updateSeigniorage is executed
+     * @param lastSeigBlock_        last block executed
+     * @param increaseSeig_         issued seigniorage
+     * @param totalSupplyOfTon_     total supply of TON
+     * @param amount_               [ amountOfstaker : seignorage issued to stakers,
+     *                                amountOfsequencer : seignorage issued to sequencers,
+     *                                amountOfDao : seignorage issued to DAO,
+     *                                amountOfStosHolders : seignorage issued to sTOS holders]
+     * @param prevIndex_            previous index
+     * @param index_                updated index
+     */
     event UpdatedSeigniorage(
                     uint256 lastSeigBlock_,
                     uint256 increaseSeig_,
@@ -18,6 +36,12 @@ interface ISeigManagerV2 {
                     uint256 index_
                     );
 
+    /**
+     * @dev                 an event that occurs when claim is executed by layer2Manager, optimismSequencer, and candidate contracts.
+     * @param caller        the caller address (layer2Manager, optimismSequencer, or candidate contracts.)
+     * @param to            the to address
+     * @param amount        the amount sended
+     */
     event Claimed(address caller, address to, uint256 amount);
 
     /* ========== onlyOwner ========== */

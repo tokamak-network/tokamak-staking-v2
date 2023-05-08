@@ -9,12 +9,61 @@ import "../libraries/Layer2.sol";
  */
 interface ILayer2Manager {
 
+    /**
+     * @dev                 event that occurs when sequencer claims seigniorage assigned to him
+     * @param _index        the sequencer index
+     * @param _sequencer    the sequencer address
+     * @param amount        the amount claimed
+     */
     event Claimed(uint32 _index, address _sequencer, uint256 amount);
+
+    /**
+     * @dev                     event that occurs when create the optimism sequencer
+     * @param _index            the sequencer index
+     * @param _sequencer        the sequencer address
+     * @param _name             name
+     * @param addressManager    the addressManager address
+     * @param l1Bridge          the l1 bridge address
+     * @param l2Bridge          the l2 bridge address
+     * @param l2ton             the l2 ton address
+     * @param depositAmount     the amount deposited
+     */
     event CreatedOptimismSequencer(uint32 _index, address _sequencer, bytes32 _name, address addressManager, address l1Bridge, address l2Bridge, address l2ton, uint256 depositAmount);
+
+    /**
+     * @dev                     event that occurs when create the candidate
+     * @param _index            the candidate index
+     * @param _operator         the operator address
+     * @param _name             name
+     * @param _sequencerIndex   the sequencer index to support
+     * @param _commission       commission (used by divied 10000)
+     * @param depositAmount     the amount staked
+     */
     event CreatedCandidate(uint32 _index, address _operator, bytes32 _name, uint32 _sequencerIndex, uint16 _commission, uint256 depositAmount);
+
+    /**
+     * @dev                         an event that occurs when seigniorage is distributed to sequencers
+     * @param _totalSeigs           the total seigniorage to distribute
+     * @param _distributedAmount    the amount distributed
+     */
     event Distributed(uint256 _totalSeigs, uint256 _distributedAmount);
+
+    /**
+     * @dev                 an event that occurs when sequencer increases security deposit amount
+     * @param _index        the sequnecer index
+     * @param caller        caller address
+     * @param amount        amount increased
+     */
     event IncreasedSecurityDeposit(uint32 _index, address caller, uint256 amount);
+
+    /**
+     * @dev                 an event that occurs when sequencer decreased security deposit amount
+     * @param _index        the sequnecer index
+     * @param _sequencer    caller address
+     * @param amount        amount decreased
+     */
     event DecreasedSecurityDeposit(uint32 _index, address _sequencer, uint256 amount);
+
 
     /* ========== onlyOwner ========== */
 
