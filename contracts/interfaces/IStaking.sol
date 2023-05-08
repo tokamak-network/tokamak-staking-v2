@@ -57,6 +57,4 @@ interface IStaking {
     function getPendingUnstakedAmount(uint32 _index, address account) external view returns (uint256) ;
     function getCurrentSnapshotId() external view returns (uint256);
 
-
-
 }

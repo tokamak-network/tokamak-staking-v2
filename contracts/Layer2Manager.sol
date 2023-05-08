@@ -115,7 +115,7 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         address l2ton,
         uint256 amount
     )
-        external override ifFree
+        external override ifFree returns (uint32)
     {
         require(msg.sender == AddressManagerI(addressManager).getAddress('OVM_Sequencer'), 'NOT Sequencer');
 
@@ -154,6 +154,8 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
 
         emit CreatedOptimismSequencer(
             _index, msg.sender, _name, addressManager, l1Bridge, l2Bridge, l2ton, amount);
+
+        return _index;
     }
 
     /// @inheritdoc ILayer2Manager
@@ -162,7 +164,7 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         bytes32 _name,
         uint16 _commission,
         uint256 amount
-    )   external override nonZeroUint32(_sequencerIndex) ifFree
+    )   external override nonZeroUint32(_sequencerIndex) ifFree returns (uint32)
     {
         require(_sequencerIndex <= indexSequencers, "wrong index");
         bytes32 _key = LibOperator.getKey(msg.sender, _sequencerIndex);
@@ -190,6 +192,7 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         );
 
         emit CreatedCandidate(_index, msg.sender, _name, _sequencerIndex, _commission, amount);
+        return _index;
     }
 
     /// @inheritdoc ILayer2Manager

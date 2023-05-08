@@ -70,6 +70,7 @@ interface ILayer2Manager {
      * @param l2Bridge          l2Bridge address
      * @param l2ton             l2ton address
      * @param amount            the security deposit amount
+     * @return sequencerIndex   the sequencer index
      */
     function createOptimismSequencer(
         bytes32 _name,
@@ -78,7 +79,7 @@ interface ILayer2Manager {
         address l2Bridge,
         address l2ton,
         uint256 amount
-    )  external ;
+    )  external returns (uint32);
 
     /**
      * @dev                     create candidate
@@ -86,13 +87,14 @@ interface ILayer2Manager {
      * @param _name             title
      * @param _commission       commission
      * @param amount            the staking amount
+     * @return candidateIndex   the candidate index
      */
     function createCandidate(
         uint32 _sequencerIndex,
         bytes32 _name,
         uint16 _commission,
         uint256 amount
-    )   external;
+    )   external returns (uint32);
 
     /**
      * @dev                     decrease the security deposit amount
