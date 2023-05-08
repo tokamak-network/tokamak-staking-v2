@@ -1,0 +1,327 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IOptimismSequencer",
+  "sourceName": "contracts/interfaces/IOptimismSequencer.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "addressManager",
+          "type": "address"
+        }
+      ],
+      "name": "L1CrossDomainMessenger",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "account_",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "addressManager",
+          "type": "address"
+        }
+      ],
+      "name": "L1StandardBridge",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "account_",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_index",
+          "type": "uint32"
+        }
+      ],
+      "name": "bridges",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_index",
+          "type": "uint32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_layerInfo",
+          "type": "bytes"
+        }
+      ],
+      "name": "create",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_index",
+          "type": "uint32"
+        }
+      ],
+      "name": "existedIndex",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_index",
+          "type": "uint32"
+        }
+      ],
+      "name": "getLayerInfo",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "addressManager",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "l1Bridge",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "l2Bridge",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "l2ton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct LibOptimism.Info",
+          "name": "_layerInfo",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_index",
+          "type": "uint32"
+        }
+      ],
+      "name": "getLayerKey",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "layerKey_",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_index",
+          "type": "uint32"
+        }
+      ],
+      "name": "getTvl",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "l1Bridge",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "l2ton",
+          "type": "address"
+        }
+      ],
+      "name": "getTvl",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "onApprove",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "addressManager",
+          "type": "address"
+        }
+      ],
+      "name": "sequencer",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "sequencer_",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_index",
+          "type": "uint32"
+        }
+      ],
+      "name": "sequencer",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "sequencer_",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_index",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "stake",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_index",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "lton_",
+          "type": "uint256"
+        }
+      ],
+      "name": "unstake",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

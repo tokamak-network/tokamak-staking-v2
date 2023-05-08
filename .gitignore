@@ -11,6 +11,6 @@ cache
 artifacts/@openzeppelin
 artifacts/build-info
 artifacts/hardhat
-
+test/__snapshots__
 backup
 deployments

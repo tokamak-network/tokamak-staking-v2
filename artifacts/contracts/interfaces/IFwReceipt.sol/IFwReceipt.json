@@ -1,0 +1,466 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IFwReceipt",
+  "sourceName": "contracts/interfaces/IFwReceipt.sol",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "key",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "caller",
+          "type": "address"
+        }
+      ],
+      "name": "CanceledRequest",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "key",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "providedAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "feeAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "isCandidate",
+          "type": "bool"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "indexNo",
+          "type": "uint32"
+        }
+      ],
+      "name": "FinalizedFastWithdrawal",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "key",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint8",
+          "name": "status",
+          "type": "uint8"
+        }
+      ],
+      "name": "NormalWithdrawal",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "key",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "provider",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "provideAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "feeAmount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "isCandidate",
+          "type": "bool"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "indexNo",
+          "type": "uint32"
+        }
+      ],
+      "name": "ProvidedLiquidity",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bool",
+          "name": "isCandidate",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint32",
+          "name": "layerIndex",
+          "type": "uint32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "availableLiquidity",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "requestor",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "requestAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint32",
+          "name": "deadline",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint16",
+          "name": "feeRate",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint32",
+          "name": "layerIndex",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "messageNonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "hashMessage",
+          "type": "bytes32"
+        }
+      ],
+      "name": "cancelRequest",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bool",
+          "name": "isCandidate",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint32",
+          "name": "layerIndex",
+          "type": "uint32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "debtInStaked",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "requestor",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "requestAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint32",
+          "name": "deadline",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint16",
+          "name": "feeRate",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint32",
+          "name": "layerIndex",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "messageNonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "hashMessage",
+          "type": "bytes32"
+        }
+      ],
+      "name": "finalizeFastWithdraw",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "hashMessage",
+          "type": "bytes32"
+        }
+      ],
+      "name": "includedTxsOfProvider",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "included",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "requestor",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "requestAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "provideAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint32",
+          "name": "deadline",
+          "type": "uint32"
+        },
+        {
+          "internalType": "bool",
+          "name": "isCandidate",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint32",
+          "name": "indexNo",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint16",
+          "name": "feeRate",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint32",
+          "name": "layerIndex",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "messageNonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "hashMessage",
+          "type": "bytes32"
+        }
+      ],
+      "name": "provideLiquidity",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_candidate",
+          "type": "address"
+        }
+      ],
+      "name": "setCandidate",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_optimismSequencer",
+          "type": "address"
+        }
+      ],
+      "name": "setOptimismSequencer",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "requestor",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint16",
+          "name": "feeRate",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint32",
+          "name": "deadline",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint32",
+          "name": "layerIndex",
+          "type": "uint32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "messageNonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "hashMessage",
+          "type": "bytes32"
+        }
+      ],
+      "name": "validateHashMessage",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

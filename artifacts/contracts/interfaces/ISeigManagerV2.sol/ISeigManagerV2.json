@@ -1,0 +1,508 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "ISeigManagerV2",
+  "sourceName": "contracts/interfaces/ISeigManagerV2.sol",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "caller",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "Claimed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "snapshotTime",
+          "type": "uint256"
+        }
+      ],
+      "name": "Snapshot",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "lastSeigBlock_",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "increaseSeig_",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "totalSupplyOfTon_",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256[4]",
+          "name": "amount_",
+          "type": "uint256[4]"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "prevIndex_",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "index_",
+          "type": "uint256"
+        }
+      ],
+      "name": "UpdatedSeigniorage",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "curIndex",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "curTotal",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "increaseAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "calculateIndex",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "nextIndex",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "claim",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getCurrentBlockNumber",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getCurrentSnapshotId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "ltonAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "getLtonToTon",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "tonAmount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "ltonAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_snapshotId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getLtonToTonAt",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "tonAmount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getSnapshotTime",
+      "outputs": [
+        {
+          "internalType": "uint32[]",
+          "name": "",
+          "type": "uint32[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_tonAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "getTonToLton",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "ltonAmount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_tonAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_snapshotId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getTonToLtonAt",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "ltonAmount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getTotalLton",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_snapshotId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getTotalLtonAt",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "indexLton",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "snapshotId",
+          "type": "uint256"
+        }
+      ],
+      "name": "indexLtonAt",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "snapshotId",
+          "type": "uint256"
+        }
+      ],
+      "name": "indexLtonAtSnapshot",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "snapshotted",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "mintableSeigsAmount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "runUpdateSeigniorage",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "res",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_dao",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_stosDistribute",
+          "type": "address"
+        }
+      ],
+      "name": "setAddress",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint16",
+          "name": "_ratesDao",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint16",
+          "name": "_ratesStosHolders",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint16",
+          "name": "_ratesTonStakers",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint16",
+          "name": "_ratesUnits",
+          "type": "uint16"
+        }
+      ],
+      "name": "setDividendRates",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_lastSeigBlock",
+          "type": "uint256"
+        }
+      ],
+      "name": "setLastSeigBlock",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_minimumBlocksForUpdateSeig",
+          "type": "uint32"
+        }
+      ],
+      "name": "setMinimumBlocksForUpdateSeig",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_seigPerBlock",
+          "type": "uint256"
+        }
+      ],
+      "name": "setSeigPerBlock",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "snapshot",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalSupplyTON",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "updateSeigniorage",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "res",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
