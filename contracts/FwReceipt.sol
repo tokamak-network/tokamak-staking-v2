@@ -9,7 +9,8 @@ import "./libraries/SafeERC20.sol";
 import "./libraries/BytesParserLib.sol";
 import "./libraries/LibOperator.sol";
 import "./libraries/LibOptimism.sol";
-import "hardhat/console.sol";
+import "./interfaces/IFwReceipt.sol";
+// import "hardhat/console.sol";
 
 interface L1CrossDomainMessangerI {
     function successfulMessages(bytes32 xDomainCalldataHash) external view returns (bool) ;
@@ -46,27 +47,12 @@ interface L1BridgeI {
     ) external;
 }
 
-interface FwReceiptI {
-    function finalizeFastWithdraw(
-        uint16 feeRate,
-        uint32 deadline,
-        uint32 layerIndex
-    )
-        external returns (uint8);
-}
 
-contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
+contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage, IFwReceipt {
     using SafeERC20 for IERC20;
     using BytesParserLib for bytes;
 
     /* ========== DEPENDENCIES ========== */
-    event ProvidedLiquidity(bytes32 key, address provider, uint256 provideAmount, uint256 feeAmount, bool isCandidate, uint32 indexNo);
-    event CanceledRequest(bytes32 key, address caller);
-    // event InvalidMessageFastWithdrawal(bytes32 key, uint8 status);
-    event NormalWithdrawal(bytes32 key, address from, address to, uint256 amount, uint8 status);
-    event FinalizedFastWithdrawal(bytes32 key, address from, address to, uint256 providedAmount, uint256 feeAmount, bool isCandidate, uint32 indexNo);
-    // event FailFinishFastWithdrawal(bytes32 key, address from, address to, uint256 providedAmount, uint256 feeAmount, uint8 status);
-    // event AlreadyProcessed(bytes32 key, uint8 status);
 
     /* ========== CONSTRUCTOR ========== */
     constructor() {
@@ -74,25 +60,28 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
 
     /* ========== onlyOwner ========== */
 
+    /// @inheritdoc IFwReceipt
     function setOptimismSequencer(address _optimismSequencer)
-        external onlyOwner nonZeroAddress(_optimismSequencer)
+        external override onlyOwner nonZeroAddress(_optimismSequencer)
     {
         require(optimismSequencer != _optimismSequencer, "same");
         optimismSequencer = _optimismSequencer;
     }
 
+    /// @inheritdoc IFwReceipt
     function setCandidate(address _candidate)
-        external onlyOwner nonZeroAddress(_candidate)
+        external  override onlyOwner nonZeroAddress(_candidate)
     {
         require(candidate != _candidate, "same");
         candidate = _candidate;
     }
 
-    /* ========== onlySequencer ========== */
+    /* ========== only Sequencer ========== */
 
 
-    /* === ======= public ========== */
+    /* ========== Anyone can execute ========== */
 
+    /// @inheritdoc IFwReceipt
     function finalizeFastWithdraw(
         address requestor,
         uint256 requestAmount,
@@ -102,7 +91,7 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
         uint256 messageNonce,
         bytes32 hashMessage
         )
-        external returns (uint8)
+        external  override returns (uint8)
     {
         require(requestAmount != 0 && layerIndex != uint32(0), "Z1");
         require(validateHashMessage(
@@ -181,39 +170,7 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
         return _message.status;
     }
 
-    function validateHashMessage(
-        address requestor,
-        uint256 amount,
-        uint16 feeRate,
-        uint32 deadline,
-        uint32 layerIndex,
-        uint256 messageNonce,
-        bytes32 hashMessage
-    ) public view returns(bool){
-
-        LibOptimism.Info memory _layerInfo = SequencerI(optimismSequencer).getLayerInfo(layerIndex);
-
-        bytes memory _l1BridgeMessage = abi.encodeWithSelector(
-                L1BridgeI.finalizeERC20Withdrawal.selector,
-                ton,
-                _layerInfo.l2ton,
-                requestor,
-                address(this),
-                amount,
-                abi.encodePacked(feeRate, deadline, layerIndex)
-            );
-
-        bytes memory _message = abi.encodeWithSelector(
-                L1CrossDomainMessangerI.relayMessage.selector,
-                _layerInfo.l1Bridge,
-                _layerInfo.l2Bridge,
-                _l1BridgeMessage,
-                messageNonce
-            );
-
-        return (keccak256(_message) == hashMessage);
-    }
-
+    /// @inheritdoc IFwReceipt
     function provideLiquidity(
         address requestor,
         uint256 requestAmount,
@@ -226,7 +183,7 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
         uint256 messageNonce,
         bytes32 hashMessage
         )
-        external nonZero(provideAmount)
+        external  override nonZero(provideAmount)
     {
         require(validateHashMessage(
             requestor,
@@ -293,6 +250,7 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
         emit ProvidedLiquidity(hashMessage, msg.sender, provideAmount1, feeAmount, _isCandidate, _indexNo);
     }
 
+    /// @inheritdoc IFwReceipt
     function cancelRequest(
         address requestor,
         uint256 requestAmount,
@@ -300,7 +258,8 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
         uint16 feeRate,
         uint32 layerIndex,
         uint256 messageNonce,
-        bytes32 hashMessage) external
+        bytes32 hashMessage)
+        external override
     {
         require(validateHashMessage(
             requestor,
@@ -324,8 +283,44 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
         emit CanceledRequest(hashMessage, msg.sender);
     }
 
+    /* ========== VIEW ========== */
 
-    function availableLiquidity(bool isCandidate, uint32 layerIndex, address account) public view returns (uint256 amount) {
+    /// @inheritdoc IFwReceipt
+    function validateHashMessage(
+        address requestor,
+        uint256 amount,
+        uint16 feeRate,
+        uint32 deadline,
+        uint32 layerIndex,
+        uint256 messageNonce,
+        bytes32 hashMessage
+    ) public view  override returns(bool){
+
+        LibOptimism.Info memory _layerInfo = SequencerI(optimismSequencer).getLayerInfo(layerIndex);
+
+        bytes memory _l1BridgeMessage = abi.encodeWithSelector(
+                L1BridgeI.finalizeERC20Withdrawal.selector,
+                ton,
+                _layerInfo.l2ton,
+                requestor,
+                address(this),
+                amount,
+                abi.encodePacked(feeRate, deadline, layerIndex)
+            );
+
+        bytes memory _message = abi.encodeWithSelector(
+                L1CrossDomainMessangerI.relayMessage.selector,
+                _layerInfo.l1Bridge,
+                _layerInfo.l2Bridge,
+                _l1BridgeMessage,
+                messageNonce
+            );
+
+        return (keccak256(_message) == hashMessage);
+    }
+
+    /// @inheritdoc IFwReceipt
+    function availableLiquidity(bool isCandidate, uint32 layerIndex, address account) public view  override returns (uint256 amount) {
         if (isCandidate) {
             uint256 balance = SequencerI(candidate).balanceOf(layerIndex, account);
             if (balance > sumOfReceiptsOfCandidates[account][layerIndex]) {
@@ -339,7 +334,8 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
         }
     }
 
-    function includedTxsOfProvider(address account, bytes32 txIndex) public view returns (bool included) {
+    /// @inheritdoc IFwReceipt
+    function includedTxsOfProvider(address account, bytes32 txIndex) public view  override returns (bool included) {
         uint256 len = txsOfProviders[account].length;
 
         for(uint256 i = 0; i < len; i++){
@@ -349,12 +345,13 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage {
         }
     }
 
-    function debtInStaked(bool isCandidate, uint32 layerIndex, address account) external view returns (uint256) {
+    /// @inheritdoc IFwReceipt
+    function debtInStaked(bool isCandidate, uint32 layerIndex, address account) external view  override returns (uint256) {
         if (isCandidate) return sumOfReceiptsOfCandidates[account][layerIndex];
         else  return sumOfReceiptsOfSequencers[account][layerIndex];
     }
 
-    /* === ======= internal ========== */
+    /* ========== internal ========== */
 
     function deleteTxsOfProviders(address account, bytes32 txIndex) internal {
         uint256 len = txsOfProviders[account].length;

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.4;
 
-import "./libraries/BytesParserLib.sol";
 import "./storages/StakingStorage.sol";
 import "./proxy/BaseProxyStorage.sol";
 import "./common/AccessibleCommon.sol";
+import "./libraries/BytesParserLib.sol";
 import "./libraries/SafeERC20.sol";
 import "./libraries/LibArrays.sol";
-
+import "./interfaces/IStaking.sol";
 // import "hardhat/console.sol";
 
 interface L1BridgeI {
@@ -49,18 +49,11 @@ interface Layer2ManagerI {
 }
 
 
-contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
+contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage, IStaking {
     /* ========== DEPENDENCIES ========== */
     using SafeERC20 for IERC20;
     using BytesParserLib for bytes;
     using LibArrays for uint256[];
-
-    event Staked(uint32 _index, address sender, uint256 amount, uint256 lton, address commissionTo, uint16 commission);
-    event Unstaked(uint32 _index, address sender, uint256 amount, uint256 lton);
-    event Restaked(uint32 _index, address sender, uint256 amount, uint256 lton);
-    event Withdrawal(uint32 _index, address sender, uint256 amount);
-    event FastWithdrawalClaim(bytes32 hashMessage, uint32 layerIndex, address from, address to, uint256 amount);
-    event FastWithdrawalStaked(bytes32 hashMessage, uint32 layerIndex, address staker, uint256 amount, uint256 lton);
 
     /* ========== CONSTRUCTOR ========== */
     constructor() {
@@ -73,7 +66,8 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
 
     /* ========== only Receipt ========== */
 
-    function fastWithdrawClaim(bytes32 hashMessage, uint32 layerIndex, address from, address to, uint256 amount) external ifFree returns (bool){
+    /// @inheritdoc IStaking
+    function fastWithdrawClaim(bytes32 hashMessage, uint32 layerIndex, address from, address to, uint256 amount) external override ifFree returns (bool){
         require(fwReceipt == msg.sender, "FW_CALLER_ERR");
         require(balanceOf(layerIndex, from) >= amount, "liquidity is insufficient");
         _beforeUpdate(layerIndex, from);
@@ -91,7 +85,8 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
         return true;
     }
 
-    function fastWithdrawStake(bytes32 hashMessage, uint32 layerIndex, address staker, uint256 _amount) external returns (bool){
+    /// @inheritdoc IStaking
+    function fastWithdrawStake(bytes32 hashMessage, uint32 layerIndex, address staker, uint256 _amount) external override returns (bool){
         require(fwReceipt == msg.sender, "FW_CALLER_ERR");
         _beforeUpdate(layerIndex, staker);
 
@@ -106,6 +101,205 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
     }
 
     /* ========== Anyone can execute ========== */
+
+    /// @inheritdoc IStaking
+    function restake(uint32 _index) public override {
+        // require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
+        uint256 i = withdrawalRequestIndex[_index][msg.sender];
+        require(_restake(_index, msg.sender, i, 1),'SL_E_RESTAKE');
+    }
+
+    /// @inheritdoc IStaking
+    function restakeMulti(uint32 _index, uint256 n) external override {
+        // require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
+        uint256 i = withdrawalRequestIndex[_index][msg.sender];
+        require(_restake(_index, msg.sender, i, n),'SL_E_RESTAKE');
+    }
+
+    /// @inheritdoc IStaking
+    function withdraw(uint32 _index) public override ifFree {
+        address sender = msg.sender;
+
+        uint256 totalRequests = withdrawalRequests[_index][sender].length;
+        uint256 len = 0;
+        uint256 amount = 0;
+
+        for(uint256 i = withdrawalRequestIndex[_index][sender]; i < totalRequests ; i++){
+            LibStake.WithdrawalReqeust storage r = withdrawalRequests[_index][sender][i];
+            if (r.withdrawableBlockNumber < block.number && r.processed == false) {
+                r.processed = true;
+                amount += uint256(r.amount);
+                len++;
+            } else {
+                break;
+            }
+        }
+        require (amount > 0, 'zero available withdrawal amount');
+
+        withdrawalRequestIndex[_index][sender] += len;
+        pendingUnstaked[_index][sender] -= amount;
+        pendingUnstakedLayer2[_index] -= amount;
+        pendingUnstakedAccount[sender] -= amount;
+
+        uint256 bal = IERC20(ton).balanceOf(address(this));
+
+        if (bal < amount) {
+            if (bal > 0) IERC20(ton).safeTransfer(sender, bal);
+            SeigManagerV2I(seigManagerV2).claim(sender, (amount - bal));
+        } else {
+            IERC20(ton).safeTransfer(sender, amount);
+        }
+
+        emit Withdrawal(_index, sender, amount);
+    }
+
+    /* ========== VIEW ========== */
+
+    /// @inheritdoc IStaking
+    function numberOfPendings(uint32 layerIndex, address account)
+        public view override returns (uint256 totalRequests, uint256 withdrawIndex, uint256 pendingLength)
+    {
+        totalRequests = withdrawalRequests[layerIndex][account].length;
+        withdrawIndex = withdrawalRequestIndex[layerIndex][account];
+        if (totalRequests >= withdrawIndex) pendingLength = totalRequests - withdrawIndex;
+    }
+
+    /// @inheritdoc IStaking
+    function amountOfPendings(uint32 layerIndex, address account)
+        public view override returns (uint256 amount, uint32 startIndex, uint32 len, uint32 nextWithdrawableBlockNumber)
+    {
+        uint256 totalRequests = withdrawalRequests[layerIndex][account].length;
+        startIndex = uint32(withdrawalRequestIndex[layerIndex][account]);
+
+        for (uint256 i = startIndex; i < totalRequests; i++) {
+            LibStake.WithdrawalReqeust memory r = withdrawalRequests[layerIndex][account][i];
+            if (r.processed == false) {
+                if (nextWithdrawableBlockNumber == 0) nextWithdrawableBlockNumber = r.withdrawableBlockNumber;
+                amount += uint256(r.amount);
+                len += 1;
+            }
+        }
+    }
+
+    /// @inheritdoc IStaking
+    function availableWithdraw(uint32 _index, address account)
+        public view override returns (uint256 amount, uint32 startIndex, uint32 len)
+    {
+        uint256 totalRequests = withdrawalRequests[_index][account].length;
+        startIndex = uint32(withdrawalRequestIndex[_index][account]);
+
+        for (uint256 i = startIndex; i < totalRequests; i++) {
+            LibStake.WithdrawalReqeust memory r = withdrawalRequests[_index][account][i];
+            if (r.withdrawableBlockNumber < block.number && r.processed == false) {
+                amount += uint256(r.amount);
+                len += 1;
+            } else {
+                break;
+            }
+        }
+    }
+
+    /// @inheritdoc IStaking
+    function totalStakedLton() public view override returns (uint256 amount) {
+        return _totalStakedLton;
+    }
+
+    /// @inheritdoc IStaking
+    function totalStakedLtonAt(uint256 snapshotId) public view override returns (uint256 amount) {
+        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _totalStakedLtonSnapshot);
+        return snapshotted ? value : totalStakedLton();
+    }
+
+    /// @inheritdoc IStaking
+    function totalStakedLtonAtSnapshot(uint256 snapshotId) public view override returns (bool snapshotted, uint256 amount) {
+        return _valueAt(snapshotId, _totalStakedLtonSnapshot);
+    }
+
+    /// @inheritdoc IStaking
+    function balanceOfLton(uint32 _index) public view override returns (uint256 amount) {
+        amount = layerStakedLton[_index];
+    }
+
+    /// @inheritdoc IStaking
+    function balanceOfLtonAt(uint32 _index, uint256 snapshotId) public view override returns (uint256 amount) {
+        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _layerStakedLtonSnapshot[_index]);
+
+        return snapshotted ? value : balanceOfLton(_index);
+    }
+
+    /// @inheritdoc IStaking
+    function balanceOfLtonAtSnapshot(uint32 _index, uint256 snapshotId) public view override returns (bool snapshotted, uint256 amount) {
+        return _valueAt(snapshotId, _layerStakedLtonSnapshot[_index]);
+    }
+
+    /// @inheritdoc IStaking
+    function balanceOfLton(uint32 _index, address account) public view override returns (uint256 amount) {
+        LibStake.StakeInfo memory info = layerStakes[_index][account];
+        amount = info.stakelton;
+    }
+
+    /// @inheritdoc IStaking
+    function balanceOfLtonAt(uint32 _index, address account, uint256 snapshotId) public view override returns (uint256 amount) {
+        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _layerStakesSnapshot[_index][account]);
+        return snapshotted ? value :  balanceOfLton(_index, account);
+    }
+
+    /// @inheritdoc IStaking
+    function balanceOfLtonAtSnapshot(uint32 _index, address account, uint256 snapshotId) public view override returns (bool snapshotted, uint256 amount) {
+        return _valueAt(snapshotId, _layerStakesSnapshot[_index][account]);
+    }
+
+    /// @inheritdoc IStaking
+    function getLayerStakes(uint32 _index, address account) public view override returns (LibStake.StakeInfo memory info) {
+        info = layerStakes[_index][account];
+    }
+
+    /// @inheritdoc IStaking
+    function balanceOf(uint32 _index, address account) public view override returns (uint256 amount) {
+        amount = SeigManagerV2I(seigManagerV2).getLtonToTon(balanceOfLton(_index, account));
+    }
+
+    /// @inheritdoc IStaking
+    function balanceOfAt(uint32 _index, address account, uint256 snapshotId) public view override returns (uint256 amount) {
+        amount = SeigManagerV2I(seigManagerV2).getLtonToTonAt(balanceOfLtonAt(_index, account, snapshotId), snapshotId);
+    }
+
+    /// @inheritdoc IStaking
+    function totalLayer2Deposits() public view override returns (uint256 amount) {
+        amount = Layer2ManagerI(layer2Manager).totalLayer2Deposits();
+    }
+
+    /// @inheritdoc IStaking
+    function layer2Deposits(uint32 _index) public view override returns (uint256 amount) {
+        amount = Layer2ManagerI(layer2Manager).layer2Deposits(_index);
+    }
+
+    /// @inheritdoc IStaking
+    function totalStakeAccountList() public view override returns (uint256) {
+        return stakeAccountList.length;
+    }
+
+    /// @inheritdoc IStaking
+    function getTotalLton() public view override returns (uint256) {
+        return _totalStakedLton;
+    }
+
+    /// @inheritdoc IStaking
+    function getStakeAccountList() public view returns (address[] memory) {
+        return stakeAccountList;
+    }
+
+    /// @inheritdoc IStaking
+    function getPendingUnstakedAmount(uint32 _index, address account) public view returns (uint256) {
+        return pendingUnstaked[_index][account];
+    }
+
+    /// @inheritdoc IStaking
+    function getCurrentSnapshotId() public view virtual returns (uint256) {
+        return SeigManagerV2I(seigManagerV2).getCurrentSnapshotId();
+    }
+
+    /* ========== internal ========== */
 
     function stake_(uint32 _index, uint256 amount, address commissionTo, uint16 commission) internal
     {
@@ -186,21 +380,6 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
 
         emit Unstaked(_index, sender, amount, lton_);
     }
-
-    function restake(uint32 _index) public
-    {
-        // require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
-        uint256 i = withdrawalRequestIndex[_index][msg.sender];
-        require(_restake(_index, msg.sender, i, 1),'SL_E_RESTAKE');
-    }
-
-    function restakeMulti(uint32 _index, uint256 n) public
-    {
-        // require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
-        uint256 i = withdrawalRequestIndex[_index][msg.sender];
-        require(_restake(_index, msg.sender, i, n),'SL_E_RESTAKE');
-    }
-
     function _restake(uint32 _index, address sender, uint256 i, uint256 nlength) internal ifFree returns (bool) {
 
         _beforeUpdate(_index, sender);
@@ -240,168 +419,6 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage {
         emit Restaked(_index, sender, accAmount, lton_);
         return true;
     }
-
-    function withdraw(uint32 _index) public ifFree {
-        address sender = msg.sender;
-
-        uint256 totalRequests = withdrawalRequests[_index][sender].length;
-        uint256 len = 0;
-        uint256 amount = 0;
-
-        for(uint256 i = withdrawalRequestIndex[_index][sender]; i < totalRequests ; i++){
-            LibStake.WithdrawalReqeust storage r = withdrawalRequests[_index][sender][i];
-            if (r.withdrawableBlockNumber < block.number && r.processed == false) {
-                r.processed = true;
-                amount += uint256(r.amount);
-                len++;
-            } else {
-                break;
-            }
-        }
-        require (amount > 0, 'zero available withdrawal amount');
-
-        withdrawalRequestIndex[_index][sender] += len;
-        pendingUnstaked[_index][sender] -= amount;
-        pendingUnstakedLayer2[_index] -= amount;
-        pendingUnstakedAccount[sender] -= amount;
-
-        uint256 bal = IERC20(ton).balanceOf(address(this));
-
-        if (bal < amount) {
-            if (bal > 0) IERC20(ton).safeTransfer(sender, bal);
-            SeigManagerV2I(seigManagerV2).claim(sender, (amount - bal));
-        } else {
-            IERC20(ton).safeTransfer(sender, amount);
-        }
-
-        emit Withdrawal(_index, sender, amount);
-    }
-
-    /* ========== VIEW ========== */
-
-    function numberOfPendings(uint32 layerIndex, address account)
-        public view returns (uint256 totalRequests, uint256 withdrawIndex, uint256 pendingLength)
-    {
-        totalRequests = withdrawalRequests[layerIndex][account].length;
-        withdrawIndex = withdrawalRequestIndex[layerIndex][account];
-        if (totalRequests >= withdrawIndex) pendingLength = totalRequests - withdrawIndex;
-    }
-
-    function amountOfPendings(uint32 layerIndex, address account)
-        public view returns (uint256 amount, uint32 startIndex, uint32 len, uint32 nextWithdrawableBlockNumber)
-    {
-        uint256 totalRequests = withdrawalRequests[layerIndex][account].length;
-        startIndex = uint32(withdrawalRequestIndex[layerIndex][account]);
-
-        for (uint256 i = startIndex; i < totalRequests; i++) {
-            LibStake.WithdrawalReqeust memory r = withdrawalRequests[layerIndex][account][i];
-            if (r.processed == false) {
-                if (nextWithdrawableBlockNumber == 0) nextWithdrawableBlockNumber = r.withdrawableBlockNumber;
-                amount += uint256(r.amount);
-                len += 1;
-            }
-        }
-    }
-
-    function availableWithdraw(uint32 _index, address account)
-        public view returns (uint256 amount, uint32 startIndex, uint32 len)
-    {
-        uint256 totalRequests = withdrawalRequests[_index][account].length;
-        startIndex = uint32(withdrawalRequestIndex[_index][account]);
-
-        for (uint256 i = startIndex; i < totalRequests; i++) {
-            LibStake.WithdrawalReqeust memory r = withdrawalRequests[_index][account][i];
-            if (r.withdrawableBlockNumber < block.number && r.processed == false) {
-                amount += uint256(r.amount);
-                len += 1;
-            } else {
-                break;
-            }
-        }
-    }
-
-    function totalStakedLton() public view returns (uint256 amount) {
-        return _totalStakedLton;
-    }
-
-    function totalStakedLtonAt(uint256 snapshotId) public view returns (uint256 amount) {
-        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _totalStakedLtonSnapshot);
-        return snapshotted ? value : totalStakedLton();
-    }
-
-    function totalStakedLtonAtSnapshot(uint256 snapshotId) public view returns (bool snapshotted, uint256 amount) {
-        return _valueAt(snapshotId, _totalStakedLtonSnapshot);
-    }
-
-    function balanceOfLton(uint32 _index) public view returns (uint256 amount) {
-        amount = layerStakedLton[_index];
-    }
-
-    function balanceOfLtonAt(uint32 _index, uint256 snapshotId) public view returns (uint256 amount) {
-        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _layerStakedLtonSnapshot[_index]);
-
-        return snapshotted ? value : balanceOfLton(_index);
-    }
-
-    function balanceOfLtonAtSnapshot(uint32 _index, uint256 snapshotId) public view returns (bool snapshotted, uint256 amount) {
-        return _valueAt(snapshotId, _layerStakedLtonSnapshot[_index]);
-    }
-
-    function balanceOfLton(uint32 _index, address account) public view returns (uint256 amount) {
-        LibStake.StakeInfo memory info = layerStakes[_index][account];
-        amount = info.stakelton;
-    }
-
-    function balanceOfLtonAt(uint32 _index, address account, uint256 snapshotId) public view returns (uint256 amount) {
-        (bool snapshotted, uint256 value) = _valueAt(snapshotId, _layerStakesSnapshot[_index][account]);
-        return snapshotted ? value :  balanceOfLton(_index, account);
-    }
-
-     function balanceOfLtonAtSnapshot(uint32 _index, address account, uint256 snapshotId) public view returns (bool snapshotted, uint256 amount) {
-        return _valueAt(snapshotId, _layerStakesSnapshot[_index][account]);
-    }
-
-    function getLayerStakes(uint32 _index, address account) public view returns (LibStake.StakeInfo memory info) {
-        info = layerStakes[_index][account];
-    }
-
-    function balanceOf(uint32 _index, address account) public view returns (uint256 amount) {
-        amount = SeigManagerV2I(seigManagerV2).getLtonToTon(balanceOfLton(_index, account));
-    }
-
-    function balanceOfAt(uint32 _index, address account, uint256 snapshotId) public view returns (uint256 amount) {
-        amount = SeigManagerV2I(seigManagerV2).getLtonToTonAt(balanceOfLtonAt(_index, account, snapshotId), snapshotId);
-    }
-
-    function totalLayer2Deposits() public view returns (uint256 amount) {
-        amount = Layer2ManagerI(layer2Manager).totalLayer2Deposits();
-    }
-
-    function layer2Deposits(uint32 _index) public view returns (uint256 amount) {
-        amount = Layer2ManagerI(layer2Manager).layer2Deposits(_index);
-    }
-
-    function totalStakeAccountList() public view returns (uint256) {
-        return stakeAccountList.length;
-    }
-
-    function getTotalLton() public view returns (uint256) {
-        return _totalStakedLton;
-    }
-
-    function getStakeAccountList() public view returns (address[] memory) {
-        return stakeAccountList;
-    }
-
-    function getPendingUnstakedAmount(uint32 _index, address account) public view returns (uint256) {
-        return pendingUnstaked[_index][account];
-    }
-
-    function getCurrentSnapshotId() public view virtual returns (uint256) {
-        return SeigManagerV2I(seigManagerV2).getCurrentSnapshotId();
-    }
-
-    /* ========== internal ========== */
 
     function _beforeUpdate(uint32 _layerIndex, address account) internal {
         _updateSnapshot(_totalStakedLtonSnapshot, totalStakedLton());

@@ -20,12 +20,14 @@ abstract contract Sequencer  {
     function create (uint32 _index, bytes memory _layerInfo) external virtual returns (bool) ;
 
     /* ========== Anyone can execute ========== */
-    function getLayerKey(uint32 _index) public virtual returns (bytes32 layerKey_);
     function stake(uint32 _index, uint256 amount) external virtual;
-    function existedIndex(uint32 _index) public virtual returns (bool);
 
+    /* ========== VIEW ========== */
+    function existedIndex(uint32 _index) public virtual returns (bool);
+    function getLayerKey(uint32 _index) public virtual returns (bytes32 layerKey_);
     function getTvl(uint32 _index) public virtual returns (uint256);
     function sequencer(uint32 _index) public virtual returns (address);
+
     /* ========== internal ========== */
 
 

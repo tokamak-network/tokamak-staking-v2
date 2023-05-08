@@ -58,8 +58,8 @@ library LibFastWithdraw
     }
 
     struct Request {
-        address l1ton;
-        address l2ton;
+        address l1wton;
+        address l2wton;
         address requestor;
         address fwReceipt;
         uint256 amount;

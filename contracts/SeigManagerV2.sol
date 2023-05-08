@@ -29,18 +29,6 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
     using SafeERC20 for IERC20;
     using LibArrays for uint256[];
 
-    event Snapshot(uint256 id, uint256 snapshotTime);
-    event UpdatedSeigniorage(
-                    uint256 lastSeigBlock_,
-                    uint256 increaseSeig_,
-                    uint256 totalSupplyOfTon_,
-                    uint256[4] amount_,
-                    uint256 prevIndex_,
-                    uint256 index_
-                    );
-
-    event Claimed(address caller, address to, uint256 amount);
-
     /* ========== CONSTRUCTOR ========== */
     constructor() {
     }
