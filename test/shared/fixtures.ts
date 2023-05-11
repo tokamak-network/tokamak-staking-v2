@@ -6,7 +6,7 @@ import { Layer2ManagerProxy } from '../../typechain-types/contracts/proxy/Layer2
 import { Layer2Manager } from '../../typechain-types/contracts/Layer2Manager.sol'
 
 import { OptimismSequencerProxy } from '../../typechain-types/contracts/proxy/OptimismSequencerProxy'
-import { OptimismSequencer } from '../../typechain-types/contracts/OptimismSequencer.sol'
+import { OptimismSequencer } from '../../typechain-types/contracts/OptimismSequencer'
 import { CandidateProxy } from '../../typechain-types/contracts/proxy/CandidateProxy'
 import { Candidate } from '../../typechain-types/contracts/Candidate'
 import { FwReceiptProxy } from '../../typechain-types/contracts/proxy/FwReceiptProxy'
@@ -16,13 +16,13 @@ import { TON } from '../../typechain-types/contracts/test/TON.sol'
 import { Lib_AddressManager } from '../../typechain-types/contracts/test/Lib_AddressManager'
 import { MockL1Messenger } from '../../typechain-types/contracts/test/MockL1Messenger'
 import { MockL2Messenger } from '../../typechain-types/contracts/test/MockL2Messenger'
-import { MockL1Bridge } from '../../typechain-types/contracts/test/MockL1Bridge'
+import { MockL1Bridge } from '../../typechain-types/contracts/test/MockL1Bridge.sol'
 import { MockL2Bridge } from '../../typechain-types/contracts/test/MockL2Bridge'
 import { TestERC20 } from '../../typechain-types/contracts/test/TestERC20'
 
 import { LibOperator } from '../../typechain-types/contracts/libraries/LibOperator'
 import { LibOptimism } from '../../typechain-types/contracts/libraries/LibOptimism'
-import { LibFastWithdraw } from '../../typechain-types/contracts/libraries/LibFastWithdraw'
+import { LibFastWithdraw } from '../../typechain-types/contracts/libraries/LibFastWithdraw.sol'
 
 import Web3EthAbi from 'web3-eth-abi';
 import TON_ABI from '../../artifacts/contracts/test/TON.sol/TON.json'
