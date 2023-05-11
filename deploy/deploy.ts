@@ -118,8 +118,6 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
         SeigManagerV2ProxyDeployment.address
     )) as SeigManagerV2;
 
-    const upgradeToTx_seigManagerV2Proxy = await seigManagerV2Proxy.connect(deploySigner).upgradeTo(SeigManagerV2LogicDeployment.address);
-    await upgradeToTx_seigManagerV2Proxy.wait();
 
     //==== Layer2Manager =================================
 
@@ -149,8 +147,6 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
         Layer2ManagerProxyDeployment.address
     )) as Layer2Manager;
 
-    const upgradeToTx_layer2Manager = await layer2ManagerProxy.connect(deploySigner).upgradeTo(Layer2ManagerLogicDeployment.address);
-    await upgradeToTx_layer2Manager.wait();
 
     //==== OptimismSequencer =================================
 
@@ -179,8 +175,6 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
         OptimismSequencerProxyDeployment.address
     )) as OptimismSequencer;
 
-    const upgradeToTx_optimism = await optimismSequencerProxy.connect(deploySigner).upgradeTo(OptimismSequencerLogicDeployment.address);
-    await upgradeToTx_optimism.wait();
 
 
     //==== Candidate =================================
@@ -210,10 +204,6 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
         CandidateProxyDeployment.address
     )) as Candidate;
 
-    const upgradeToTx_candiate = await candidateProxy.connect(deploySigner).upgradeTo(CandidateLogicDeployment.address);
-    await upgradeToTx_candiate.wait();
-
-
     //==== FwReceipt =================================
 
     const FwReceiptLogicDeployment = await deploy("FwReceipt", {
@@ -240,10 +230,6 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
         FwReceiptLogicDeployment.abi,
         FwReceiptProxyDeployment.address
     )) as FwReceipt;
-
-    const upgradeToTx_fwReceipt = await fwReceiptProxy.connect(deploySigner).upgradeTo(FwReceiptLogicDeployment.address);
-    await upgradeToTx_fwReceipt.wait();
-
 
     //==== initialize =================================
 
@@ -300,6 +286,24 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
         candidateProxy.address
     )).wait();
 
+    //==== upgradeTo =================================
+    const upgradeToTx_seigManagerV2Proxy = await seigManagerV2Proxy.connect(deploySigner).upgradeTo(SeigManagerV2LogicDeployment.address);
+    await upgradeToTx_seigManagerV2Proxy.wait();
+
+    const upgradeToTx_layer2Manager = await layer2ManagerProxy.connect(deploySigner).upgradeTo(Layer2ManagerLogicDeployment.address);
+    await upgradeToTx_layer2Manager.wait();
+
+    const upgradeToTx_optimism = await optimismSequencerProxy.connect(deploySigner).upgradeTo(OptimismSequencerLogicDeployment.address);
+    await upgradeToTx_optimism.wait();
+
+
+    const upgradeToTx_candiate = await candidateProxy.connect(deploySigner).upgradeTo(CandidateLogicDeployment.address);
+    await upgradeToTx_candiate.wait();
+
+    const upgradeToTx_fwReceipt = await fwReceiptProxy.connect(deploySigner).upgradeTo(FwReceiptLogicDeployment.address);
+    await upgradeToTx_fwReceipt.wait();
+
+
     //==== setLastSeigBlock =================================
 
     let block = await hre.ethers.provider.getBlock('latest')
@@ -319,88 +323,9 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
 
     if (hre.network.name != "hardhat") {
 
-        // await hre.run("etherscan-verify", {
-        //     network: hre.network.name
-        // });
-
         await hre.run("etherscan-verify", {
-            network: hre.network.name,
-            address: LibOptimismDeployment.address,
-            constructorArgsParams: [],
+            network: hre.network.name
         });
-
-        await hre.run("etherscan-verify", {
-            network: hre.network.name,
-            address: LibOperatorDeployment.address,
-            constructorArgsParams: [],
-        });
-
-        await hre.run("etherscan-verify", {
-            network: hre.network.name,
-            address: LibFastWithdrawDeployment.address,
-            constructorArgsParams: [],
-        });
-
-        await hre.run("etherscan-verify", {
-            network: hre.network.name,
-            address: SeigManagerV2LogicDeployment.address,
-            constructorArgsParams: [],
-        });
-
-        await hre.run("etherscan-verify", {
-            network: hre.network.name,
-            address: SeigManagerV2ProxyDeployment.address,
-            constructorArgsParams: [],
-        });
-
-        await hre.run("etherscan-verify", {
-            network: hre.network.name,
-            address: Layer2ManagerLogicDeployment.address,
-            constructorArgsParams: [],
-        });
-
-        await hre.run("etherscan-verify", {
-            network: hre.network.name,
-            address: Layer2ManagerProxyDeployment.address,
-            constructorArgsParams: [],
-        });
-
-        await hre.run("etherscan-verify", {
-            network: hre.network.name,
-            address: OptimismSequencerLogicDeployment.address,
-            constructorArgsParams: [],
-        });
-
-        await hre.run("etherscan-verify", {
-            network: hre.network.name,
-            address: OptimismSequencerProxyDeployment.address,
-            constructorArgsParams: [],
-        });
-
-        await hre.run("etherscan-verify", {
-            network: hre.network.name,
-            address: CandidateLogicDeployment.address,
-            constructorArgsParams: [],
-        });
-
-        await hre.run("etherscan-verify", {
-            network: hre.network.name,
-            address: CandidateProxyDeployment.address,
-            constructorArgsParams: [],
-        });
-
-        await hre.run("etherscan-verify", {
-            network: hre.network.name,
-            address: FwReceiptLogicDeployment.address,
-            constructorArgsParams: [],
-        });
-
-        await hre.run("etherscan-verify", {
-            network: hre.network.name,
-            address: FwReceiptProxyDeployment.address,
-            constructorArgsParams: [],
-        });
-
     }
 };
 
