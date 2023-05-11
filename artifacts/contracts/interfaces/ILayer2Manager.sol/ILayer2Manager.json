@@ -270,7 +270,13 @@
         }
       ],
       "name": "createCandidate",
-      "outputs": [],
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "function"
     },
@@ -308,7 +314,13 @@
         }
       ],
       "name": "createOptimismSequencer",
-      "outputs": [],
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "function"
     },

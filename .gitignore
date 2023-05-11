@@ -7,10 +7,10 @@ typechain-types
 
 # Hardhat files
 cache
-#artifacts
-artifacts/@openzeppelin
-artifacts/build-info
-artifacts/hardhat
+artifacts
+# artifacts/@openzeppelin
+# artifacts/build-info
+# artifacts/hardhat
 test/__snapshots__
 backup
 deployments
