@@ -175,7 +175,6 @@ describe('Integrated Test', () => {
         it('FwReceipt : initialize can be executed by only owner', async () => {
             await snapshotGasCost(deployed.fwReceiptProxy.connect(deployer).initialize(
                 seigManagerInfo.ton,
-                deployed.l1Messenger.address,
                 deployed.seigManagerV2.address,
                 deployed.optimismSequencerProxy.address,
                 deployed.candidateProxy.address

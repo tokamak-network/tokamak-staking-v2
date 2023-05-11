@@ -74,7 +74,6 @@ describe('FwReceipt', () => {
             await expect(
                 deployed.fwReceiptProxy.connect(addr1).initialize(
                     seigManagerInfo.ton,
-                    deployed.l1Messenger.address,
                     deployed.seigManagerV2.address,
                     deployed.optimismSequencerProxy.address,
                     deployed.candidateProxy.address
@@ -85,7 +84,6 @@ describe('FwReceipt', () => {
         it('initialize can be executed by only owner', async () => {
             await snapshotGasCost(deployed.fwReceiptProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
-                    deployed.l1Messenger.address,
                     deployed.seigManagerV2.address,
                     deployed.optimismSequencerProxy.address,
                     deployed.candidateProxy.address
@@ -100,7 +98,6 @@ describe('FwReceipt', () => {
             await expect(
                 deployed.fwReceiptProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
-                    deployed.l1Messenger.address,
                     deployed.seigManagerV2.address,
                     deployed.optimismSequencerProxy.address,
                     deployed.candidateProxy.address
@@ -224,7 +221,7 @@ describe('FwReceipt', () => {
 
             messageInfo.requestor = addr1.address
             messageInfo.deadline =  (Date.now()/1000)+(60*60)
-            messageInfo.deadline = parseInt(messageInfo.deadline)
+            messageInfo.deadline = parseInt(messageInfo.deadline+"")
             messageInfo.layerIndex = 1
             messageInfo.amount = ethers.utils.parseEther("1");
             messageInfo.messageNonce = ethers.BigNumber.from("4")
@@ -253,7 +250,7 @@ describe('FwReceipt', () => {
         it('Failed on invalid message', async () => {
             messageInfo.requestor = addr1.address
             messageInfo.deadline =  (Date.now()/1000)+(60*60)
-            messageInfo.deadline = parseInt(messageInfo.deadline)
+            messageInfo.deadline = parseInt(messageInfo.deadline+"")
             messageInfo.layerIndex = 1
             messageInfo.amount = ethers.utils.parseEther("1");
             messageInfo.messageNonce = ethers.BigNumber.from("4")
@@ -284,7 +281,7 @@ describe('FwReceipt', () => {
         it('Fails when layer index does not exist', async () => {
             messageInfo.requestor = addr1.address
             messageInfo.deadline =  (Date.now()/1000)+(60*60)
-            messageInfo.deadline = parseInt(messageInfo.deadline)
+            messageInfo.deadline = parseInt(messageInfo.deadline+"")
             messageInfo.layerIndex = 0
             messageInfo.amount = ethers.utils.parseEther("1");
             messageInfo.messageNonce = ethers.BigNumber.from("4")
@@ -319,7 +316,7 @@ describe('FwReceipt', () => {
         it('Failed on invalid message', async () => {
             messageInfo.requestor = addr1.address
             messageInfo.deadline =  (Date.now()/1000)+(60*60)
-            messageInfo.deadline = parseInt(messageInfo.deadline)
+            messageInfo.deadline = parseInt(messageInfo.deadline+"")
             messageInfo.layerIndex = 1
             messageInfo.amount = ethers.utils.parseEther("1");
             messageInfo.messageNonce = ethers.BigNumber.from("4")
@@ -348,7 +345,7 @@ describe('FwReceipt', () => {
         it('Fails when layer index does not exist', async () => {
             messageInfo.requestor = addr1.address
             messageInfo.deadline =  (Date.now()/1000)+(60*60)
-            messageInfo.deadline = parseInt(messageInfo.deadline)
+            messageInfo.deadline = parseInt(messageInfo.deadline+"")
             messageInfo.layerIndex = 0
             messageInfo.amount = ethers.utils.parseEther("1");
             messageInfo.messageNonce = ethers.BigNumber.from("4")

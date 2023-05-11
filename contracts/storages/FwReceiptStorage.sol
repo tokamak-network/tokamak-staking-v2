@@ -6,7 +6,6 @@ import {LibFastWithdraw} from "../libraries/LibFastWithdraw.sol";
 contract FwReceiptStorage {
 
     address public ton;
-    address public l1CrossDomainMessenger;
     address public seigManagerV2;
     address public optimismSequencer;
     address public candidate;
