@@ -67,11 +67,11 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
         delayBlocksForWithdraw: 93046,
     }
 
-    let seigManagerInfo = seigManagerInfo_goerli;
+    let seigManagerInfo = seigManagerInfo_mainnet;
     let layer2ManagerInfo = layer2ManagerInfo_mainnet;
 
     if (hre.network.name == 'goerli') {
-        seigManagerInfo = seigManagerInfo_mainnet;
+        seigManagerInfo = seigManagerInfo_goerli;
         layer2ManagerInfo = layer2ManagerInfo_goerli;
     }
 
@@ -176,7 +176,6 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
     )) as OptimismSequencer;
 
 
-
     //==== Candidate =================================
 
     const CandidateLogicDeployment = await deploy("Candidate", {
@@ -230,6 +229,7 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
         FwReceiptLogicDeployment.abi,
         FwReceiptProxyDeployment.address
     )) as FwReceipt;
+
 
     //==== initialize =================================
 
@@ -327,6 +327,7 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
             network: hre.network.name
         });
     }
+
 };
 
 export default deployTonStakingV2;
