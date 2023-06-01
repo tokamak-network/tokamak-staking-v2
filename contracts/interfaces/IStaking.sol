@@ -16,9 +16,9 @@ interface IStaking {
      * @param amount            the TON amount of staking
      * @param lton              the lton amount
      * @param commissionTo      address receiving commission
-     * @param commission        commission
+     * @param commissionLton    the lton of commission
      */
-    event Staked(uint32 sequencerIndex, uint32 candidateIndex, address sender, uint256 amount, uint256 lton, address commissionTo, uint16 commission);
+    event Staked(uint32 sequencerIndex, uint32 candidateIndex, address sender, uint256 amount, uint256 lton, address commissionTo, uint256 commissionLton);
 
     /**
      * @dev                     event that occur when unstaking

@@ -346,7 +346,7 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage, IStaking
             info_.stakelton += lton_;
         }
 
-        emit Staked(_sequencerIndex, _candidateIndex, sender, amount, lton_, commissionTo, commission);
+        emit Staked(_sequencerIndex, _candidateIndex, sender, amount, lton_, commissionTo, commissionLton);
     }
 
     function _unstake(uint32 _sequencerIndex, uint32 _candidateIndex, uint256 lton_, uint256 _debtTon) internal ifFree nonZero(lton_)
