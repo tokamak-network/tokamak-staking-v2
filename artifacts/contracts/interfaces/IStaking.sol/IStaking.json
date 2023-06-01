@@ -83,7 +83,13 @@
         {
           "indexed": false,
           "internalType": "uint32",
-          "name": "_index",
+          "name": "sequencerIndex",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "candidateIndex",
           "type": "uint32"
         },
         {
@@ -114,7 +120,13 @@
         {
           "indexed": false,
           "internalType": "uint32",
-          "name": "_index",
+          "name": "sequencerIndex",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "candidateIndex",
           "type": "uint32"
         },
         {
@@ -157,7 +169,13 @@
         {
           "indexed": false,
           "internalType": "uint32",
-          "name": "_index",
+          "name": "sequencerIndex",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "candidateIndex",
           "type": "uint32"
         },
         {
@@ -188,7 +206,13 @@
         {
           "indexed": false,
           "internalType": "uint32",
-          "name": "_index",
+          "name": "sequencerIndex",
+          "type": "uint32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "candidateIndex",
           "type": "uint32"
         },
         {
@@ -728,6 +752,11 @@
           "internalType": "uint32",
           "name": "_index",
           "type": "uint32"
+        },
+        {
+          "internalType": "bool",
+          "name": "isCandidate",
+          "type": "bool"
         }
       ],
       "name": "restake",
@@ -746,6 +775,11 @@
           "internalType": "uint256",
           "name": "n",
           "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "isCandidate",
+          "type": "bool"
         }
       ],
       "name": "restakeMulti",
@@ -841,6 +875,11 @@
           "internalType": "uint32",
           "name": "_index",
           "type": "uint32"
+        },
+        {
+          "internalType": "bool",
+          "name": "isCandidate",
+          "type": "bool"
         }
       ],
       "name": "withdraw",
