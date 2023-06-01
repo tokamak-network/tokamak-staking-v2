@@ -36,7 +36,7 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage, IOpt
         // data : (32 bytes) index
         uint32 _index = data.toUint32(0);
         if(amount != 0) IERC20(ton).safeTransferFrom(sender, address(this), amount);
-        _stake(_index, sender, amount, address(0), 0);
+        _stake(_index, 0, sender, amount, address(0), 0);
 
         return true;
     }
@@ -60,13 +60,13 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage, IOpt
     function stake(uint32 _index, uint256 amount) external override(Sequencer, IOptimismSequencer)
     {
         require(existedIndex(_index), 'non-registered layer');
-        stake_(_index, amount, address(0), 0);
+        stake_(_index, 0, amount, address(0), 0);
     }
 
     /// @inheritdoc IOptimismSequencer
     function unstake(uint32 _index, uint256 lton_) external override
     {
-        _unstake(_index, lton_, FwReceiptI(fwReceipt).debtInStaked(false, _index, msg.sender));
+        _unstake(_index, 0, lton_, FwReceiptI(fwReceipt).debtInStaked(false, _index, msg.sender));
     }
 
     /// @inheritdoc IOptimismSequencer

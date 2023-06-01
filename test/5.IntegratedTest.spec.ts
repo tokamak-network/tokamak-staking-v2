@@ -1702,7 +1702,7 @@ describe('Integrated Test', () => {
 
             expect(availableWithdrawOfStaker.amount).to.eq(ethers.constants.Zero)
 
-            await expect(deployed.optimismSequencer.connect(addr1).withdraw(layerIndex)).to.be.revertedWith("zero available withdrawal amount")
+            await expect(deployed.optimismSequencer.connect(addr1).withdraw(layerIndex, false)).to.be.revertedWith("zero available withdrawal amount")
 
         })
 
@@ -1714,7 +1714,7 @@ describe('Integrated Test', () => {
 
             expect(availableWithdrawOfStaker.amount).to.eq(ethers.constants.Zero)
 
-            await expect(deployed.candidate.connect(addr1).withdraw(_index)).to.be.revertedWith("zero available withdrawal amount")
+            await expect(deployed.candidate.connect(addr1).withdraw(_index, true)).to.be.revertedWith("zero available withdrawal amount")
 
         })
         it("      pass blocks", async function () {
@@ -1736,7 +1736,7 @@ describe('Integrated Test', () => {
 
             const topic = deployed.optimismSequencer.interface.getEventTopic('Withdrawal');
 
-            const receipt = await (await snapshotGasCost(deployed.optimismSequencer.connect(addr1).withdraw(layerIndex))).wait();
+            const receipt = await (await snapshotGasCost(deployed.optimismSequencer.connect(addr1).withdraw(layerIndex, false))).wait();
 
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
             const deployedEvent = deployed.optimismSequencer.interface.parseLog(log);
@@ -1758,7 +1758,7 @@ describe('Integrated Test', () => {
 
             const topic = deployed.candidate.interface.getEventTopic('Withdrawal');
 
-            const receipt = await (await snapshotGasCost(deployed.candidate.connect(addr1).withdraw(_index))).wait();
+            const receipt = await (await snapshotGasCost(deployed.candidate.connect(addr1).withdraw(_index, true))).wait();
 
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
             const deployedEvent = deployed.candidate.interface.parseLog(log);

@@ -37,9 +37,9 @@ contract Candidate is Staking, CandidateStorage, ICandidate {
 
         LibOperator.Info memory _layerInfo = getCandidateInfo(_index);
         if (_layerInfo.commission == 0 || sender == _layerInfo.operator) {
-            _stake(_index, sender, amount, address(0), 0);
+            _stake(0, _index, sender, amount, address(0), 0);
         } else {
-            _stake(_index, sender, amount, _layerInfo.operator, _layerInfo.commission);
+            _stake(0, _index, sender, amount, _layerInfo.operator, _layerInfo.commission);
         }
 
         return true;
@@ -65,7 +65,7 @@ contract Candidate is Staking, CandidateStorage, ICandidate {
 
         if(amount != 0) {
             IERC20(ton).safeTransferFrom(layer2Manager, address(this), amount);
-            _stake(_candidateIndex, info.operator, amount, address(0), 0);
+            _stake(0, _candidateIndex, info.operator, amount, address(0), 0);
         }
 
         return true;
@@ -80,9 +80,9 @@ contract Candidate is Staking, CandidateStorage, ICandidate {
         LibOperator.Info memory _layerInfo = getCandidateInfo(_index);
 
         if (_layerInfo.commission == 0 || msg.sender == _layerInfo.operator) {
-            stake_(_index, amount, address(0), 0);
+            stake_(0, _index, amount, address(0), 0);
         } else {
-            stake_(_index, amount, _layerInfo.operator, _layerInfo.commission);
+            stake_(0, _index, amount, _layerInfo.operator, _layerInfo.commission);
         }
     }
 
@@ -91,9 +91,9 @@ contract Candidate is Staking, CandidateStorage, ICandidate {
     {
         uint256 debt_ = FwReceiptI(fwReceipt).debtInStaked(true, _index, msg.sender);
         if(msg.sender == operator(_index)) {
-            _unstake(_index, lton_, debt_ + Layer2ManagerI(layer2Manager).minimumDepositForCandidate());
+            _unstake(0, _index, lton_, debt_ + Layer2ManagerI(layer2Manager).minimumDepositForCandidate());
         } else {
-            _unstake(_index, lton_, debt_);
+            _unstake(0, _index, lton_, debt_);
         }
     }
 

@@ -10,40 +10,44 @@ interface IStaking {
 
     /**
      * @dev                     event that occur when staking
-     * @param _index            the sequencer index or candidate index
+     * @param sequencerIndex    the sequencer index
+     * @param candidateIndex    the candidate index
      * @param sender            sender address
      * @param amount            the TON amount of staking
      * @param lton              the lton amount
      * @param commissionTo      address receiving commission
      * @param commission        commission
      */
-    event Staked(uint32 _index, address sender, uint256 amount, uint256 lton, address commissionTo, uint16 commission);
+    event Staked(uint32 sequencerIndex, uint32 candidateIndex, address sender, uint256 amount, uint256 lton, address commissionTo, uint16 commission);
 
     /**
      * @dev                     event that occur when unstaking
-     * @param _index            the sequencer index or candidate index
+     * @param sequencerIndex    the sequencer index
+     * @param candidateIndex    the candidate index
      * @param sender            sender address
      * @param amount            the TON amount of unstaking
      * @param lton              the lton amount
      */
-    event Unstaked(uint32 _index, address sender, uint256 amount, uint256 lton);
+    event Unstaked(uint32 sequencerIndex, uint32 candidateIndex, address sender, uint256 amount, uint256 lton);
 
     /**
      * @dev                     event that occur when restaking
-     * @param _index            the sequencer index or candidate index
+     * @param sequencerIndex    the sequencer index
+     * @param candidateIndex    the candidate index
      * @param sender            sender address
      * @param amount            the TON amount of restaking
      * @param lton              the lton amount
      */
-    event Restaked(uint32 _index, address sender, uint256 amount, uint256 lton);
+    event Restaked(uint32 sequencerIndex, uint32 candidateIndex, address sender, uint256 amount, uint256 lton);
 
     /**
      * @dev                     event that occur when withdrawal
-     * @param _index            the sequencer index or candidate index
+     * @param sequencerIndex    the sequencer index
+     * @param candidateIndex    the candidate index
      * @param sender            sender address
      * @param amount            the TON amount of withdrawal
      */
-    event Withdrawal(uint32 _index, address sender, uint256 amount);
+    event Withdrawal(uint32 sequencerIndex, uint32 candidateIndex, address sender, uint256 amount);
 
     /**
      * @dev                     an event that occurs when the liquidity provided amount is sended to requestor when liquidity is provided
@@ -95,21 +99,24 @@ interface IStaking {
     /**
      * @dev                     restaking
      * @param _index            the sequencer index or candidate index
+     * @param isCandidate       if it's true, it is a candidate, otherwise it's a sequencer
      */
-    function restake(uint32 _index) external;
+    function restake(uint32 _index, bool isCandidate) external;
 
     /**
      * @dev                     multi-restaking
      * @param _index            the sequencer index or candidate index
      * @param n                 hashMessage of fast withdrawal
+     * @param isCandidate       if it's true, it is a candidate, otherwise it's a sequencer
      */
-    function restakeMulti(uint32 _index, uint256 n) external;
+    function restakeMulti(uint32 _index, uint256 n, bool isCandidate) external;
 
     /**
      * @dev                     withdrawal
      * @param _index            the sequencer index or candidate index
+     * @param isCandidate       if it's true, it is a candidate, otherwise it's a sequencer
      */
-    function withdraw(uint32 _index) external ;
+    function withdraw(uint32 _index, bool isCandidate) external ;
 
     /* ========== VIEW ========== */
 
