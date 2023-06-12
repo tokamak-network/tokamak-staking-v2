@@ -60,6 +60,8 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage, IOpt
     function stake(uint32 _index, uint256 amount) external override(Sequencer, IOptimismSequencer)
     {
         require(existedIndex(_index), 'non-registered layer');
+        require(amount >= IERC20(ton).allowance(msg.sender, address(this)), "allowance allowance is insufficient is insufficient");
+
         stake_(_index, 0, amount, address(0), 0);
     }
 

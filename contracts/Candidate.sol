@@ -77,6 +77,8 @@ contract Candidate is Staking, CandidateStorage, ICandidate {
     function stake(uint32 _index, uint256 amount) external
     {
         require(existedIndex(_index), 'non-registered candidate');
+        require(amount >= IERC20(ton).allowance(msg.sender, address(this)), "allowance allowance is insufficient is insufficient");
+
         LibOperator.Info memory _layerInfo = getCandidateInfo(_index);
 
         if (_layerInfo.commission == 0 || msg.sender == _layerInfo.operator) {
