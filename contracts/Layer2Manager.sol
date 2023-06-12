@@ -117,8 +117,9 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
     )
         external override ifFree returns (uint32)
     {
-        require(msg.sender == AddressManagerI(addressManager).getAddress('OVM_Sequencer'), 'NOT Sequencer');
-
+        // for test
+        // require(msg.sender == AddressManagerI(addressManager).getAddress('OVM_Sequencer'), 'NOT Sequencer');
+        require(amount >= ton.allowance(msg.sender, address(this)), "allowance allowance is insufficient is insufficient");
         require(indexSequencers < maxLayer2Count, 'exceeded maxLayer2Count');
 
         require(
