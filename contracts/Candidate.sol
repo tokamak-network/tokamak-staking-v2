@@ -56,12 +56,12 @@ contract Candidate is Staking, CandidateStorage, ICandidate {
         require(_info.length > 57, "wrong _info");
 
         LibOperator.Info memory info = LibOperator.parseKey(_info);
-        require(operators[info.sequencerIndex][info.operator] == 0, "alread existed");
+        require(operators[info.operatorIndex][info.operator] == 0, "alread existed");
         require(info.commission < uint16(10000), "commission err");
         uint256 amount = _info.toUint256(26);
 
         layerInfo[_candidateIndex] = abi.encodePacked(_info.slice(0,26));
-        operators[info.sequencerIndex][info.operator] = _candidateIndex;
+        operators[info.operatorIndex][info.operator] = _candidateIndex;
 
         if(amount != 0) {
             IERC20(ton).safeTransferFrom(layer2Manager, address(this), amount);

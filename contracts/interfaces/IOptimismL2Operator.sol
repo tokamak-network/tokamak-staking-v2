@@ -3,10 +3,10 @@ pragma solidity ^0.8.4;
 import "../libraries/LibOptimism.sol";
 
 /**
- * @title   OptimismSequencer
- * @dev     create sequencer, stake , get sequencer address and tvl
+ * @title   IOptimismL2Operator
+ * @dev     create operator, stake , get operator address and tvl
  */
-interface IOptimismSequencer {
+interface IOptimismL2Operator {
 
     /* ========== only TON ========== */
 
@@ -29,9 +29,9 @@ interface IOptimismSequencer {
     /* ========== only Layer2Manager ========== */
 
     /**
-     * @dev                 create the sequencer contract
-     * @param _index        the sequencer index
-     * @param _layerInfo    the layer2(sequencer) information (80 bytes)
+     * @dev                 create the operator contract
+     * @param _index        the operator index
+     * @param _layerInfo    the layer2(operator) information (80 bytes)
      *                      addressManager address (20bytes), l1Bridge address (20bytes), l2Bridge address (20bytes), l2ton address (20bytes)
      * @return result       true
      */
@@ -41,14 +41,14 @@ interface IOptimismSequencer {
 
     /**
      * @dev                 stake TON
-     * @param _index        the sequencer index
+     * @param _index        the operator index
      * @param amount        the amount of TON what want to stake
      */
     function stake(uint32 _index, uint256 amount) external ;
 
     /**
      * @dev                 unstake TON
-     * @param _index        the sequencer index
+     * @param _index        the operator index
      * @param lton_         the amount of LTON what want to unstake
      */
     function unstake(uint32 _index, uint256 lton_) external ;
@@ -56,54 +56,54 @@ interface IOptimismSequencer {
     /* ========== VIEW ========== */
 
     /**
-     * @dev                 whether the sequencer index existed
-     * @param _index        the sequencer index
+     * @dev                 whether the operator index existed
+     * @param _index        the operator index
      * @return result       if exist, true , otherwise false
      */
     function existedIndex(uint32 _index) external view returns (bool) ;
 
      /**
-     * @dev                 view the sequencer information
-     * @param _index        the sequencer index
+     * @dev                 view the operator information
+     * @param _index        the operator index
      * @return _layerInfo   addressManager, l1Bridge, l2Bridge , l2ton
      */
     function getLayerInfo(uint32 _index) external view returns (LibOptimism.Info memory _layerInfo);
 
     /**
-     * @dev                 view the layer(sequencer) key
-     * @param _index        the sequencer index
+     * @dev                 view the layer(operator) key
+     * @param _index        the operator index
      * @return layerKey_    the keccak256 of layerInfo bytes
      */
     function getLayerKey(uint32 _index) external view returns (bytes32 layerKey_);
 
     /**
-     * @dev                 view the layer(sequencer)'s total value locked
-     * @param _index        the sequencer index
-     * @return amount       the amount of deposited at sequencer (TVL)
+     * @dev                 view the layer(operator)'s total value locked
+     * @param _index        the operator index
+     * @return amount       the amount of deposited at operator (TVL)
      */
     function getTvl(uint32 _index) external view returns (uint256 amount) ;
 
     /**
-     * @dev                 view the layer(sequencer)'s total value locked
-     * @param l1Bridge      the sequencer's l1bridge address
-     * @param l2ton         the sequencer's l2 TON address
-     * @return amount       the amount of deposited at sequencer (TVL)
+     * @dev                 view the layer(operator)'s total value locked
+     * @param l1Bridge      the operator's l1bridge address
+     * @param l2ton         the operator's l2 TON address
+     * @return amount       the amount of deposited at operator (TVL)
      */
     function getTvl(address l1Bridge, address l2ton) external view returns (uint256 amount) ;
 
     /**
-     * @dev                 view the sequencer address
-     * @param _index        the sequencer index
-     * @return sequencer_   the sequencer address
+     * @dev                 view the operator address
+     * @param _index        the operator index
+     * @return operator_   the operator address
      */
-    function sequencer(uint32 _index) external view returns (address sequencer_) ;
+    function operator(uint32 _index) external view returns (address operator_) ;
 
     /**
-     * @dev                     view the sequencer address
-     * @param addressManager    the sequencer index
-     * @return sequencer_       the sequencer address
+     * @dev                     view the operator address
+     * @param addressManager    the operator index
+     * @return operator_       the operator address
      */
-    function sequencer(address addressManager) external view returns (address sequencer_);
+    function operator(address addressManager) external view returns (address operator_);
 
     /**
      * @dev                     view the L1 crossDomainMessenger address
@@ -121,7 +121,7 @@ interface IOptimismSequencer {
 
     /**
      * @dev                     view the bridge addresses
-     * @param _index            the sequencer index
+     * @param _index            the operator index
      * @return l1bridge         the L1 bridge address
      * @return l21bridge        the L2 bridge address
      */

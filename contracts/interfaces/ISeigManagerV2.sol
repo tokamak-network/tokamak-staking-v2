@@ -21,7 +21,7 @@ interface ISeigManagerV2 {
      * @param increaseSeig_         issued seigniorage
      * @param totalSupplyOfTon_     total supply of TON
      * @param amount_               [ amountOfstaker : seignorage issued to stakers,
-     *                                amountOfsequencer : seignorage issued to sequencers
+     *                                amountOfOperator : seignorage issued to operators
      *                                ]
      * @param prevIndex_            previous index
      * @param index_                updated index
@@ -36,8 +36,8 @@ interface ISeigManagerV2 {
                     );
 
     /**
-     * @dev                 an event that occurs when claim is executed by layer2Manager, optimismSequencer, and candidate contracts.
-     * @param caller        the caller address (layer2Manager, optimismSequencer, or candidate contracts.)
+     * @dev                 an event that occurs when claim is executed by layer2Manager, optimismL2Operator, and candidate contracts.
+     * @param caller        the caller address (layer2Manager, optimismL2Operator, or candidate contracts.)
      * @param to            the to address
      * @param amount        the amount sended
      */
@@ -85,7 +85,7 @@ interface ISeigManagerV2 {
 
     /**
      * @dev             Send {amount} TON to {to} address
-     *                  Can be executed by layer2Manager, optimismSequencer, and candidate contracts.
+     *                  Can be executed by layer2Manager, optimismL2Operator, and candidate contracts.
      * @param _to       to address
      * @param _amount   amount of TON
      */

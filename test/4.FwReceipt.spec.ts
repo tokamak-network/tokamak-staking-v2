@@ -58,7 +58,7 @@ describe('FwReceipt', () => {
         deployed = await stakingV2Fixtures()
         deployer = deployed.deployer;
         addr1 = deployed.addr1;
-        sequencer1 = deployed.sequencer1;
+        sequencer1 = deployed.operator1;
 
         layerInfo.addressManager = deployed.addressManager.address;
         layerInfo.l1Messenger = deployed.l1Messenger.address
@@ -75,7 +75,7 @@ describe('FwReceipt', () => {
                 deployed.fwReceiptProxy.connect(addr1).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2.address,
-                    deployed.optimismSequencerProxy.address,
+                    deployed.optimismL2OperatorProxy.address,
                     deployed.candidateProxy.address
                 )
                 ).to.be.revertedWith("Accessible: Caller is not an admin")
@@ -85,12 +85,12 @@ describe('FwReceipt', () => {
             await snapshotGasCost(deployed.fwReceiptProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2.address,
-                    deployed.optimismSequencerProxy.address,
+                    deployed.optimismL2OperatorProxy.address,
                     deployed.candidateProxy.address
                 ))
 
             expect(await deployed.fwReceiptProxy.ton()).to.eq(seigManagerInfo.ton)
-            expect(await deployed.fwReceiptProxy.optimismSequencer()).to.eq(deployed.optimismSequencerProxy.address)
+            expect(await deployed.fwReceiptProxy.optimismL2Operator()).to.eq(deployed.optimismL2OperatorProxy.address)
 
         })
 
@@ -99,36 +99,36 @@ describe('FwReceipt', () => {
                 deployed.fwReceiptProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2.address,
-                    deployed.optimismSequencerProxy.address,
+                    deployed.optimismL2OperatorProxy.address,
                     deployed.candidateProxy.address
                 )
                 ).to.be.revertedWith("already initialize")
         })
     });
 
-    describe('# setOptimismSequencer', () => {
+    describe('# setOptimismL2Operator', () => {
 
-        it('setOptimismSequencer can not be executed by not owner', async () => {
+        it('setOptimismL2Operator can not be executed by not owner', async () => {
             await expect(
-                deployed.fwReceipt.connect(addr1).setOptimismSequencer(deployed.optimismSequencerProxy.address)
+                deployed.fwReceipt.connect(addr1).setOptimismL2Operator(deployed.optimismL2OperatorProxy.address)
                 ).to.be.revertedWith("Accessible: Caller is not an admin")
         })
 
-        it('setOptimismSequencer can be executed by only owner ', async () => {
+        it('setOptimismL2Operator can be executed by only owner ', async () => {
             await snapshotGasCost(
-                    deployed.fwReceipt.connect(deployer).setOptimismSequencer(deployed.addr1.address)
+                    deployed.fwReceipt.connect(deployer).setOptimismL2Operator(deployed.addr1.address)
             )
-            expect(await deployed.fwReceipt.optimismSequencer()).to.eq(deployed.addr1.address)
+            expect(await deployed.fwReceipt.optimismL2Operator()).to.eq(deployed.addr1.address)
 
             await snapshotGasCost(
-                    deployed.fwReceipt.connect(deployer).setOptimismSequencer(deployed.optimismSequencerProxy.address)
+                    deployed.fwReceipt.connect(deployer).setOptimismL2Operator(deployed.optimismL2OperatorProxy.address)
             )
-            expect(await deployed.fwReceipt.optimismSequencer()).to.eq(deployed.optimismSequencerProxy.address)
+            expect(await deployed.fwReceipt.optimismL2Operator()).to.eq(deployed.optimismL2OperatorProxy.address)
         })
 
         it('cannot be changed to the same value', async () => {
             await expect(
-                deployed.fwReceipt.connect(deployer).setOptimismSequencer(deployed.optimismSequencerProxy.address)
+                deployed.fwReceipt.connect(deployer).setOptimismL2Operator(deployed.optimismL2OperatorProxy.address)
                 ).to.be.revertedWith("same")
         })
     });

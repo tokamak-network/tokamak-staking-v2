@@ -22,7 +22,7 @@ interface L1CrossDomainMessangerI {
         )  external;
 }
 
-interface SequencerI {
+interface OperatorI {
     function getLayerInfo(uint32 _index)
         external view returns (LibOptimism.Info memory _layerInfo);
 
@@ -61,11 +61,11 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage, IFwR
     /* ========== onlyOwner ========== */
 
     /// @inheritdoc IFwReceipt
-    function setOptimismSequencer(address _optimismSequencer)
-        external override onlyOwner nonZeroAddress(_optimismSequencer)
+    function setOptimismL2Operator(address _optimismL2Operator)
+        external override onlyOwner nonZeroAddress(_optimismL2Operator)
     {
-        require(optimismSequencer != _optimismSequencer, "same");
-        optimismSequencer = _optimismSequencer;
+        require(optimismL2Operator != _optimismL2Operator, "same");
+        optimismL2Operator = _optimismL2Operator;
     }
 
     /// @inheritdoc IFwReceipt
@@ -76,7 +76,7 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage, IFwR
         candidate = _candidate;
     }
 
-    /* ========== only Sequencer ========== */
+    /* ========== only  Operator ========== */
 
 
     /* ========== Anyone can execute ========== */
@@ -121,7 +121,7 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage, IFwR
 
                 LibFastWithdraw.Liquidity[] memory _liquidities = LibFastWithdraw.decodeLiquidities(_message.liquidities);
                 uint256 len = _liquidities.length;
-                uint256 sumOfProvidedOfSequencer = 0;
+                uint256 sumOfProvidedOfL2Operator = 0;
                 uint256 sumOfProvidedOfCandidate = 0;
                 address _requestor = requestor;
                 uint256 _requestAmount = requestAmount;
@@ -132,14 +132,14 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage, IFwR
                     uint256 fee = _liquidity.amount - provideAmount;
                     bool fwStake = false;
                     if (!_liquidity.isCandidate) {
-                        sumOfProvidedOfSequencer += _liquidity.amount;
-                        sumOfReceiptsOfSequencers[_liquidity.provider][_liquidity.indexNo] -= provideAmount;
-                        fwStake = SequencerI(optimismSequencer).fastWithdrawStake(hashMessage, _liquidity.indexNo, _liquidity.provider, fee);
+                        sumOfProvidedOfL2Operator += _liquidity.amount;
+                        sumOfReceiptsOfL2Operators[_liquidity.provider][_liquidity.indexNo] -= provideAmount;
+                        fwStake = OperatorI(optimismL2Operator).fastWithdrawStake(hashMessage, _liquidity.indexNo, _liquidity.provider, fee);
 
                     } else {
                         sumOfProvidedOfCandidate += _liquidity.amount;
                         sumOfReceiptsOfCandidates[_liquidity.provider][_liquidity.indexNo] -= provideAmount;
-                        fwStake = SequencerI(candidate).fastWithdrawStake(hashMessage, _liquidity.indexNo, _liquidity.provider, fee);
+                        fwStake = OperatorI(candidate).fastWithdrawStake(hashMessage, _liquidity.indexNo, _liquidity.provider, fee);
                     }
                     deleteTxsOfProviders(_liquidity.provider, hashMessage);
                     require(fwStake, 'fail fwStake');
@@ -148,12 +148,12 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage, IFwR
 
                 _message.status = uint8(LibFastWithdraw.STATUS.FINALIZE_WITHDRAWAL);
 
-                if (sumOfProvidedOfSequencer != 0) IERC20(ton).safeTransfer(optimismSequencer, sumOfProvidedOfSequencer);
+                if (sumOfProvidedOfL2Operator != 0) IERC20(ton).safeTransfer(optimismL2Operator, sumOfProvidedOfL2Operator);
                 if (sumOfProvidedOfCandidate != 0) IERC20(ton).safeTransfer(candidate, sumOfProvidedOfCandidate);
 
-                if ((sumOfProvidedOfSequencer + sumOfProvidedOfCandidate) < _requestAmount) {
-                     IERC20(ton).safeTransfer(_requestor, _requestAmount-(sumOfProvidedOfSequencer + sumOfProvidedOfCandidate));
-                     emit FinalizedFastWithdrawal(hashMessage, _requestor, _requestor, _requestAmount-(sumOfProvidedOfSequencer + sumOfProvidedOfCandidate), 0, false, 0);
+                if ((sumOfProvidedOfL2Operator + sumOfProvidedOfCandidate) < _requestAmount) {
+                     IERC20(ton).safeTransfer(_requestor, _requestAmount-(sumOfProvidedOfL2Operator + sumOfProvidedOfCandidate));
+                     emit FinalizedFastWithdrawal(hashMessage, _requestor, _requestor, _requestAmount-(sumOfProvidedOfL2Operator + sumOfProvidedOfCandidate), 0, false, 0);
                 }
 
              } else {
@@ -201,7 +201,7 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage, IFwR
             require(layerIndex == indexNo, 'it is not same L2');
         } else {
             LibOperator.Info memory _candidateInfo = CandidateI(candidate).getCandidateInfo(indexNo);
-            require(_candidateInfo.sequencerIndex  == layerIndex, 'it is not same L2');
+            require(_candidateInfo.operatorIndex  == layerIndex, 'it is not same L2');
         }
 
         LibFastWithdraw.Message storage _message = messages[hashMessage];
@@ -230,13 +230,13 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage, IFwR
         require(provideAmount1 <= availableLiquidity(_isCandidate, _indexNo, msg.sender), "liquidity is insufficient.");
 
         if (_isCandidate) {
-            require(SequencerI(candidate).fastWithdrawClaim(hashMessage, _indexNo, msg.sender, _requestor, provideAmount1),
+            require(OperatorI(candidate).fastWithdrawClaim(hashMessage, _indexNo, msg.sender, _requestor, provideAmount1),
                 "fail fastWithdrawCalim ");
             sumOfReceiptsOfCandidates[msg.sender][_indexNo] += provideAmount1;
         } else {
-            require(SequencerI(optimismSequencer).fastWithdrawClaim(hashMessage, _indexNo, msg.sender, _requestor, provideAmount1),
+            require(OperatorI(optimismL2Operator).fastWithdrawClaim(hashMessage, _indexNo, msg.sender, _requestor, provideAmount1),
                  "fail fastWithdrawCalim ");
-            sumOfReceiptsOfSequencers[msg.sender][_indexNo] += provideAmount1;
+            sumOfReceiptsOfL2Operators[msg.sender][_indexNo] += provideAmount1;
         }
         _message.liquidities = LibFastWithdraw.encodeLiquidity(
             LibFastWithdraw.Liquidity({
@@ -296,7 +296,7 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage, IFwR
         bytes32 hashMessage
     ) public view  override returns(bool){
 
-        LibOptimism.Info memory _layerInfo = SequencerI(optimismSequencer).getLayerInfo(layerIndex);
+        LibOptimism.Info memory _layerInfo = OperatorI(optimismL2Operator).getLayerInfo(layerIndex);
 
         bytes memory _l1BridgeMessage = abi.encodeWithSelector(
                 L1BridgeI.finalizeERC20Withdrawal.selector,
@@ -322,14 +322,14 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage, IFwR
     /// @inheritdoc IFwReceipt
     function availableLiquidity(bool isCandidate, uint32 layerIndex, address account) public view  override returns (uint256 amount) {
         if (isCandidate) {
-            uint256 balance = SequencerI(candidate).balanceOf(layerIndex, account);
+            uint256 balance = OperatorI(candidate).balanceOf(layerIndex, account);
             if (balance > sumOfReceiptsOfCandidates[account][layerIndex]) {
                 amount = balance - sumOfReceiptsOfCandidates[account][layerIndex];
             }
         } else {
-            uint256 balance = SequencerI(optimismSequencer).balanceOf(layerIndex, account);
-            if (balance > sumOfReceiptsOfSequencers[account][layerIndex]) {
-                amount = balance - sumOfReceiptsOfSequencers[account][layerIndex];
+            uint256 balance = OperatorI(optimismL2Operator).balanceOf(layerIndex, account);
+            if (balance > sumOfReceiptsOfL2Operators[account][layerIndex]) {
+                amount = balance - sumOfReceiptsOfL2Operators[account][layerIndex];
             }
         }
     }
@@ -348,7 +348,7 @@ contract FwReceipt is AccessibleCommon, BaseProxyStorage, FwReceiptStorage, IFwR
     /// @inheritdoc IFwReceipt
     function debtInStaked(bool isCandidate, uint32 layerIndex, address account) external view  override returns (uint256) {
         if (isCandidate) return sumOfReceiptsOfCandidates[account][layerIndex];
-        else  return sumOfReceiptsOfSequencers[account][layerIndex];
+        else  return sumOfReceiptsOfL2Operators[account][layerIndex];
     }
 
     /* ========== internal ========== */

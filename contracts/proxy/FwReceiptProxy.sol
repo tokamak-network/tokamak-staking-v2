@@ -17,19 +17,19 @@ contract FwReceiptProxy is BaseProxy, FwReceiptStorage {
     function initialize(
         address _ton,
         address _seigManagerV2,
-        address _optimismSequencer,
+        address _optimismL2Operator,
         address _candidate
     )
         external onlyOwner
         nonZeroAddress(_ton)
         nonZeroAddress(_seigManagerV2)
-        nonZeroAddress(_optimismSequencer)
+        nonZeroAddress(_optimismL2Operator)
         nonZeroAddress(_candidate)
     {
         require(ton == address(0), "already initialize");
         ton = _ton;
         seigManagerV2 = _seigManagerV2;
-        optimismSequencer = _optimismSequencer;
+        optimismL2Operator = _optimismL2Operator;
         candidate = _candidate;
     }
 

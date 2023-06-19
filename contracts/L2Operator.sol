@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-abstract contract Sequencer  {
+abstract contract L2Operator  {
     /* ========== DEPENDENCIES ========== */
 
     /* ========== CONSTRUCTOR ========== */
@@ -26,7 +26,7 @@ abstract contract Sequencer  {
     function existedIndex(uint32 _index) public virtual returns (bool);
     function getLayerKey(uint32 _index) public virtual returns (bytes32 layerKey_);
     function getTvl(uint32 _index) public virtual returns (uint256);
-    function sequencer(uint32 _index) public virtual returns (address);
+    function operator(uint32 _index) public virtual returns (address);
 
     /* ========== internal ========== */
 

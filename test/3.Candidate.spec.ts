@@ -33,7 +33,7 @@ describe('Candidate', () => {
         deployed = await stakingV2Fixtures()
         deployer = deployed.deployer;
         addr1 = deployed.addr1;
-        sequencer1 = deployed.sequencer1;
+        sequencer1 = deployed.operator1;
     })
 
     describe('# initialize', () => {

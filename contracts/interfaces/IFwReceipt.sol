@@ -16,7 +16,7 @@ interface IFwReceipt {
      * @param provideAmount     the amount of liquidity provided
      * @param feeAmount         the fee amount
      * @param isCandidate       whether a candidate, if candidate, true
-     * @param indexNo           the sequencer index or candidate index
+     * @param indexNo           the operator index or candidate index
      */
     event ProvidedLiquidity(bytes32 key, address provider, uint256 provideAmount, uint256 feeAmount, bool isCandidate, uint32 indexNo);
 
@@ -45,7 +45,7 @@ interface IFwReceipt {
      * @param providedAmount    the amount of liquidity provided
      * @param feeAmount         the fee amount
      * @param isCandidate       whether a candidate, if candidate, true
-     * @param indexNo           the sequencer index or candidate index
+     * @param indexNo           the operator index or candidate index
      */
     event FinalizedFastWithdrawal(bytes32 key, address from, address to, uint256 providedAmount, uint256 feeAmount, bool isCandidate, uint32 indexNo);
 
@@ -53,10 +53,10 @@ interface IFwReceipt {
     /* ========== onlyOwner ========== */
 
     /**
-     * @dev                         set optimism sequencer address
-     * @param _optimismSequencer    the optimism sequencer address
+     * @dev                         set optimism operator address
+     * @param _optimismL2Operator   the optimism operator address
      */
-    function setOptimismSequencer(address _optimismSequencer) external;
+    function setOptimismL2Operator(address _optimismL2Operator) external;
 
     /**
      * @dev                         set candidate address
@@ -72,7 +72,7 @@ interface IFwReceipt {
      * @param requestAmount     fast withdrawal amount
      * @param deadline          deadline (sec unit)
      * @param feeRate           fee rate ( divided 10000 )
-     * @param layerIndex        the sequencer index
+     * @param layerIndex        the operator index
      * @param messageNonce      the message nonce used in l2's fast withdraw transaction
      * @param hashMessage       the message hash
      * @return result           status
@@ -96,9 +96,9 @@ interface IFwReceipt {
      * @param provideAmount     the amount of liquidity provided
      * @param deadline          deadline (sec unit)
      * @param isCandidate       whether a candidate, if candidate, true
-     * @param indexNo           the sequencer index or candidate index
+     * @param indexNo           the operator index or candidate index
      * @param feeRate           fee rate ( divided 10000 )
-     * @param layerIndex        the sequencer index
+     * @param layerIndex        the operator index
      * @param messageNonce      the message nonce used in l2's fast withdraw transaction
      * @param hashMessage       the message hash
      */
@@ -122,7 +122,7 @@ interface IFwReceipt {
      * @param requestAmount     fast withdrawal amount
      * @param deadline          deadline (sec unit)
      * @param feeRate           fee rate ( divided 10000 )
-     * @param layerIndex        the sequencer index
+     * @param layerIndex        the operator index
      * @param messageNonce      the message nonce used in l2's fast withdraw transaction
      * @param hashMessage       the message hash
      */
@@ -143,7 +143,7 @@ interface IFwReceipt {
      * @param amount            fast withdrawal amount
      * @param feeRate           fee rate ( divided 10000 )
      * @param deadline          deadline
-     * @param layerIndex        the sequencer index
+     * @param layerIndex        the operator index
      * @param messageNonce      the message nonce used in l2's fast withdraw transaction
      * @param hashMessage       the message hash
      * @return result
@@ -159,9 +159,9 @@ interface IFwReceipt {
     ) external view returns(bool);
 
     /**
-     * @dev                     view how much liquidity that account in that sequencer can provide
+     * @dev                     view how much liquidity that account in that operator can provide
      * @param isCandidate       whether a candidate, if candidate, true
-     * @param layerIndex        the sequencer index or candidate index
+     * @param layerIndex        the operator index or candidate index
      * @param account           the account address
      * @return amount           amount of liquidity available
      */
@@ -176,9 +176,9 @@ interface IFwReceipt {
     function includedTxsOfProvider(address account, bytes32 hashMessage) external view returns (bool included);
 
     /**
-     * @dev                     total liquidities (not yet finalized) by accounts in a particular sequencer or candidate.
+     * @dev                     total liquidities (not yet finalized) by accounts in a particular operator or candidate.
      * @param isCandidate       whether a candidate, if candidate, true
-     * @param layerIndex        the sequencer index or candidate index
+     * @param layerIndex        the operator index or candidate index
      * @param account           the account address
      * @return liquidities      Total liquidities
      */

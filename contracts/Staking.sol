@@ -305,15 +305,15 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage, IStaking
 
     /* ========== internal ========== */
 
-    function stake_(uint32 _sequencerIndex, uint32 _candidateIndex, uint256 amount, address commissionTo, uint16 commission) internal
+    function stake_(uint32 _operatorIndex, uint32 _candidateIndex, uint256 amount, address commissionTo, uint16 commission) internal
     {
         IERC20(ton).safeTransferFrom(msg.sender, address(this), amount);
-        _stake(_sequencerIndex, _candidateIndex, msg.sender, amount, commissionTo, commission);
+        _stake(_operatorIndex, _candidateIndex, msg.sender, amount, commissionTo, commission);
     }
 
-    function _stake(uint32 _sequencerIndex, uint32 _candidateIndex, address sender, uint256 amount, address commissionTo, uint16 commission) internal ifFree nonZero(amount)
+    function _stake(uint32 _operatorIndex, uint32 _candidateIndex, address sender, uint256 amount, address commissionTo, uint16 commission) internal ifFree nonZero(amount)
     {
-        uint32 _index = _sequencerIndex;
+        uint32 _index = _operatorIndex;
         if (_candidateIndex != 0) _index = _candidateIndex;
         _beforeUpdate(_index, sender);
 
@@ -346,13 +346,13 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage, IStaking
             info_.stakelton += lton_;
         }
 
-        emit Staked(_sequencerIndex, _candidateIndex, sender, amount, lton_, commissionTo, commissionLton);
+        emit Staked(_operatorIndex, _candidateIndex, sender, amount, lton_, commissionTo, commissionLton);
     }
 
-    function _unstake(uint32 _sequencerIndex, uint32 _candidateIndex, uint256 lton_, uint256 _debtTon) internal ifFree nonZero(lton_)
+    function _unstake(uint32 _operatorIndex, uint32 _candidateIndex, uint256 lton_, uint256 _debtTon) internal ifFree nonZero(lton_)
     {
         // require(SeigManagerV2I(seigManagerV2).updateSeigniorage(), 'fail updateSeig');
-        uint32 _index = _sequencerIndex;
+        uint32 _index = _operatorIndex;
         if (_candidateIndex != 0) _index = _candidateIndex;
 
         address sender = msg.sender;
@@ -387,11 +387,11 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage, IStaking
         pendingUnstakedLayer2[_index] += amount;
         pendingUnstakedAccount[sender] += amount;
 
-        emit Unstaked(_sequencerIndex, _candidateIndex, sender, amount, lton_);
+        emit Unstaked(_operatorIndex, _candidateIndex, sender, amount, lton_);
     }
 
-    function _restake(uint32 _sequencerIndex, uint32 _candidateIndex, address sender, uint256 i, uint256 nlength) internal ifFree returns (bool) {
-        uint32 _index = _sequencerIndex;
+    function _restake(uint32 _operatorIndex, uint32 _candidateIndex, address sender, uint256 i, uint256 nlength) internal ifFree returns (bool) {
+        uint32 _index = _operatorIndex;
         if (_candidateIndex != 0) _index = _candidateIndex;
 
         _beforeUpdate(_index, sender);
@@ -428,7 +428,7 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage, IStaking
 
         withdrawalRequestIndex[_index][sender] += nlength;
 
-        emit Restaked(_sequencerIndex, _candidateIndex, sender, accAmount, lton_);
+        emit Restaked(_operatorIndex, _candidateIndex, sender, accAmount, lton_);
         return true;
     }
 

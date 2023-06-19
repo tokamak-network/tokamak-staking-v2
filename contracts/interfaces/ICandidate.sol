@@ -33,7 +33,7 @@ interface ICandidate {
      * @dev                     create the candidate contract
      * @param _candidateIndex   the candidate index
      * @param _info             the candidate information (26 bytes)
-     *                          operator address (20 bytes), sequencer index (4 bytes),  commission (2 bytes)
+     *                          operator address (20 bytes), operator index (4 bytes),  commission (2 bytes)
      * @return result           true
      */
     function create(uint32 _candidateIndex, bytes memory _info) external returns (bool);
@@ -67,7 +67,7 @@ interface ICandidate {
     /**
      * @dev                 view the candidate information
      * @param _index        the candidate index
-     * @return info         operator address, sequencer index,  commission
+     * @return info         operator address, operator index,  commission
      */
     function getCandidateInfo(uint32 _index)
         external view returns (LibOperator.Info memory info);

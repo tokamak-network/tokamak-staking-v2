@@ -35,7 +35,7 @@ describe('Layer2Manager', () => {
         deployed = await stakingV2Fixtures()
         deployer = deployed.deployer;
         addr1 = deployed.addr1;
-        sequencer1 = deployed.sequencer1;
+        sequencer1 = deployed.operator1;
     })
 
     describe('# initialize', () => {
@@ -45,7 +45,7 @@ describe('Layer2Manager', () => {
                 deployed.layer2ManagerProxy.connect(addr1).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2Proxy.address,
-                    deployed.optimismSequencerProxy.address,
+                    deployed.optimismL2OperatorProxy.address,
                     deployed.candidateProxy.address,
                     layer2ManagerInfo.minimumDepositForSequencer,
                     layer2ManagerInfo.minimumDepositForCandidate,
@@ -58,7 +58,7 @@ describe('Layer2Manager', () => {
             await snapshotGasCost(deployed.layer2ManagerProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2Proxy.address,
-                    deployed.optimismSequencerProxy.address,
+                    deployed.optimismL2OperatorProxy.address,
                     deployed.candidateProxy.address,
                     layer2ManagerInfo.minimumDepositForSequencer,
                     layer2ManagerInfo.minimumDepositForCandidate,
@@ -67,10 +67,10 @@ describe('Layer2Manager', () => {
 
             expect(await deployed.layer2ManagerProxy.ton()).to.eq(seigManagerInfo.ton)
             expect(await deployed.layer2ManagerProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
-            expect(await deployed.layer2ManagerProxy.optimismSequencer()).to.eq(deployed.optimismSequencerProxy.address)
+            expect(await deployed.layer2ManagerProxy.optimismL2Operator()).to.eq(deployed.optimismL2OperatorProxy.address)
             expect(await deployed.layer2ManagerProxy.candidate()).to.eq(deployed.candidateProxy.address)
 
-            expect(await deployed.layer2ManagerProxy.minimumDepositForSequencer()).to.eq(layer2ManagerInfo.minimumDepositForSequencer)
+            expect(await deployed.layer2ManagerProxy.minimumDepositForL2Operator()).to.eq(layer2ManagerInfo.minimumDepositForSequencer)
             expect(await deployed.layer2ManagerProxy.minimumDepositForCandidate()).to.eq(layer2ManagerInfo.minimumDepositForCandidate)
 
             expect(await deployed.layer2ManagerProxy.delayBlocksForWithdraw()).to.eq(layer2ManagerInfo.delayBlocksForWithdraw)
@@ -81,7 +81,7 @@ describe('Layer2Manager', () => {
                 deployed.layer2ManagerProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2Proxy.address,
-                    deployed.optimismSequencerProxy.address,
+                    deployed.optimismL2OperatorProxy.address,
                     deployed.candidateProxy.address,
                     layer2ManagerInfo.minimumDepositForSequencer,
                     layer2ManagerInfo.minimumDepositForCandidate,
@@ -119,22 +119,22 @@ describe('Layer2Manager', () => {
         it('setMinimumDepositForSequencer can not be executed by not owner', async () => {
             const minimumDepositForSequencer = ethers.utils.parseEther("200");
             await expect(
-                deployed.layer2Manager.connect(addr1).setMinimumDepositForSequencer(minimumDepositForSequencer)
+                deployed.layer2Manager.connect(addr1).setMinimumDepositForL2Operator(minimumDepositForSequencer)
                 ).to.be.revertedWith("Accessible: Caller is not an admin")
         })
 
         it('setMinimumDepositForSequencer can be executed by only owner ', async () => {
             const minimumDepositForSequencer = ethers.utils.parseEther("200");
-            await snapshotGasCost(deployed.layer2Manager.connect(deployer).setMinimumDepositForSequencer(minimumDepositForSequencer))
-            expect(await deployed.layer2Manager.minimumDepositForSequencer()).to.eq(minimumDepositForSequencer)
+            await snapshotGasCost(deployed.layer2Manager.connect(deployer).setMinimumDepositForL2Operator(minimumDepositForSequencer))
+            expect(await deployed.layer2Manager.minimumDepositForL2Operator()).to.eq(minimumDepositForSequencer)
 
-            await deployed.layer2Manager.connect(deployer).setMinimumDepositForSequencer(layer2ManagerInfo.minimumDepositForSequencer)
-            expect(await deployed.layer2Manager.minimumDepositForSequencer()).to.eq(layer2ManagerInfo.minimumDepositForSequencer)
+            await deployed.layer2Manager.connect(deployer).setMinimumDepositForL2Operator(layer2ManagerInfo.minimumDepositForSequencer)
+            expect(await deployed.layer2Manager.minimumDepositForL2Operator()).to.eq(layer2ManagerInfo.minimumDepositForSequencer)
         })
 
         it('cannot be changed to the same value', async () => {
             await expect(
-                deployed.layer2Manager.connect(deployer).setMinimumDepositForSequencer(layer2ManagerInfo.minimumDepositForSequencer)
+                deployed.layer2Manager.connect(deployer).setMinimumDepositForL2Operator(layer2ManagerInfo.minimumDepositForSequencer)
                 ).to.be.revertedWith("same")
         })
     });

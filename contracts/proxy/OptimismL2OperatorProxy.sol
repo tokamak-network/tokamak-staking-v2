@@ -3,11 +3,11 @@ pragma solidity ^0.8.4;
 
 import "../proxy/BaseProxy.sol";
 import "../storages/StakingStorage.sol";
-import "../storages/OptimismSequencerStorage.sol";
+import "../storages/OptimismL2OperatorStorage.sol";
 
 // import "hardhat/console.sol";
 
-contract OptimismSequencerProxy is BaseProxy, StakingStorage, OptimismSequencerStorage {
+contract OptimismL2OperatorProxy is BaseProxy, StakingStorage, OptimismL2OperatorStorage {
     /* ========== DEPENDENCIES ========== */
 
     /* ========== CONSTRUCTOR ========== */

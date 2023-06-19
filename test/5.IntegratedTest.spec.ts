@@ -73,7 +73,7 @@ describe('Integrated Test', () => {
         deployer = deployed.deployer;
         addr1 = deployed.addr1;
         addr2 = deployed.addr2;
-        sequencer1 = deployed.sequencer1;
+        sequencer1 = deployed.operator1;
         layerInfo.addressManager = deployed.addressManager.address;
         layerInfo.l1Messenger = deployed.l1Messenger.address
         layerInfo.l2Messenger = deployed.l2Messenger.address
@@ -94,7 +94,7 @@ describe('Integrated Test', () => {
                     [
                         seigManagerInfo.seigManagerV1,
                         deployed.layer2ManagerProxy.address,
-                        deployed.optimismSequencerProxy.address,
+                        deployed.optimismL2OperatorProxy.address,
                         deployed.candidateProxy.address
                     ],
                     seigManagerInfo.seigPerBlock,
@@ -113,7 +113,7 @@ describe('Integrated Test', () => {
             expect(await deployed.seigManagerV2Proxy.tot()).to.eq(seigManagerInfo.tot)
             expect(await deployed.seigManagerV2Proxy.seigManagerV1()).to.eq(seigManagerInfo.seigManagerV1)
             expect(await deployed.seigManagerV2Proxy.layer2Manager()).to.eq(deployed.layer2ManagerProxy.address)
-            expect(await deployed.seigManagerV2Proxy.optimismSequencer()).to.eq(deployed.optimismSequencerProxy.address)
+            expect(await deployed.seigManagerV2Proxy.optimismL2Operator()).to.eq(deployed.optimismL2OperatorProxy.address)
             expect(await deployed.seigManagerV2Proxy.candidate()).to.eq(deployed.candidateProxy.address)
 
             expect(await deployed.seigManagerV2Proxy.seigPerBlock()).to.eq(seigManagerInfo.seigPerBlock)
@@ -125,7 +125,7 @@ describe('Integrated Test', () => {
             await snapshotGasCost(deployed.layer2ManagerProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2Proxy.address,
-                    deployed.optimismSequencerProxy.address,
+                    deployed.optimismL2OperatorProxy.address,
                     deployed.candidateProxy.address,
                     layer2ManagerInfo.minimumDepositForSequencer,
                     layer2ManagerInfo.minimumDepositForCandidate,
@@ -134,27 +134,27 @@ describe('Integrated Test', () => {
 
             expect(await deployed.layer2ManagerProxy.ton()).to.eq(seigManagerInfo.ton)
             expect(await deployed.layer2ManagerProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
-            expect(await deployed.layer2ManagerProxy.optimismSequencer()).to.eq(deployed.optimismSequencerProxy.address)
+            expect(await deployed.layer2ManagerProxy.optimismL2Operator()).to.eq(deployed.optimismL2OperatorProxy.address)
             expect(await deployed.layer2ManagerProxy.candidate()).to.eq(deployed.candidateProxy.address)
 
-            expect(await deployed.layer2ManagerProxy.minimumDepositForSequencer()).to.eq(layer2ManagerInfo.minimumDepositForSequencer)
+            expect(await deployed.layer2ManagerProxy.minimumDepositForL2Operator()).to.eq(layer2ManagerInfo.minimumDepositForSequencer)
             expect(await deployed.layer2ManagerProxy.minimumDepositForCandidate()).to.eq(layer2ManagerInfo.minimumDepositForCandidate)
 
             expect(await deployed.layer2ManagerProxy.delayBlocksForWithdraw()).to.eq(layer2ManagerInfo.delayBlocksForWithdraw)
         })
 
-        it('OptimismSequencer : initialize can be executed by only owner', async () => {
-            await snapshotGasCost(deployed.optimismSequencerProxy.connect(deployer).initialize(
+        it('optimismL2Operator : initialize can be executed by only owner', async () => {
+            await snapshotGasCost(deployed.optimismL2OperatorProxy.connect(deployer).initialize(
                 seigManagerInfo.ton,
                 deployed.seigManagerV2Proxy.address,
                 deployed.layer2ManagerProxy.address,
                 deployed.fwReceiptProxy.address
                 ))
 
-            expect(await deployed.optimismSequencerProxy.ton()).to.eq(seigManagerInfo.ton)
-            expect(await deployed.optimismSequencerProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
-            expect(await deployed.optimismSequencerProxy.layer2Manager()).to.eq(deployed.layer2ManagerProxy.address)
-            expect(await deployed.optimismSequencerProxy.fwReceipt()).to.eq(deployed.fwReceiptProxy.address)
+            expect(await deployed.optimismL2OperatorProxy.ton()).to.eq(seigManagerInfo.ton)
+            expect(await deployed.optimismL2OperatorProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
+            expect(await deployed.optimismL2OperatorProxy.layer2Manager()).to.eq(deployed.layer2ManagerProxy.address)
+            expect(await deployed.optimismL2OperatorProxy.fwReceipt()).to.eq(deployed.fwReceiptProxy.address)
 
         })
 
@@ -176,12 +176,12 @@ describe('Integrated Test', () => {
             await snapshotGasCost(deployed.fwReceiptProxy.connect(deployer).initialize(
                 seigManagerInfo.ton,
                 deployed.seigManagerV2.address,
-                deployed.optimismSequencerProxy.address,
+                deployed.optimismL2OperatorProxy.address,
                 deployed.candidateProxy.address
                 ))
 
             expect(await deployed.fwReceiptProxy.ton()).to.eq(seigManagerInfo.ton)
-            expect(await deployed.fwReceiptProxy.optimismSequencer()).to.eq(deployed.optimismSequencerProxy.address)
+            expect(await deployed.fwReceiptProxy.optimismL2Operator()).to.eq(deployed.optimismL2OperatorProxy.address)
             expect(await deployed.fwReceiptProxy.candidate()).to.eq(deployed.candidateProxy.address)
 
         })
@@ -209,7 +209,7 @@ describe('Integrated Test', () => {
 
     });
 
-    describe('# create OptimismSequencer', () => {
+    describe('# create optimismL2Operator', () => {
         /*
         it('Cannot be created unless the caller is the layer\'s sequencer.', async () => {
             expect(await deployed.addressManager.getAddress("OVM_Sequencer")).to.not.eq(addr1.address)
@@ -217,7 +217,7 @@ describe('Integrated Test', () => {
             let amount = ethers.utils.parseEther("100");
 
             await expect(
-                deployed.layer2Manager.connect(addr1).createOptimismSequencer(
+                deployed.layer2Manager.connect(addr1).createOptimismL2Operator(
                     ethers.utils.formatBytes32String(name),
                     deployed.addressManager.address,
                     deployed.l1Bridge.address,
@@ -232,9 +232,9 @@ describe('Integrated Test', () => {
             let name = "Tokamak Optimism";
             let amount = ethers.utils.parseEther("100");
 
-            expect(await deployed.addressManager.getAddress("OVM_Sequencer")).to.eq(sequencer1.address)
+            expect(await deployed.addressManager.getAddress("OVM_TONStakingManager")).to.eq(sequencer1.address)
             await expect(
-                deployed.layer2Manager.connect(sequencer1).createOptimismSequencer(
+                deployed.layer2Manager.connect(sequencer1).createOptimismL2Operator(
                     ethers.utils.formatBytes32String(name),
                     deployed.addressManager.address,
                     deployed.l1Bridge.address,
@@ -249,9 +249,10 @@ describe('Integrated Test', () => {
 
             let totalLayers = await deployed.layer2Manager.totalLayers()
             let getAllLayersBefore = await deployed.layer2Manager.getAllLayers();
-            expect(await deployed.addressManager.getAddress("OVM_Sequencer")).to.eq(sequencer1.address)
+
+            expect(await deployed.addressManager.getAddress("OVM_TONStakingManager")).to.eq(sequencer1.address)
             let totalSecurityDeposit = await deployed.layer2Manager.totalSecurityDeposit();
-            let amount = await deployed.layer2Manager.minimumDepositForSequencer();
+            let amount = await deployed.layer2Manager.minimumDepositForL2Operator();
 
             if (amount.gt(await deployed.ton.balanceOf(sequencer1.address)))
                 await (await deployed.ton.connect(deployed.tonAdmin).mint(sequencer1.address, amount)).wait();
@@ -259,9 +260,9 @@ describe('Integrated Test', () => {
             if (amount.gte(await deployed.ton.allowance(sequencer1.address, deployed.layer2Manager.address)))
                 await (await deployed.ton.connect(sequencer1).approve(deployed.layer2Manager.address, amount)).wait();
 
-            const topic = deployed.layer2Manager.interface.getEventTopic('CreatedOptimismSequencer');
+            const topic = deployed.layer2Manager.interface.getEventTopic('CreatedOptimismL2Operator');
 
-            const receipt = await (await snapshotGasCost(deployed.layer2Manager.connect(sequencer1).createOptimismSequencer(
+            const receipt = await (await snapshotGasCost(deployed.layer2Manager.connect(sequencer1).createOptimismL2Operator(
                     ethers.utils.formatBytes32String(name),
                     deployed.addressManager.address,
                     deployed.l1Bridge.address,
@@ -273,9 +274,8 @@ describe('Integrated Test', () => {
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
             const deployedEvent = deployed.layer2Manager.interface.parseLog(log);
 
-            let sequencerIndex = deployedEvent.args._index;
-
-            expect(deployedEvent.args._sequencer).to.eq(sequencer1.address);
+            let operatorIndex = deployedEvent.args._index;
+            expect(deployedEvent.args._operator).to.eq(sequencer1.address);
             expect(deployedEvent.args._name).to.eq(ethers.utils.formatBytes32String(name));
             expect(deployedEvent.args.addressManager).to.eq(deployed.addressManager.address);
             expect(deployedEvent.args.l1Bridge).to.eq(deployed.l1Bridge.address);
@@ -296,9 +296,9 @@ describe('Integrated Test', () => {
                 }
             );
 
-            expect(await deployed.optimismSequencer.getLayerKey(sequencerIndex)).to.eq(layerKey)
+            expect(await deployed.optimismL2Operator.getLayerKey(operatorIndex)).to.eq(layerKey)
 
-            let layer = await deployed.optimismSequencer.getLayerInfo(sequencerIndex);
+            let layer = await deployed.optimismL2Operator.getLayerInfo(operatorIndex);
 
             expect(layer.addressManager).to.eq(deployed.addressManager.address)
             expect(layer.l1Bridge).to.eq(deployed.l1Bridge.address)
@@ -306,12 +306,12 @@ describe('Integrated Test', () => {
             expect(layer.l2ton).to.eq(deployed.l2ton.address)
 
             expect(await deployed.layer2Manager.layerKeys(layerKey)).to.eq(true)
-            expect(await deployed.layer2Manager.indexSequencers()).to.eq(sequencerIndex)
+            expect(await deployed.layer2Manager.indexOperators()).to.eq(operatorIndex)
 
             let getAllLayersAfter = await deployed.layer2Manager.getAllLayers();
 
-            expect(getAllLayersBefore.optimismSequencerIndexes_.length).to.eq(
-                getAllLayersAfter.optimismSequencerIndexes_.length-1
+            expect(getAllLayersBefore.optimismL2OperatorIndexes_.length).to.eq(
+                getAllLayersAfter.optimismL2OperatorIndexes_.length-1
             )
 
         })
@@ -327,7 +327,7 @@ describe('Integrated Test', () => {
             let totalLayers = await deployed.layer2Manager.totalLayers()
             let totalCandidates = await deployed.layer2Manager.totalCandidates()
 
-            let sequencerIndex = await deployed.layer2Manager.optimismSequencerIndexes(totalLayers.sub(ethers.constants.One))
+            let operatorIndex = await deployed.layer2Manager.optimismL2OperatorIndexes(totalLayers.sub(ethers.constants.One))
 
             let amount = await deployed.layer2Manager.minimumDepositForCandidate();
 
@@ -340,7 +340,7 @@ describe('Integrated Test', () => {
             const topic = deployed.layer2Manager.interface.getEventTopic('CreatedCandidate');
             const commission = 500;
             const receipt = await(await snapshotGasCost(deployed.layer2Manager.connect(addr1).createCandidate(
-                sequencerIndex,
+                operatorIndex,
                 ethers.utils.formatBytes32String(name),
                 commission,
                 amount
@@ -352,7 +352,7 @@ describe('Integrated Test', () => {
             let candidateIndex = deployedEvent.args._index;
             expect(deployedEvent.args._operator).to.eq(addr1.address);
             expect(deployedEvent.args._name).to.eq(ethers.utils.formatBytes32String(name));
-            expect(deployedEvent.args._sequencerIndex).to.eq(sequencerIndex);
+            expect(deployedEvent.args._operatorIndex).to.eq(operatorIndex);
             expect(deployedEvent.args._commission).to.eq(commission);
 
             expect(await deployed.layer2Manager.totalCandidates()).to.eq(totalCandidates.add(1))
@@ -362,7 +362,7 @@ describe('Integrated Test', () => {
 
             let candidateKey = await getCandidateKey({
                     operator: addr1.address,
-                    sequencerIndex: sequencerIndex,
+                    operatorIndex: operatorIndex,
                     commission: ethers.constants.Zero
                 }
             );
@@ -371,12 +371,13 @@ describe('Integrated Test', () => {
 
             let candidateInfo_ = await deployed.candidate.getCandidateInfo(candidateIndex);
             expect(candidateInfo_.operator).to.eq(addr1.address)
-            expect(candidateInfo_.sequencerIndex).to.eq(sequencerIndex)
+            expect(candidateInfo_.operatorIndex).to.eq(operatorIndex)
             expect(candidateInfo_.commission).to.eq(commission)
+
 
             let candidateLayerKey = await getCandidateLayerKey({
                 operator: addr1.address,
-                sequencerIndex: sequencerIndex,
+                operatorIndex: operatorIndex,
                 commission: ethers.constants.Zero
                 }
             );
@@ -394,7 +395,7 @@ describe('Integrated Test', () => {
 
     describe('# increase Security Deposit ', () => {
         it('After approval of the use of TON in advance, the deposit can be increased.', async () => {
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
             let amount = ethers.utils.parseEther("100");
             await expect(
                 deployed.layer2Manager.connect(addr1).increaseSecurityDeposit(
@@ -404,7 +405,7 @@ describe('Integrated Test', () => {
 
         it('Approve the deposit and increase the security deposit.', async () => {
             let amount = ethers.utils.parseEther("100");
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
 
             if (amount.gt(await deployed.ton.balanceOf(addr1.address)))
                 await (await deployed.ton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
@@ -433,19 +434,19 @@ describe('Integrated Test', () => {
 
     describe('# decrease Security Deposit ', () => {
 
-        it('function can not be executed by not sequencer', async () => {
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+        it('function can not be executed by not operator', async () => {
+            let layerIndex = await deployed.layer2Manager.indexOperators();
             let amount = ethers.utils.parseEther("100");
             await expect(
                 deployed.layer2Manager.connect(addr1).decreaseSecurityDeposit(
                     layerIndex, amount
                 )
-                ).to.be.revertedWith("sequencer is zero or not caller.")
+                ).to.be.revertedWith("operator is zero or not caller.")
         })
 
 
         it('Remained security deposit must is greater than more than the minimum security deposit.', async () => {
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
             // let minimumDepositForSequencer = await deployed.layer2Manager.minimumDepositForSequencer();
             let depositBefore = await deployed.layer2Manager.layerHoldings(layerIndex)
             let amount = depositBefore.securityDeposit;
@@ -457,8 +458,8 @@ describe('Integrated Test', () => {
 
         it('Sequencer can decrease the security deposit.', async () => {
 
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
-            let minimumDepositForSequencer = await deployed.layer2Manager.minimumDepositForSequencer();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
+            let minimumDepositForSequencer = await deployed.layer2Manager.minimumDepositForL2Operator();
             let depositBefore = await deployed.layer2Manager.layerHoldings(layerIndex)
             let amount = depositBefore.securityDeposit.sub(minimumDepositForSequencer);
 
@@ -482,14 +483,14 @@ describe('Integrated Test', () => {
         })
     });
 
-    describe('# stake at Sequencer', () => {
+    describe('# stake at optimismL2Operator', () => {
 
         it('You cannot stake on unregistered layers.', async () => {
             let amount = ethers.utils.parseEther("100");
             let layerIndex = 10;
 
             await expect(
-                deployed.optimismSequencer.connect(addr1).stake(
+                deployed.optimismL2Operator.connect(addr1).stake(
                     layerIndex,
                     amount
                 )
@@ -500,10 +501,10 @@ describe('Integrated Test', () => {
         it('If TON are not approved prior to staking, staking is not possible.', async () => {
             let amount = ethers.utils.parseEther("100");
 
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
 
             await expect(
-                deployed.optimismSequencer.connect(addr1).stake(
+                deployed.optimismL2Operator.connect(addr1).stake(
                     layerIndex,
                     amount
                 )).to.be.reverted;
@@ -512,45 +513,45 @@ describe('Integrated Test', () => {
 
         it('If it is a registered layer, you can stake it.', async () => {
             let amount = ethers.utils.parseEther("5000");
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
 
             // let totalStakedPrincipal = await deployed.stakingLayer2.totalStakedPrincipal()
-            let totalStakedLton = await deployed.optimismSequencer.totalStakedLton()
-            let totalStakeAccountList = await deployed.optimismSequencer.totalStakeAccountList()
+            let totalStakedLton = await deployed.optimismL2Operator.totalStakedLton()
+            let totalStakeAccountList = await deployed.optimismL2Operator.totalStakeAccountList()
 
             if (amount.gt(await deployed.ton.balanceOf(addr1.address)))
                 await (await deployed.ton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
 
-            if (amount.gte(await deployed.ton.allowance(addr1.address, deployed.optimismSequencer.address)))
-                await (await deployed.ton.connect(addr1).approve(deployed.optimismSequencer.address, amount)).wait();
+            if (amount.gte(await deployed.ton.allowance(addr1.address, deployed.optimismL2Operator.address)))
+                await (await deployed.ton.connect(addr1).approve(deployed.optimismL2Operator.address, amount)).wait();
 
-            await snapshotGasCost(deployed.optimismSequencer.connect(addr1).stake(
+            await snapshotGasCost(deployed.optimismL2Operator.connect(addr1).stake(
                     layerIndex,
                     amount
                 ));
 
             // expect(await deployed.stakingLayer2.totalStakedPrincipal()).to.eq(totalStakedPrincipal.add(amount))
-            expect(await deployed.optimismSequencer.totalStakedLton()).to.gt(totalStakedLton)
-            expect(await deployed.optimismSequencer.totalStakeAccountList()).to.eq(totalStakeAccountList.add(1))
-            expect(await deployed.optimismSequencer.stakeAccountList(totalStakeAccountList)).to.eq(addr1.address)
+            expect(await deployed.optimismL2Operator.totalStakedLton()).to.gt(totalStakedLton)
+            expect(await deployed.optimismL2Operator.totalStakeAccountList()).to.eq(totalStakeAccountList.add(1))
+            expect(await deployed.optimismL2Operator.stakeAccountList(totalStakeAccountList)).to.eq(addr1.address)
 
             let lton = await deployed.seigManagerV2.getTonToLton(amount);
-            expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)).to.eq(lton)
-            expect(await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address)).to.eq(amount)
+            expect(await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](layerIndex, addr1.address)).to.eq(lton)
+            expect(await deployed.optimismL2Operator.balanceOf(layerIndex, addr1.address)).to.eq(amount)
 
         })
 
         it('Anyone can take a snapshot.', async () => {
 
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
             let account = addr1
             let block = await ethers.provider.getBlock('latest');
             const snapshotIdBefore = await deployed.seigManagerV2.getCurrentSnapshotId()
 
             const indexLton0 = await deployed.seigManagerV2.indexLton();
-            const totalStakedLton0 = await deployed.optimismSequencer.totalStakedLton();
-            const balanceOfLayer0 = await deployed.optimismSequencer["balanceOfLton(uint32)"](layerIndex);
-            const balanceOfAccount0 = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, account.address);
+            const totalStakedLton0 = await deployed.optimismL2Operator.totalStakedLton();
+            const balanceOfLayer0 = await deployed.optimismL2Operator["balanceOfLton(uint32)"](layerIndex);
+            const balanceOfAccount0 = await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](layerIndex, account.address);
 
             const interface1 = deployed.seigManagerV2.interface ;
             const topic = interface1.getEventTopic('Snapshot');
@@ -575,10 +576,10 @@ describe('Integrated Test', () => {
             // console.log('snapshot',snapshot)
 
             expect(await deployed.seigManagerV2.indexLtonAt(snapshot.id)).to.be.eq(snapshot.indexLton);
-            expect(await deployed.optimismSequencer.totalStakedLtonAt(snapshot.id)).to.be.eq(snapshot.totalStakedLton);
-            expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,uint256)"](snapshot.layerIndex, snapshot.id))
+            expect(await deployed.optimismL2Operator.totalStakedLtonAt(snapshot.id)).to.be.eq(snapshot.totalStakedLton);
+            expect(await deployed.optimismL2Operator["balanceOfLtonAt(uint32,uint256)"](snapshot.layerIndex, snapshot.id))
                     .to.be.eq(snapshot.balanceOfLayer);
-            expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,address,uint256)"](snapshot.layerIndex, account.address, snapshot.id))
+            expect(await deployed.optimismL2Operator["balanceOfLtonAt(uint32,address,uint256)"](snapshot.layerIndex, account.address, snapshot.id))
                     .to.be.eq(snapshot.balanceOfAccount);
 
             let snapshotTimeAfter = await deployed.seigManagerV2.getSnapshotTime()
@@ -655,16 +656,16 @@ describe('Integrated Test', () => {
         })
     });
 
-    describe('# TON.approveAndCall -> stake at Sequencer', () => {
+    describe('# TON.approveAndCall -> stake at optimismL2Operator', () => {
 
         it('You can stake without approval before staking.', async () => {
             let amount = ethers.utils.parseEther("5000");
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
-            let balanceOf = await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address);
-            let balanceOfLton = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address);
+            let layerIndex = await deployed.layer2Manager.indexOperators();
+            let balanceOf = await deployed.optimismL2Operator.balanceOf(layerIndex, addr1.address);
+            let balanceOfLton = await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](layerIndex, addr1.address);
 
-            let totalStakedLton = await deployed.optimismSequencer.totalStakedLton()
-            let totalStakeAccountList = await deployed.optimismSequencer.totalStakeAccountList()
+            let totalStakedLton = await deployed.optimismL2Operator.totalStakedLton()
+            let totalStakeAccountList = await deployed.optimismL2Operator.totalStakeAccountList()
 
             if (amount.gt(await deployed.ton.balanceOf(addr1.address)))
                 await (await deployed.ton.connect(deployed.tonAdmin).mint(addr1.address, amount)).wait();
@@ -675,24 +676,24 @@ describe('Integrated Test', () => {
                 );
 
             await snapshotGasCost(deployed.ton.connect(addr1).approveAndCall(
-                deployed.optimismSequencer.address,
+                deployed.optimismL2Operator.address,
                 amount,
                 data
             ));
 
-            expect(await deployed.optimismSequencer.totalStakedLton()).to.gt(totalStakedLton)
+            expect(await deployed.optimismL2Operator.totalStakedLton()).to.gt(totalStakedLton)
 
-            let getLayerStakes = await deployed.optimismSequencer.getLayerStakes(layerIndex, addr1.address);
+            let getLayerStakes = await deployed.optimismL2Operator.getLayerStakes(layerIndex, addr1.address);
 
             if (!getLayerStakes.stake) {
-                expect(await deployed.optimismSequencer.totalStakeAccountList()).to.eq(totalStakeAccountList.add(1))
-                expect(await deployed.optimismSequencer.stakeAccountList(totalStakeAccountList)).to.eq(addr1.address)
+                expect(await deployed.optimismL2Operator.totalStakeAccountList()).to.eq(totalStakeAccountList.add(1))
+                expect(await deployed.optimismL2Operator.stakeAccountList(totalStakeAccountList)).to.eq(addr1.address)
             }
 
             let lton = await deployed.seigManagerV2.getTonToLton(amount);
-            expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address))
+            expect(await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](layerIndex, addr1.address))
                 .to.eq(balanceOfLton.add(lton))
-            expect(await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address))
+            expect(await deployed.optimismL2Operator.balanceOf(layerIndex, addr1.address))
                 .to.eq(balanceOf.add(amount))
         })
 
@@ -746,7 +747,7 @@ describe('Integrated Test', () => {
 
         it('Anyone can take a snapshot.', async () => {
             // console.log('------------- 2 ---------------')
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
             let account = addr1
 
             let block = await ethers.provider.getBlock('latest');
@@ -764,9 +765,9 @@ describe('Integrated Test', () => {
             expect(snapshotId).to.be.eq(snapshotIdBefore.add(ethers.constants.One));
 
             const indexLton1 = await deployed.seigManagerV2.indexLton();
-            const totalStakedLton1 = await deployed.optimismSequencer.totalStakedLton();
-            const balanceOfLayer1 = await deployed.optimismSequencer["balanceOfLton(uint32)"](layerIndex);
-            const balanceOfAccount1 = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, account.address);
+            const totalStakedLton1 = await deployed.optimismL2Operator.totalStakedLton();
+            const balanceOfLayer1 = await deployed.optimismL2Operator["balanceOfLton(uint32)"](layerIndex);
+            const balanceOfAccount1 = await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](layerIndex, account.address);
 
             let snapshot:StakeSnapshotFixture = {
                 id: snapshotId,
@@ -787,10 +788,10 @@ describe('Integrated Test', () => {
             let i=0;
             for (i = 0; i < snapshotListSequencer.length; i++){
                 expect(await deployed.seigManagerV2.indexLtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].indexLton);
-                expect(await deployed.optimismSequencer.totalStakedLtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].totalStakedLton);
-                expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,uint256)"](snapshotListSequencer[i].layerIndex, snapshotListSequencer[i].id))
+                expect(await deployed.optimismL2Operator.totalStakedLtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].totalStakedLton);
+                expect(await deployed.optimismL2Operator["balanceOfLtonAt(uint32,uint256)"](snapshotListSequencer[i].layerIndex, snapshotListSequencer[i].id))
                         .to.be.eq(snapshotListSequencer[i].balanceOfLayer);
-                expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,address,uint256)"](snapshotListSequencer[i].layerIndex, account.address, snapshotListSequencer[i].id))
+                expect(await deployed.optimismL2Operator["balanceOfLtonAt(uint32,address,uint256)"](snapshotListSequencer[i].layerIndex, account.address, snapshotListSequencer[i].id))
                         .to.be.eq(snapshotListSequencer[i].balanceOfAccount);
             }
 
@@ -802,7 +803,7 @@ describe('Integrated Test', () => {
     describe('# fast withdraw', () => {
 
         it('L2 user request the fast withdraw ', async () => {
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
             let block = await ethers.provider.getBlock('latest')
 
             messageInfo.amount = ethers.utils.parseEther("1")
@@ -954,7 +955,7 @@ describe('Integrated Test', () => {
         });
 
         it('L2 user request the fast withdraw ', async () => {
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
             let block = await ethers.provider.getBlock('latest')
 
             messageInfo.requestor = addr1.address
@@ -1018,7 +1019,7 @@ describe('Integrated Test', () => {
         });
 
         it('L2 user request the fast withdraw ', async () => {
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
             let block = await ethers.provider.getBlock('latest')
 
             messageInfo.requestor = addr2.address
@@ -1170,7 +1171,7 @@ describe('Integrated Test', () => {
         });
 
         it('L2 user request the fast withdraw ', async () => {
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
             let block = await ethers.provider.getBlock('latest')
 
             messageInfo.requestor = addr2.address
@@ -1225,7 +1226,7 @@ describe('Integrated Test', () => {
 
             let balanceAddr1Before = await deployed.ton.balanceOf(addr1.address)
             let balanceAddr2Before = await deployed.ton.balanceOf(addr2.address)
-            let stakedAddr1Before = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](
+            let stakedAddr1Before = await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](
                 info.messageInfo.layerIndex, addr1.address);
             let debtInStakedAddr1Before = await deployed.fwReceipt.debtInStaked(
                 false, info.messageInfo.layerIndex, addr1.address);
@@ -1267,7 +1268,7 @@ describe('Integrated Test', () => {
             expect(await deployed.ton.balanceOf(deployed.l1Bridge.address)).to.be.eq(balancel1BridgeBefore);
 
             // 업데이트 시뇨리지시 이미 제공된 유동성에 대해서도 이자를 받을 수 있다.
-            expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](
+            expect(await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](
                 info.messageInfo.layerIndex, addr1.address
             )).to.be.eq(stakedAddr1Before);
 
@@ -1280,7 +1281,7 @@ describe('Integrated Test', () => {
         it('Fast withdrawals, normally provided with liquidity, are settled after DTD.', async () => {
             let info: DomainMessageFixture = xDomainCalldataList[3];
             let balanceBeforeAddr1 = await deployed.ton.balanceOf(addr1.address)
-            let stakedAddr1Before = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](
+            let stakedAddr1Before = await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](
                 info.messageInfo.layerIndex, addr1.address);
             let debtInStakedAddr1Before = await deployed.fwReceipt.debtInStaked(
                 false, info.messageInfo.layerIndex, addr1.address);
@@ -1337,7 +1338,7 @@ describe('Integrated Test', () => {
             expect(deployedEvent.args.indexNo).to.be.eq(info.indexNo);
 
             let feeLton = await deployed.seigManagerV2.getTonToLton(fee);
-            expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](
+            expect(await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](
                 info.messageInfo.layerIndex, addr1.address
             )).to.be.eq(stakedAddr1Before.add(feeLton));
 
@@ -1374,11 +1375,11 @@ describe('Integrated Test', () => {
         });
 
         it('If the staked amount is greater than 0, indexLton increase.', async () => {
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
             let candidateIndex = await deployed.layer2Manager.indexCandidates();
 
-            let prevBalanceOfSequencer = await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address);
-            let prevBalanceLtonOfSequencer =await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)
+            let prevBalanceOfSequencer = await deployed.optimismL2Operator.balanceOf(layerIndex, addr1.address);
+            let prevBalanceLtonOfSequencer =await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](layerIndex, addr1.address)
 
             let prevBalanceOfCandidate = await deployed.candidate.balanceOf(candidateIndex, addr1.address);
             let prevBalanceLtonOfCandidate =await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)
@@ -1394,8 +1395,8 @@ describe('Integrated Test', () => {
             expect(await deployed.ton.balanceOf(deployed.dao.address)).to.eq(0)
             expect(await deployed.ton.balanceOf(deployed.stosDistribute.address)).to.eq(0)
 
-            expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)).to.eq(prevBalanceLtonOfSequencer)
-            expect(await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address)).to.gt(prevBalanceOfSequencer)
+            expect(await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](layerIndex, addr1.address)).to.eq(prevBalanceLtonOfSequencer)
+            expect(await deployed.optimismL2Operator.balanceOf(layerIndex, addr1.address)).to.gt(prevBalanceOfSequencer)
 
             expect(await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)).to.eq(prevBalanceLtonOfCandidate)
             expect(await deployed.candidate.balanceOf(candidateIndex, addr1.address)).to.gt(prevBalanceOfCandidate)
@@ -1404,7 +1405,7 @@ describe('Integrated Test', () => {
 
         it('Anyone can take a snapshot.', async () => {
             // console.log('------------- 3 ---------------')
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
             let account = addr1
 
             let block = await ethers.provider.getBlock('latest');
@@ -1421,9 +1422,9 @@ describe('Integrated Test', () => {
             expect(snapshotId).to.be.eq(snapshotIdBefore.add(ethers.constants.One));
 
             const indexLton1 = await deployed.seigManagerV2.indexLton();
-            const totalStakedLton1 = await deployed.optimismSequencer.totalStakedLton();
-            const balanceOfLayer1 = await deployed.optimismSequencer["balanceOfLton(uint32)"](layerIndex);
-            const balanceOfAccount1 = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, account.address);
+            const totalStakedLton1 = await deployed.optimismL2Operator.totalStakedLton();
+            const balanceOfLayer1 = await deployed.optimismL2Operator["balanceOfLton(uint32)"](layerIndex);
+            const balanceOfAccount1 = await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](layerIndex, account.address);
 
 
             let snapshot:StakeSnapshotFixture = {
@@ -1443,10 +1444,10 @@ describe('Integrated Test', () => {
             let i=0;
             for (i = 0; i < snapshotListSequencer.length; i++){
                 expect(await deployed.seigManagerV2.indexLtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].indexLton);
-                expect(await deployed.optimismSequencer.totalStakedLtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].totalStakedLton);
-                expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,uint256)"](snapshotListSequencer[i].layerIndex, snapshotListSequencer[i].id))
+                expect(await deployed.optimismL2Operator.totalStakedLtonAt(snapshotListSequencer[i].id)).to.be.eq(snapshotListSequencer[i].totalStakedLton);
+                expect(await deployed.optimismL2Operator["balanceOfLtonAt(uint32,uint256)"](snapshotListSequencer[i].layerIndex, snapshotListSequencer[i].id))
                         .to.be.eq(snapshotListSequencer[i].balanceOfLayer);
-                expect(await deployed.optimismSequencer["balanceOfLtonAt(uint32,address,uint256)"](snapshotListSequencer[i].layerIndex, account.address, snapshotListSequencer[i].id))
+                expect(await deployed.optimismL2Operator["balanceOfLtonAt(uint32,address,uint256)"](snapshotListSequencer[i].layerIndex, account.address, snapshotListSequencer[i].id))
                         .to.be.eq(snapshotListSequencer[i].balanceOfAccount);
             }
         });
@@ -1460,12 +1461,12 @@ describe('Integrated Test', () => {
         });
 
         it('runUpdateSeigniorage : If the sum of the staking amount and the bonding liquidity amount is greater than 0, indexLton increase.', async () => {
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
             let candidateIndex = await deployed.layer2Manager.indexCandidates();
 
 
-            let prevBalanceOfSequencer = await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address);
-            let prevBalanceLtonOfSequencer =await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)
+            let prevBalanceOfSequencer = await deployed.optimismL2Operator.balanceOf(layerIndex, addr1.address);
+            let prevBalanceLtonOfSequencer =await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](layerIndex, addr1.address)
 
             let prevBalanceOfCandidate = await deployed.candidate.balanceOf(candidateIndex, addr1.address);
             let prevBalanceLtonOfCandidate =await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)
@@ -1483,8 +1484,8 @@ describe('Integrated Test', () => {
             expect(await deployed.ton.balanceOf(deployed.stosDistribute.address)).to.eq(0)
 
 
-            expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)).to.eq(prevBalanceLtonOfSequencer)
-            expect(await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address)).to.gt(prevBalanceOfSequencer)
+            expect(await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](layerIndex, addr1.address)).to.eq(prevBalanceLtonOfSequencer)
+            expect(await deployed.optimismL2Operator.balanceOf(layerIndex, addr1.address)).to.gt(prevBalanceOfSequencer)
 
             expect(await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)).to.eq(prevBalanceLtonOfCandidate)
             expect(await deployed.candidate.balanceOf(candidateIndex, addr1.address)).to.gt(prevBalanceOfCandidate)
@@ -1530,12 +1531,12 @@ describe('Integrated Test', () => {
         })
 
         it('If you set the DAO and dividend rate for seig, seig is granted to the DAO.', async () => {
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
             let candidateIndex = await deployed.layer2Manager.indexCandidates();
 
 
-            let prevBalanceOfSequencer = await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address);
-            let prevBalanceLtonOfSequencer =await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)
+            let prevBalanceOfSequencer = await deployed.optimismL2Operator.balanceOf(layerIndex, addr1.address);
+            let prevBalanceLtonOfSequencer =await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](layerIndex, addr1.address)
 
             let prevBalanceOfCandidate = await deployed.candidate.balanceOf(candidateIndex, addr1.address);
             let prevBalanceLtonOfCandidate =await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)
@@ -1563,8 +1564,8 @@ describe('Integrated Test', () => {
                 .add(deployedEvent.args.amount_[2])
                 .add(deployedEvent.args.amount_[3])
             )
-            expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)).to.eq(prevBalanceLtonOfSequencer)
-            expect(await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address)).to.gt(prevBalanceOfSequencer)
+            expect(await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](layerIndex, addr1.address)).to.eq(prevBalanceLtonOfSequencer)
+            expect(await deployed.optimismL2Operator.balanceOf(layerIndex, addr1.address)).to.gt(prevBalanceOfSequencer)
 
             expect(await deployed.candidate["balanceOfLton(uint32,address)"](candidateIndex, addr1.address)).to.eq(prevBalanceLtonOfCandidate)
             expect(await deployed.candidate.balanceOf(candidateIndex, addr1.address)).to.gt(prevBalanceOfCandidate)
@@ -1578,42 +1579,42 @@ describe('Integrated Test', () => {
 
         it('You can unstake when you have the staked amount.', async () => {
 
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
             let candidateIndex = await deployed.layer2Manager.indexCandidates();
 
             const balanceOfStaker = await deployed.ton.balanceOf(addr1.address)
-            const availableWithdrawOfStaker = await deployed.optimismSequencer.availableWithdraw(layerIndex, addr1.address)
-            const amountOfPendings = await deployed.optimismSequencer.amountOfPendings(layerIndex, addr1.address)
+            const availableWithdrawOfStaker = await deployed.optimismL2Operator.availableWithdraw(layerIndex, addr1.address)
+            const amountOfPendings = await deployed.optimismL2Operator.amountOfPendings(layerIndex, addr1.address)
 
-            let amountLton = await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)
+            let amountLton = await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](layerIndex, addr1.address)
             let amount = await deployed.seigManagerV2.getLtonToTon(amountLton)
 
-            let totalStakedLton = await deployed.optimismSequencer.totalStakedLton()
+            let totalStakedLton = await deployed.optimismL2Operator.totalStakedLton()
 
             const block = await ethers.provider.getBlock('latest')
             const delay = await deployed.layer2Manager.delayBlocksForWithdraw();
 
-            const topic = deployed.optimismSequencer.interface.getEventTopic('Unstaked');
+            const topic = deployed.optimismL2Operator.interface.getEventTopic('Unstaked');
 
-            const receipt = await (await snapshotGasCost(deployed.optimismSequencer.connect(addr1).unstake(
+            const receipt = await (await snapshotGasCost(deployed.optimismL2Operator.connect(addr1).unstake(
                     layerIndex,
                     amountLton
                 ))).wait();
 
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
-            const deployedEvent = deployed.optimismSequencer.interface.parseLog(log);
+            const deployedEvent = deployed.optimismL2Operator.interface.parseLog(log);
             expect(deployedEvent.args.lton).to.eq(amountLton)
             expect(deployedEvent.args.amount).to.gte(amount)
 
-            expect(await deployed.optimismSequencer.totalStakedLton()).to.eq(totalStakedLton.sub(amountLton))
+            expect(await deployed.optimismL2Operator.totalStakedLton()).to.eq(totalStakedLton.sub(amountLton))
 
-            expect(await deployed.optimismSequencer["balanceOfLton(uint32,address)"](layerIndex, addr1.address)).to.eq(0)
-            expect(await deployed.optimismSequencer.balanceOf(layerIndex, addr1.address)).to.eq(0)
+            expect(await deployed.optimismL2Operator["balanceOfLton(uint32,address)"](layerIndex, addr1.address)).to.eq(0)
+            expect(await deployed.optimismL2Operator.balanceOf(layerIndex, addr1.address)).to.eq(0)
 
             expect(await deployed.ton.balanceOf(addr1.address)).to.eq(balanceOfStaker)
 
-            pendings = await deployed.optimismSequencer.amountOfPendings(layerIndex, addr1.address)
-            availableWithdraw = await deployed.optimismSequencer.availableWithdraw(layerIndex, addr1.address)
+            pendings = await deployed.optimismL2Operator.amountOfPendings(layerIndex, addr1.address)
+            availableWithdraw = await deployed.optimismL2Operator.availableWithdraw(layerIndex, addr1.address)
 
             expect(availableWithdraw.amount).to.eq(availableWithdrawOfStaker.amount)
             expect(pendings.amount).to.eq(amountOfPendings.amount.add(deployedEvent.args.amount))
@@ -1642,7 +1643,7 @@ describe('Integrated Test', () => {
 
         it('You can unstake when you have the staked amount.', async () => {
 
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
             let candidateIndex = await deployed.layer2Manager.indexCandidates();
 
             const balanceOfStaker = await deployed.ton.balanceOf(addr1.address)
@@ -1696,13 +1697,13 @@ describe('Integrated Test', () => {
     describe('# withdraw ', () => {
 
         it('[at Sequencer] You cannot withdraw if there is no amount available for withdrawal.', async () => {
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
 
-            const availableWithdrawOfStaker = await deployed.optimismSequencer.availableWithdraw(layerIndex, addr1.address)
+            const availableWithdrawOfStaker = await deployed.optimismL2Operator.availableWithdraw(layerIndex, addr1.address)
 
             expect(availableWithdrawOfStaker.amount).to.eq(ethers.constants.Zero)
 
-            await expect(deployed.optimismSequencer.connect(addr1).withdraw(layerIndex, false)).to.be.revertedWith("zero available withdrawal amount")
+            await expect(deployed.optimismL2Operator.connect(addr1).withdraw(layerIndex, false)).to.be.revertedWith("zero available withdrawal amount")
 
         })
 
@@ -1727,22 +1728,22 @@ describe('Integrated Test', () => {
 
         it('[at Sequencer] You can withdraw if there is amount available for withdrawal.', async () => {
 
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
 
             const balanceOfStaker = await deployed.ton.balanceOf(addr1.address)
-            const availableWithdrawOfStaker = await deployed.optimismSequencer.availableWithdraw(layerIndex, addr1.address)
+            const availableWithdrawOfStaker = await deployed.optimismL2Operator.availableWithdraw(layerIndex, addr1.address)
 
             expect(availableWithdrawOfStaker.amount).to.gt(ethers.constants.Zero)
 
-            const topic = deployed.optimismSequencer.interface.getEventTopic('Withdrawal');
+            const topic = deployed.optimismL2Operator.interface.getEventTopic('Withdrawal');
 
-            const receipt = await (await snapshotGasCost(deployed.optimismSequencer.connect(addr1).withdraw(layerIndex, false))).wait();
+            const receipt = await (await snapshotGasCost(deployed.optimismL2Operator.connect(addr1).withdraw(layerIndex, false))).wait();
 
             const log = receipt.logs.find(x => x.topics.indexOf(topic) >= 0);
-            const deployedEvent = deployed.optimismSequencer.interface.parseLog(log);
+            const deployedEvent = deployed.optimismL2Operator.interface.parseLog(log);
             expect(deployedEvent.args.amount).to.gte(availableWithdrawOfStaker.amount)
 
-            const availableWithdraw = await deployed.optimismSequencer.availableWithdraw(layerIndex, addr1.address)
+            const availableWithdraw = await deployed.optimismL2Operator.availableWithdraw(layerIndex, addr1.address)
             expect(availableWithdraw.amount).to.eq(ethers.constants.Zero)
             expect(await deployed.ton.balanceOf(addr1.address)).to.eq(balanceOfStaker.add(availableWithdrawOfStaker.amount))
         })
@@ -1865,7 +1866,7 @@ describe('Integrated Test', () => {
         })
 
         it('The sequencer cannot claim when there is no claimable amount.', async () => {
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
 
             let holdings = await deployed.layer2Manager.holdings(layerIndex)
             expect(holdings.seigs).to.eq(ethers.constants.Zero)
@@ -1876,7 +1877,7 @@ describe('Integrated Test', () => {
         });
 
         it('When totalSeigs is not 0, seigniorage can be distributed to the sequencer.', async () => {
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
 
             expect((await deployed.layer2Manager.holdings(layerIndex)).seigs).to.eq(ethers.constants.Zero)
             expect(await deployed.layer2Manager.totalSeigs()).to.gt(ethers.constants.Zero)
@@ -1888,11 +1889,11 @@ describe('Integrated Test', () => {
             expect((await deployed.layer2Manager.holdings(layerIndex)).seigs).to.gt(ethers.constants.Zero)
         });
 
-        it('the sequencers can claim ', async () => {
+        it('the operators can claim ', async () => {
 
-            let layerIndex = await deployed.layer2Manager.indexSequencers();
+            let layerIndex = await deployed.layer2Manager.indexOperators();
 
-            expect(await deployed.layer2Manager.sequencer(layerIndex)).to.eq(sequencer1.address);
+            expect(await deployed.layer2Manager.operator(layerIndex)).to.eq(sequencer1.address);
             let balanceOfTon = await deployed.ton.balanceOf(sequencer1.address);
             let holdings = (await deployed.layer2Manager.holdings(layerIndex)) ;
 

@@ -92,7 +92,7 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
         require(
             msg.sender != address(0) ||
             msg.sender == layer2Manager ||
-            msg.sender == optimismSequencer ||
+            msg.sender == optimismL2Operator ||
             msg.sender == candidate
             , "SM_E1"
         );
@@ -137,7 +137,7 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
             (
                 uint256 totalSupplyOfTon,
                 uint256 amountOfStaker,
-                uint256 amountOfSequencer
+                uint256 amountOfL2Operator
             ) = _distribute(increaseSeig, totalLton);
 
             uint256 prevIndex = _indexLton;
@@ -151,9 +151,9 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
             // 2. mint increaseSeig of ton in address(this)
             // if (increaseSeig != 0) ton.mint(address(this), increaseSeig);
 
-            // 3. give amountOfsequencer
-            if (amountOfSequencer != 0)
-                require(Layer2ManagerI(layer2Manager).addSeigs(amountOfSequencer),'FAIL addSeigs');
+            // 3. give amountOfL2Operator
+            if (amountOfL2Operator != 0)
+                require(Layer2ManagerI(layer2Manager).addSeigs(amountOfL2Operator),'FAIL addSeigs');
 
 
             lastSeigBlock = getCurrentBlockNumber();
@@ -162,7 +162,7 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
                 lastSeigBlock,
                 increaseSeig,
                 totalSupplyOfTon,
-                [amountOfStaker, amountOfSequencer],
+                [amountOfStaker, amountOfL2Operator],
                 prevIndex,
                 _indexLton
                 );
@@ -222,12 +222,12 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
 
     /// @inheritdoc ISeigManagerV2
     function getTotalLton() public view override returns (uint256 amount) {
-        amount = StakingI(optimismSequencer).getTotalLton() + StakingI(candidate).getTotalLton();
+        amount = StakingI(optimismL2Operator).getTotalLton() + StakingI(candidate).getTotalLton();
     }
 
     /// @inheritdoc ISeigManagerV2
     function getTotalLtonAt(uint256 _snapshotId) public view override returns (uint256 amount) {
-        amount = StakingI(optimismSequencer).getTotalLtonAt(_snapshotId) + StakingI(candidate).getTotalLtonAt(_snapshotId);
+        amount = StakingI(optimismL2Operator).getTotalLtonAt(_snapshotId) + StakingI(candidate).getTotalLtonAt(_snapshotId);
     }
 
     /// @inheritdoc ISeigManagerV2
@@ -262,7 +262,7 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
     function _distribute(uint256 amount, uint256 totalLton) internal view returns (
         uint256 totalSupplyOfTon,
         uint256 amountOfstaker,
-        uint256 amountOfsequencer
+        uint256 amountOfL2Operator
     ){
 
         totalSupplyOfTon = totalSupplyTON();
@@ -289,14 +289,13 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
             if (totalLton != 0 && SeigRateForV2Stakers != 0) amountOfstaker = amount *  SeigRateForV2Stakers / 1e18;
             console.log('amountOfstaker %s', amountOfstaker);
 
-            // 2. ((D+C)/T) * TON seigniorage
-            //    to sequencer, D layer 2 reserve, C sequencer deposit
+
             uint256 amountOfCD = Layer2ManagerI(layer2Manager).curTotalAmountsLayer2();
 
             if (amountOfCD != 0){
-                amountOfsequencer = amount * amountOfCD / totalSupplyOfTon ;
+                amountOfL2Operator = amount * amountOfCD / totalSupplyOfTon ;
             }
-            console.log('amountOfsequencer %s', amountOfsequencer);
+            console.log('amountOfL2Operator %s', amountOfL2Operator);
         }
     }
 

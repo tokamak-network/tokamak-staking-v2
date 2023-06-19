@@ -33,14 +33,14 @@ describe('OptimismSequencer', () => {
         deployed = await stakingV2Fixtures()
         deployer = deployed.deployer;
         addr1 = deployed.addr1;
-        sequencer1 = deployed.sequencer1;
+        sequencer1 = deployed.operator1;
     })
 
     describe('# initialize', () => {
 
         it('initialize can not be executed by not owner', async () => {
             await expect(
-                deployed.optimismSequencerProxy.connect(addr1).initialize(
+                deployed.optimismL2OperatorProxy.connect(addr1).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2Proxy.address,
                     deployed.layer2ManagerProxy.address,
@@ -50,22 +50,22 @@ describe('OptimismSequencer', () => {
         })
 
         it('initialize can be executed by only owner', async () => {
-            await snapshotGasCost(deployed.optimismSequencerProxy.connect(deployer).initialize(
+            await snapshotGasCost(deployed.optimismL2OperatorProxy.connect(deployer).initialize(
                 seigManagerInfo.ton,
                 deployed.seigManagerV2Proxy.address,
                 deployed.layer2ManagerProxy.address,
                 deployed.fwReceiptProxy.address
                 ))
 
-            expect(await deployed.optimismSequencerProxy.ton()).to.eq(seigManagerInfo.ton)
-            expect(await deployed.optimismSequencerProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
-            expect(await deployed.optimismSequencerProxy.layer2Manager()).to.eq(deployed.layer2ManagerProxy.address)
+            expect(await deployed.optimismL2OperatorProxy.ton()).to.eq(seigManagerInfo.ton)
+            expect(await deployed.optimismL2OperatorProxy.seigManagerV2()).to.eq(deployed.seigManagerV2Proxy.address)
+            expect(await deployed.optimismL2OperatorProxy.layer2Manager()).to.eq(deployed.layer2ManagerProxy.address)
 
         })
 
         it('can execute only once.', async () => {
             await expect(
-                deployed.optimismSequencerProxy.connect(deployer).initialize(
+                deployed.optimismL2OperatorProxy.connect(deployer).initialize(
                     seigManagerInfo.ton,
                     deployed.seigManagerV2Proxy.address,
                     deployed.layer2ManagerProxy.address,
@@ -83,7 +83,7 @@ describe('OptimismSequencer', () => {
             let _index = 1;
 
             await expect(
-                deployed.optimismSequencer.connect(addr1).stake(
+                deployed.optimismL2Operator.connect(addr1).stake(
                     _index,
                     amount
                 )
@@ -99,7 +99,7 @@ describe('OptimismSequencer', () => {
             let _index = 1;
 
             await expect(
-                deployed.optimismSequencer.connect(addr1).fastWithdrawClaim(
+                deployed.optimismL2Operator.connect(addr1).fastWithdrawClaim(
                     ethers.constants.HashZero,
                     _index,
                     addr1.address,
@@ -118,7 +118,7 @@ describe('OptimismSequencer', () => {
             let _index = 1;
 
             await expect(
-                deployed.optimismSequencer.connect(addr1).fastWithdrawStake(
+                deployed.optimismL2Operator.connect(addr1).fastWithdrawStake(
                     ethers.constants.HashZero,
                     _index,
                     addr1.address,

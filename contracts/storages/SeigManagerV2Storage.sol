@@ -17,7 +17,7 @@ contract SeigManagerV2Storage {
     address public seigManagerV1;
     address public tot;
     address public layer2Manager;
-    address public optimismSequencer;
+    address public optimismL2Operator;
     address public candidate;
 
     /// Amount of seigniorage issued per block

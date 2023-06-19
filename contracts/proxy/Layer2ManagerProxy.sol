@@ -9,16 +9,16 @@ contract Layer2ManagerProxy is BaseProxy, Layer2ManagerStorage {
     function initialize(
         address _ton,
         address _seigManagerV2,
-        address _optimismSequencer,
+        address _optimismL2Operator,
         address _candidate,
-        uint256 _minimumDepositForSequencer,
+        uint256 _minimumDepositForL2Operator,
         uint256 _minimumDepositForCandidate,
         uint32 _delayBlocksForWithdraw
     )
         external onlyOwner
         nonZeroAddress(_ton)
         nonZeroAddress(_seigManagerV2)
-        nonZeroAddress(_optimismSequencer)
+        nonZeroAddress(_optimismL2Operator)
         nonZeroAddress(_candidate)
         nonZero(_delayBlocksForWithdraw)
     {
@@ -26,10 +26,10 @@ contract Layer2ManagerProxy is BaseProxy, Layer2ManagerStorage {
 
         ton = IERC20(_ton);
         seigManagerV2 = _seigManagerV2;
-        optimismSequencer = _optimismSequencer;
+        optimismL2Operator = _optimismL2Operator;
         candidate = _candidate;
 
-        minimumDepositForSequencer = _minimumDepositForSequencer;
+        minimumDepositForL2Operator = _minimumDepositForL2Operator;
         minimumDepositForCandidate = _minimumDepositForCandidate;
         delayBlocksForWithdraw = _delayBlocksForWithdraw;
 

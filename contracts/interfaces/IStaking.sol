@@ -10,7 +10,7 @@ interface IStaking {
 
     /**
      * @dev                     event that occur when staking
-     * @param sequencerIndex    the sequencer index
+     * @param operatorIndex    the operator index
      * @param candidateIndex    the candidate index
      * @param sender            sender address
      * @param amount            the TON amount of staking
@@ -18,41 +18,41 @@ interface IStaking {
      * @param commissionTo      address receiving commission
      * @param commissionLton    the lton of commission
      */
-    event Staked(uint32 sequencerIndex, uint32 candidateIndex, address sender, uint256 amount, uint256 lton, address commissionTo, uint256 commissionLton);
+    event Staked(uint32 operatorIndex, uint32 candidateIndex, address sender, uint256 amount, uint256 lton, address commissionTo, uint256 commissionLton);
 
     /**
      * @dev                     event that occur when unstaking
-     * @param sequencerIndex    the sequencer index
+     * @param operatorIndex    the operator index
      * @param candidateIndex    the candidate index
      * @param sender            sender address
      * @param amount            the TON amount of unstaking
      * @param lton              the lton amount
      */
-    event Unstaked(uint32 sequencerIndex, uint32 candidateIndex, address sender, uint256 amount, uint256 lton);
+    event Unstaked(uint32 operatorIndex, uint32 candidateIndex, address sender, uint256 amount, uint256 lton);
 
     /**
      * @dev                     event that occur when restaking
-     * @param sequencerIndex    the sequencer index
+     * @param operatorIndex    the operator index
      * @param candidateIndex    the candidate index
      * @param sender            sender address
      * @param amount            the TON amount of restaking
      * @param lton              the lton amount
      */
-    event Restaked(uint32 sequencerIndex, uint32 candidateIndex, address sender, uint256 amount, uint256 lton);
+    event Restaked(uint32 operatorIndex, uint32 candidateIndex, address sender, uint256 amount, uint256 lton);
 
     /**
      * @dev                     event that occur when withdrawal
-     * @param sequencerIndex    the sequencer index
+     * @param operatorIndex     the operator index
      * @param candidateIndex    the candidate index
      * @param sender            sender address
      * @param amount            the TON amount of withdrawal
      */
-    event Withdrawal(uint32 sequencerIndex, uint32 candidateIndex, address sender, uint256 amount);
+    event Withdrawal(uint32 operatorIndex, uint32 candidateIndex, address sender, uint256 amount);
 
     /**
      * @dev                     an event that occurs when the liquidity provided amount is sended to requestor when liquidity is provided
      * @param hashMessage       hashMessage of fast withdrawal
-     * @param layerIndex        the sequencer index
+     * @param layerIndex        the operator index
      * @param from              the from address (liquidity provider)
      * @param to                the to address (requestor of fast withdrawal)
      * @param amount            the sending amount to requestor
@@ -62,7 +62,7 @@ interface IStaking {
     /**
      * @dev                     an event that occurs when the liquidity provided amount is staked at finalizing after liquidity is provided to fast withdrawal
      * @param hashMessage       hashMessage of fast withdrawal
-     * @param layerIndex        the sequencer index
+     * @param layerIndex        the operator index
      * @param staker            the staker address (liquidity provider)
      * @param amount            the TON amount
      * @param lton              the lton amount
@@ -75,7 +75,7 @@ interface IStaking {
     /**
      * @dev                     the liquidity provided amount is sended to requestor when liquidity is provided
      * @param hashMessage       hashMessage of fast withdrawal
-     * @param layerIndex        the sequencer index
+     * @param layerIndex        the operator index
      * @param from              the from address (liquidity provider)
      * @param to                the to address (requestor of fast withdrawal)
      * @param amount            the sending amount to requestor
@@ -86,7 +86,7 @@ interface IStaking {
     /**
      * @dev                     the liquidity provided amount is staked at finalizing after liquidity is provided to fast withdrawal
      * @param hashMessage       hashMessage of fast withdrawal
-     * @param layerIndex        the sequencer index
+     * @param layerIndex        the operator index
      * @param staker            the staker address (liquidity provider)
      * @param amount            the TON amount
      * @return result           result
@@ -98,23 +98,23 @@ interface IStaking {
 
     /**
      * @dev                     restaking
-     * @param _index            the sequencer index or candidate index
-     * @param isCandidate       if it's true, it is a candidate, otherwise it's a sequencer
+     * @param _index            the operator index or candidate index
+     * @param isCandidate       if it's true, it is a candidate, otherwise it's a operator
      */
     function restake(uint32 _index, bool isCandidate) external;
 
     /**
      * @dev                     multi-restaking
-     * @param _index            the sequencer index or candidate index
+     * @param _index            the operator index or candidate index
      * @param n                 hashMessage of fast withdrawal
-     * @param isCandidate       if it's true, it is a candidate, otherwise it's a sequencer
+     * @param isCandidate       if it's true, it is a candidate, otherwise it's a operator
      */
     function restakeMulti(uint32 _index, uint256 n, bool isCandidate) external;
 
     /**
      * @dev                     withdrawal
-     * @param _index            the sequencer index or candidate index
-     * @param isCandidate       if it's true, it is a candidate, otherwise it's a sequencer
+     * @param _index            the operator index or candidate index
+     * @param isCandidate       if it's true, it is a candidate, otherwise it's a operator
      */
     function withdraw(uint32 _index, bool isCandidate) external ;
 
@@ -122,7 +122,7 @@ interface IStaking {
 
     /**
      * @dev                     view the number of pending withdrawals after unstaking
-     * @param layerIndex        the sequencer index or candidate index
+     * @param layerIndex        the operator index or candidate index
      * @param account           account address
      * @return totalRequests    the number of total requests
      * @return withdrawIndex    the start index of pending withdraw request
@@ -133,7 +133,7 @@ interface IStaking {
 
     /**
      * @dev                                 view the amount of pending withdrawals after unstaking
-     * @param layerIndex                    the sequencer index or candidate index
+     * @param layerIndex                    the operator index or candidate index
      * @param account                       account address
      * @return amount                       the amount of pending withdraw request
      * @return startIndex                   the start index of pending withdraw request
@@ -145,7 +145,7 @@ interface IStaking {
 
     /**
      * @dev                     view the amount available for withdrawal
-     * @param _index            the sequencer index or candidate index
+     * @param _index            the operator index or candidate index
      * @param account           account address
      * @return amount           the amount available for withdrawal
      * @return startIndex       the start index of available withdrawal
@@ -155,20 +155,20 @@ interface IStaking {
         external view returns (uint256 amount, uint32 startIndex, uint32 len);
 
     /**
-     * @dev                     the total amount of lton staked of all sequencer or all candidate
+     * @dev                     the total amount of lton staked of all operator or all candidate
      * @return amount           the total amount of lton
      */
     function totalStakedLton() external view returns (uint256 amount);
 
     /**
-     * @dev                     the total amount of lton staked of all sequencer or all candidate at special snapshot id
+     * @dev                     the total amount of lton staked of all operator or all candidate at special snapshot id
      * @param snapshotId        snapshot id
      * @return amount           the total amount of lton
      */
     function totalStakedLtonAt(uint256 snapshotId) external view returns (uint256 amount) ;
 
     /**
-     * @dev                     whether it was snapshotted and the total amount of lton staked of all sequencer or all candidate at special snapshot id
+     * @dev                     whether it was snapshotted and the total amount of lton staked of all operator or all candidate at special snapshot id
      * @param snapshotId        snapshot id
      * @return snapshotted      whether it was snapshotted
      * @return amount           the total amount of lton
@@ -176,23 +176,23 @@ interface IStaking {
     function totalStakedLtonAtSnapshot(uint256 snapshotId) external view returns (bool snapshotted, uint256 amount) ;
 
     /**
-     * @dev                     the amount of lton staked of special sequencer or candidate
-     * @param _index            the sequencer index or candidate index
+     * @dev                     the amount of lton staked of special operator or candidate
+     * @param _index            the operator index or candidate index
      * @return amount           the amount of lton
      */
     function balanceOfLton(uint32 _index) external view returns (uint256 amount) ;
 
     /**
-     * @dev                     the amount of lton staked of special sequencer or candidate  at special snapshot id
-     * @param _index            the sequencer index or candidate index
+     * @dev                     the amount of lton staked of special operator or candidate  at special snapshot id
+     * @param _index            the operator index or candidate index
      * @param snapshotId        snapshot id
      * @return amount           the amount of lton
      */
     function balanceOfLtonAt(uint32 _index, uint256 snapshotId) external view returns (uint256 amount) ;
 
     /**
-     * @dev                     whether it was snapshotted and the amount of lton staked of special sequencer or candidate  at special snapshot id
-     * @param _index            the sequencer index or candidate index
+     * @dev                     whether it was snapshotted and the amount of lton staked of special operator or candidate  at special snapshot id
+     * @param _index            the operator index or candidate index
      * @param snapshotId        snapshot id
      * @return snapshotted      whether it was snapshotted
      * @return amount           the amount of lton
@@ -200,16 +200,16 @@ interface IStaking {
     function balanceOfLtonAtSnapshot(uint32 _index, uint256 snapshotId) external view returns (bool snapshotted, uint256 amount) ;
 
     /**
-     * @dev                     the amount of lton staked of special sequencer's account or candidate's account
-     * @param _index            the sequencer index or candidate index
+     * @dev                     the amount of lton staked of special operator's account or candidate's account
+     * @param _index            the operator index or candidate index
      * @param account           the account address
      * @return amount           the amount of lton
      */
     function balanceOfLton(uint32 _index, address account) external view returns (uint256 amount);
 
     /**
-     * @dev                     the amount of lton staked of special sequencer's account or candidate's account at special snapshot id
-     * @param _index            the sequencer index or candidate index
+     * @dev                     the amount of lton staked of special operator's account or candidate's account at special snapshot id
+     * @param _index            the operator index or candidate index
      * @param account           the account address
      * @param snapshotId        snapshot id
      * @return amount           the amount of lton
@@ -217,8 +217,8 @@ interface IStaking {
     function balanceOfLtonAt(uint32 _index, address account, uint256 snapshotId) external view returns (uint256 amount);
 
     /**
-     * @dev                     whether it was snapshotted and the amount of lton staked of special sequencer's account or candidate's account at special snapshot id
-     * @param _index            the sequencer index or candidate index
+     * @dev                     whether it was snapshotted and the amount of lton staked of special operator's account or candidate's account at special snapshot id
+     * @param _index            the operator index or candidate index
      * @param account           the account address
      * @param snapshotId        snapshot id
      * @return snapshotted      whether it was snapshotted
@@ -227,8 +227,8 @@ interface IStaking {
     function balanceOfLtonAtSnapshot(uint32 _index, address account, uint256 snapshotId) external view returns (bool snapshotted, uint256 amount) ;
 
     /**
-     * @dev                     view the stake infomation of sequencer or canddiate
-     * @param _index            the sequencer index or candidate index
+     * @dev                     view the stake infomation of operator or canddiate
+     * @param _index            the operator index or candidate index
      * @param account           the account address
      * @return info             stakePrincipal : the TON amount of staked principal
      *                          stakelton : the ltonamount of staked
@@ -238,7 +238,7 @@ interface IStaking {
 
     /**
      * @dev                     view the amount staked in TON
-     * @param _index            the sequencer index or candidate index
+     * @param _index            the operator index or candidate index
      * @param account           the account address
      * @return amount           the amount staked in TON
      */
@@ -246,7 +246,7 @@ interface IStaking {
 
     /**
      * @dev                     view the amount staked in TON at special snapshot id
-     * @param _index            the sequencer index or candidate index
+     * @param _index            the operator index or candidate index
      * @param account           the account address
      * @param snapshotId        snapshot id
      * @return amount           the amount staked in TON
@@ -260,9 +260,9 @@ interface IStaking {
     function totalLayer2Deposits() external view returns (uint256 amount) ;
 
     /**
-     * @dev                     view the deposit amount of special layer2(sequencer)
-     * @param _index            the sequencer index
-     * @return amount           the TON amount staked of special layer2(sequencer)
+     * @dev                     view the deposit amount of special layer2(operator)
+     * @param _index            the operator index
+     * @return amount           the TON amount staked of special layer2(operator)
      */
     function layer2Deposits(uint32 _index) external view returns (uint256 amount) ;
 
@@ -273,7 +273,7 @@ interface IStaking {
     function totalStakeAccountList() external view returns (uint256) ;
 
     /**
-     * @dev                     the total amount of lton staked of all sequencer or all candidate
+     * @dev                     the total amount of lton staked of all operator or all candidate
      * @return amount           the total amount of lton staked
      */
     function getTotalLton() external view returns (uint256);
@@ -286,7 +286,7 @@ interface IStaking {
 
     /**
      * @dev                     view pending amount for withdrawal after unstaking
-     * @param _index            the sequencer index or candidate index
+     * @param _index            the operator index or candidate index
      * @param account           the account address
      * @return amount           the pending amount in TON
      */

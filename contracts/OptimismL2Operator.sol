@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./storages/OptimismSequencerStorage.sol";
+import "./storages/OptimismL2OperatorStorage.sol";
 import "./Staking.sol";
-import "./Sequencer.sol";
+import "./L2Operator.sol";
 import "./libraries/LibOptimism.sol";
-import "./interfaces/IOptimismSequencer.sol";
+import "./interfaces/IOptimismL2Operator.sol";
 // import "hardhat/console.sol";
 
-contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage, IOptimismSequencer {
+contract OptimismL2Operator is Staking, L2Operator, OptimismL2OperatorStorage, IOptimismL2Operator {
     using BytesParserLib for bytes;
     using SafeERC20 for IERC20;
 
@@ -23,13 +23,13 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage, IOpt
 
     /* ========== only TON ========== */
 
-    /// @inheritdoc IOptimismSequencer
+    /// @inheritdoc IOptimismL2Operator
     function onApprove(
         address sender,
         address spender,
         uint256 amount,
         bytes calldata data
-    ) external override(Sequencer, IOptimismSequencer) returns (bool) {
+    ) external override(L2Operator, IOptimismL2Operator) returns (bool) {
         require(ton == msg.sender, "EA");
         require(existedIndex(data.toUint32(0)), 'non-registered layer');
 
@@ -43,9 +43,9 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage, IOpt
 
     /* ========== only LayerManager ========== */
 
-    /// @inheritdoc IOptimismSequencer
+    /// @inheritdoc IOptimismL2Operator
     function create(uint32 _index, bytes memory _layerInfo)
-        external onlyLayer2Manager override(Sequencer, IOptimismSequencer) returns (bool)
+        external onlyLayer2Manager override(L2Operator, IOptimismL2Operator) returns (bool)
     {
         require(_layerInfo.length == 80, "wrong layerInfo");
         require(layerInfo[_index].length == 0, "already created");
@@ -56,8 +56,8 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage, IOpt
 
     /* ========== Anyone can execute ========== */
 
-    /// @inheritdoc IOptimismSequencer
-    function stake(uint32 _index, uint256 amount) external override(Sequencer, IOptimismSequencer)
+    /// @inheritdoc IOptimismL2Operator
+    function stake(uint32 _index, uint256 amount) external override(L2Operator, IOptimismL2Operator)
     {
         require(existedIndex(_index), 'non-registered layer');
         require(amount >= IERC20(ton).allowance(msg.sender, address(this)), "allowance allowance is insufficient is insufficient");
@@ -65,31 +65,31 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage, IOpt
         stake_(_index, 0, amount, address(0), 0);
     }
 
-    /// @inheritdoc IOptimismSequencer
+    /// @inheritdoc IOptimismL2Operator
     function unstake(uint32 _index, uint256 lton_) external override
     {
         _unstake(_index, 0, lton_, FwReceiptI(fwReceipt).debtInStaked(false, _index, msg.sender));
     }
 
-    /// @inheritdoc IOptimismSequencer
-    function existedIndex(uint32 _index) public view override(Sequencer, IOptimismSequencer) returns (bool) {
+    /// @inheritdoc IOptimismL2Operator
+    function existedIndex(uint32 _index) public view override(L2Operator, IOptimismL2Operator) returns (bool) {
         require(Layer2ManagerI(layer2Manager).existedLayer2Index(_index), 'non-registered layer');
         return true;
     }
 
-    /// @inheritdoc IOptimismSequencer
+    /// @inheritdoc IOptimismL2Operator
     function getLayerInfo(uint32 _index)
         public view override returns (LibOptimism.Info memory _layerInfo)
     {
         _layerInfo = LibOptimism.parseKey(layerInfo[_index]);
     }
 
-    function getLayerKey(uint32 _index) public view virtual override(Sequencer, IOptimismSequencer) returns (bytes32 layerKey_) {
+    function getLayerKey(uint32 _index) public view virtual override(L2Operator, IOptimismL2Operator) returns (bytes32 layerKey_) {
         layerKey_ = keccak256(layerInfo[_index]);
     }
 
-    /// @inheritdoc IOptimismSequencer
-    function getTvl(uint32 _index) public view override(Sequencer, IOptimismSequencer) returns (uint256 amount) {
+    /// @inheritdoc IOptimismL2Operator
+    function getTvl(uint32 _index) public view override(L2Operator, IOptimismL2Operator) returns (uint256 amount) {
 
         LibOptimism.Info memory _layerInfo = getLayerInfo(_index);
         try
@@ -100,7 +100,7 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage, IOpt
         }
     }
 
-    /// @inheritdoc IOptimismSequencer
+    /// @inheritdoc IOptimismL2Operator
     function getTvl(address l1Bridge, address l2ton) public view override returns (uint256 amount) {
         try
             L1BridgeI(l1Bridge).deposits(ton, l2ton) returns (uint256 a) {
@@ -110,29 +110,29 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage, IOpt
         }
     }
 
-    /// @inheritdoc IOptimismSequencer
-    function sequencer(uint32 _index) public view override(Sequencer, IOptimismSequencer) returns (address sequencer_) {
+    /// @inheritdoc IOptimismL2Operator
+    function operator(uint32 _index) public view override(L2Operator, IOptimismL2Operator) returns (address operator_) {
         address manager = LibOptimism.getAddressManager(layerInfo[_index]);
         if (manager == address(0)) return address(0);
         try
-            AddressManagerI(LibOptimism.getAddressManager(layerInfo[_index])).getAddress('OVM_Sequencer') returns (address a) {
-                sequencer_ = a;
+            AddressManagerI(LibOptimism.getAddressManager(layerInfo[_index])).getAddress('OVM_TONStakingManager') returns (address a) {
+                operator_ = a;
         } catch (bytes memory ) {
-            sequencer_ = address(0);
+            operator_ = address(0);
         }
     }
 
-    /// @inheritdoc IOptimismSequencer
-    function sequencer(address addressManager) public view override returns (address sequencer_) {
+    /// @inheritdoc IOptimismL2Operator
+    function operator(address addressManager) public view override returns (address operator_) {
         try
-            AddressManagerI(addressManager).getAddress('OVM_Sequencer') returns (address a) {
-                sequencer_ = a;
+            AddressManagerI(addressManager).getAddress('OVM_TONStakingManager') returns (address a) {
+                operator_ = a;
         } catch (bytes memory ) {
-            sequencer_ = address(0);
+            operator_ = address(0);
         }
     }
 
-    /// @inheritdoc IOptimismSequencer
+    /// @inheritdoc IOptimismL2Operator
     function L1CrossDomainMessenger(address addressManager) public view returns (address account_) {
         try
             AddressManagerI(addressManager).getAddress('OVM_L1CrossDomainMessenger') returns (address a) {
@@ -142,7 +142,7 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage, IOpt
         }
     }
 
-    /// @inheritdoc IOptimismSequencer
+    /// @inheritdoc IOptimismL2Operator
     function L1StandardBridge(address addressManager) public view override returns (address account_) {
         if (addressManager == address(0)) return address(0);
         try
@@ -153,7 +153,7 @@ contract OptimismSequencer is Staking, Sequencer, OptimismSequencerStorage, IOpt
         }
     }
 
-    /// @inheritdoc IOptimismSequencer
+    /// @inheritdoc IOptimismL2Operator
     function bridges(uint32 _index) public view override returns (address, address) {
         LibOptimism.Info memory _layerInfo = LibOptimism.parseKey(layerInfo[_index]);
         return (_layerInfo.l1Bridge, _layerInfo.l2Bridge) ;

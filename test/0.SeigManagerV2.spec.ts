@@ -46,7 +46,7 @@ describe('SeigManagerV2', () => {
                     [
                         seigManagerInfo.seigManagerV1,
                         deployed.layer2ManagerProxy.address,
-                        deployed.optimismSequencerProxy.address,
+                        deployed.optimismL2OperatorProxy.address,
                         deployed.candidateProxy.address
                     ],
                     seigManagerInfo.seigPerBlock,
@@ -70,7 +70,7 @@ describe('SeigManagerV2', () => {
                     [
                         seigManagerInfo.seigManagerV1,
                         deployed.layer2ManagerProxy.address,
-                        deployed.optimismSequencerProxy.address,
+                        deployed.optimismL2OperatorProxy.address,
                         deployed.candidateProxy.address
                     ],
                     seigManagerInfo.seigPerBlock,
@@ -89,7 +89,7 @@ describe('SeigManagerV2', () => {
             expect(await deployed.seigManagerV2Proxy.tot()).to.eq(seigManagerInfo.tot)
             expect(await deployed.seigManagerV2Proxy.seigManagerV1()).to.eq(seigManagerInfo.seigManagerV1)
             expect(await deployed.seigManagerV2Proxy.layer2Manager()).to.eq(deployed.layer2ManagerProxy.address)
-            expect(await deployed.seigManagerV2Proxy.optimismSequencer()).to.eq(deployed.optimismSequencerProxy.address)
+            expect(await deployed.seigManagerV2Proxy.optimismL2Operator()).to.eq(deployed.optimismL2OperatorProxy.address)
             expect(await deployed.seigManagerV2Proxy.candidate()).to.eq(deployed.candidateProxy.address)
 
             expect(await deployed.seigManagerV2Proxy.seigPerBlock()).to.eq(seigManagerInfo.seigPerBlock)
@@ -106,7 +106,7 @@ describe('SeigManagerV2', () => {
                     [
                         seigManagerInfo.seigManagerV1,
                         deployed.layer2ManagerProxy.address,
-                        deployed.optimismSequencerProxy.address,
+                        deployed.optimismL2OperatorProxy.address,
                         deployed.candidateProxy.address
                     ],
                     seigManagerInfo.seigPerBlock,

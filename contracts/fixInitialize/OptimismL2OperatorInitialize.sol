@@ -5,9 +5,9 @@ pragma solidity ^0.8.4;
 import "../storages/StakingStorage.sol";
 import "../proxy/BaseProxyStorage.sol";
 import "../common/AccessibleCommon.sol";
-import "../storages/OptimismSequencerStorage.sol";
+import "../storages/OptimismL2OperatorStorage.sol";
 
-contract OptimismSequencerInitialize is AccessibleCommon, BaseProxyStorage, StakingStorage, OptimismSequencerStorage {
+contract OptimismL2OperatorInitialize is AccessibleCommon, BaseProxyStorage, StakingStorage, OptimismL2OperatorStorage {
 
     /* ========== DEPENDENCIES ========== */
 

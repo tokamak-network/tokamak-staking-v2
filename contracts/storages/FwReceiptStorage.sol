@@ -7,14 +7,14 @@ contract FwReceiptStorage {
 
     address public ton;
     address public seigManagerV2;
-    address public optimismSequencer;
+    address public optimismL2Operator;
     address public candidate;
 
     /// hashMessage keccak256(_l2Messages)
     mapping(bytes32 => LibFastWithdraw.Message) public messages;
 
     /// account - layerIndex - sum of providing liquidity
-    mapping(address => mapping(uint32 => uint256)) sumOfReceiptsOfSequencers;
+    mapping(address => mapping(uint32 => uint256)) sumOfReceiptsOfL2Operators;
     mapping(address => mapping(uint32 => uint256)) sumOfReceiptsOfCandidates;
 
     /// account - hashMessages

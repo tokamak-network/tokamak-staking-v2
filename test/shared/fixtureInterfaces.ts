@@ -7,8 +7,8 @@ import { SeigManagerV2 } from '../../typechain-types/contracts/SeigManagerV2.sol
 import { Layer2ManagerProxy } from '../../typechain-types/contracts/proxy/Layer2ManagerProxy'
 import { Layer2Manager } from '../../typechain-types/contracts/Layer2Manager.sol'
 
-import { OptimismSequencerProxy } from '../../typechain-types/contracts/proxy/OptimismSequencerProxy'
-import { OptimismSequencer } from '../../typechain-types/contracts/OptimismSequencer'
+import { OptimismL2OperatorProxy } from '../../typechain-types/contracts/proxy/OptimismL2OperatorProxy'
+import { OptimismL2Operator } from '../../typechain-types/contracts/OptimismL2Operator'
 import { CandidateProxy } from '../../typechain-types/contracts/proxy/CandidateProxy'
 import { Candidate } from '../../typechain-types/contracts/Candidate'
 import { FwReceiptProxy } from '../../typechain-types/contracts/proxy/FwReceiptProxy'
@@ -76,7 +76,7 @@ interface Layer2Fixture  {
 
 interface OperatorFixture  {
     operator: string,
-    sequencerIndex: number,
+    operatorIndex: number,
     commission: number
 }
 
@@ -85,8 +85,8 @@ interface TonStakingV2Fixture  {
     seigManagerV2: SeigManagerV2
     layer2ManagerProxy: Layer2ManagerProxy
     layer2Manager: Layer2Manager
-    optimismSequencerProxy: OptimismSequencerProxy
-    optimismSequencer: OptimismSequencer
+    optimismL2OperatorProxy: OptimismL2OperatorProxy
+    optimismL2Operator: OptimismL2Operator
     candidateProxy: CandidateProxy
     candidate: Candidate
     fwReceiptProxy: FwReceiptProxy
@@ -95,7 +95,7 @@ interface TonStakingV2Fixture  {
     deployer: Signer,
     addr1: Signer,
     addr2: Signer,
-    sequencer1: Signer,
+    operator1: Signer,
     tonAdmin: Signer,
     addressManager: Lib_AddressManager,
     l1Messenger: MockL1Messenger,

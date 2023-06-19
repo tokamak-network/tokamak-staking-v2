@@ -9,11 +9,11 @@ contract Layer2ManagerStorage {
 
     IERC20 public ton;
     address public seigManagerV2;
-    address public optimismSequencer;
+    address public optimismL2Operator;
     address public candidate;
 
-    /// When creating a sequencer, the minimum deposit amount in TON
-    uint256 public minimumDepositForSequencer;
+    /// When creating a operator, the minimum deposit amount in TON
+    uint256 public minimumDepositForL2Operator;
 
     /// When Candidate is created, minimum staking amount in TON
     uint256 public minimumDepositForCandidate;
@@ -21,30 +21,30 @@ contract Layer2ManagerStorage {
     /// Number of waiting blocks after unstaking request before withdrawal
     uint256 public delayBlocksForWithdraw;
 
-    /// Maximum number of sequencers we can create
+    /// Maximum number of operators we can create
     uint256 public maxLayer2Count;
 
-    /// Sequencer's total security deposit amount
+    /// operator's total security deposit amount
     uint256 public totalSecurityDeposit;
 
-    /// SSeignorage not yet distributed to Sequencer
+    /// SSeignorage not yet distributed to operator
     uint256 public totalSeigs;
 
-    uint32[] public optimismSequencerIndexes ;
-    mapping (uint32 => bytes32) public optimismSequencerNames;
+    uint32[] public optimismL2OperatorIndexes ;
+    mapping (uint32 => bytes32) public optimismL2OperatorNames;
     mapping (uint32 => bytes32) public candidateNames;
 
-    /// Sequencer's security deposit amount and seigniorage
+    /// operator's security deposit amount and seigniorage
     mapping (uint32 => Layer2.Layer2Holdings) public holdings;
 
     /// hashMessage - (true or false)
     mapping (bytes32 => bool) public layerKeys;
 
     uint32[] public candidatesIndexes ; // 길이가 총 개수
-    uint32 public indexSequencers ;  // 계속 증가만 함. 인덱스로 사용
+    uint32 public indexOperators ;  // 계속 증가만 함. 인덱스로 사용
     uint32 public indexCandidates ;  // 계속 증가만 함. 인덱스로 사용
 
-    // What percentage of Sequencer's layerer's TVL will be used as a minimum security deposit
+    // What percentage of operator's layerer's TVL will be used as a minimum security deposit
     uint16 public ratioSecurityDepositOfTvl;
 
     bool internal free = true;

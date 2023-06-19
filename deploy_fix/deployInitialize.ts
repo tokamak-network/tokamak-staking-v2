@@ -19,7 +19,7 @@ import { FwReceipt } from '../typechain-types/contracts/FwReceipt.sol'
 
 import { SeigManagerV2Initialize } from '../typechain-types/contracts/fixInitialize/SeigManagerV2Initialize'
 import { Layer2ManagerInitialize } from '../typechain-types/contracts/fixInitialize/Layer2ManagerInitialize'
-import { OptimismSequencerInitialize } from '../typechain-types/contracts/fixInitialize/OptimismSequencerInitialize'
+
 import { CandidateInitialize } from '../typechain-types/contracts/fixInitialize/CandidateInitialize'
 import { FwReceiptInitialize } from '../typechain-types/contracts/fixInitialize/FwReceiptInitialize'
 

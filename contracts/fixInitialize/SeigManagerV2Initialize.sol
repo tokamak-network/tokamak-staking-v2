@@ -40,7 +40,7 @@ contract SeigManagerV2Initialize is AccessibleCommon, BaseProxyStorage, SeigMana
         wton = _wton;
         tot = _tot;
         layer2Manager =addr[1];
-        optimismSequencer = addr[2];
+        optimismL2Operator = addr[2];
         candidate = addr[3];
 
         seigPerBlock = _seigPerBlock;

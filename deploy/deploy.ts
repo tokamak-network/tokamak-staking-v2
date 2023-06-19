@@ -230,7 +230,7 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
         FwReceiptProxyDeployment.address
     )) as FwReceipt;
 
-
+        /*
     //==== initialize =================================
 
     await (await seigManagerV2Proxy.connect(deploySigner).initialize(
@@ -292,14 +292,14 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
 
     const upgradeToTx_layer2Manager = await layer2ManagerProxy.connect(deploySigner).upgradeTo(Layer2ManagerLogicDeployment.address);
     await upgradeToTx_layer2Manager.wait();
-
+        */
     const upgradeToTx_optimism = await optimismSequencerProxy.connect(deploySigner).upgradeTo(OptimismSequencerLogicDeployment.address);
     await upgradeToTx_optimism.wait();
 
 
     const upgradeToTx_candiate = await candidateProxy.connect(deploySigner).upgradeTo(CandidateLogicDeployment.address);
     await upgradeToTx_candiate.wait();
-
+        /*
     const upgradeToTx_fwReceipt = await fwReceiptProxy.connect(deploySigner).upgradeTo(FwReceiptLogicDeployment.address);
     await upgradeToTx_fwReceipt.wait();
 
@@ -317,7 +317,7 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
         seigManagerInfo.dao,
         seigManagerInfo.powerTon
         )).wait();
-
+        */
 
     //==== verify =================================
 
