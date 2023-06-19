@@ -21,9 +21,8 @@ interface ISeigManagerV2 {
      * @param increaseSeig_         issued seigniorage
      * @param totalSupplyOfTon_     total supply of TON
      * @param amount_               [ amountOfstaker : seignorage issued to stakers,
-     *                                amountOfsequencer : seignorage issued to sequencers,
-     *                                amountOfDao : seignorage issued to DAO,
-     *                                amountOfStosHolders : seignorage issued to sTOS holders]
+     *                                amountOfsequencer : seignorage issued to sequencers
+     *                                ]
      * @param prevIndex_            previous index
      * @param index_                updated index
      */
@@ -31,7 +30,7 @@ interface ISeigManagerV2 {
                     uint256 lastSeigBlock_,
                     uint256 increaseSeig_,
                     uint256 totalSupplyOfTon_,
-                    uint256[4] amount_,
+                    uint256[2] amount_,
                     uint256 prevIndex_,
                     uint256 index_
                     );

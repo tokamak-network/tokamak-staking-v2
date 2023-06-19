@@ -23,6 +23,7 @@ import { TestERC20 } from '../../typechain-types/contracts/test/TestERC20'
 import { LibOperator } from '../../typechain-types/contracts/libraries/LibOperator'
 import { LibOptimism } from '../../typechain-types/contracts/libraries/LibOptimism'
 import { LibFastWithdraw } from '../../typechain-types/contracts/libraries/LibFastWithdraw.sol'
+import { LibSeigManager } from '../../typechain-types/contracts/libraries/LibSeigManager'
 
 import Web3EthAbi from 'web3-eth-abi';
 import TON_ABI from '../../artifacts/contracts/test/TON.sol/TON.json'
@@ -150,11 +151,17 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
     const tonAdmin = await ethers.getSigner(tonAdminAddress);
 
 
-    const factoryLogic = await ethers.getContractFactory('SeigManagerV2')
-    const seigManagerV2Logic = (await factoryLogic.connect(deployer).deploy()) as SeigManagerV2
+    // LibSeigManager.sol
+    const LibSeigManager_ = await ethers.getContractFactory('LibSeigManager');
+    const libSeigManager = (await LibSeigManager_.connect(deployer).deploy()) as LibSeigManager
 
-    const factoryProxy = await ethers.getContractFactory('SeigManagerV2Proxy')
-    const seigManagerV2Proxy = (await factoryProxy.connect(deployer).deploy()) as SeigManagerV2Proxy
+    const SeigManagerV2_ = await ethers.getContractFactory('SeigManagerV2', {
+      signer: deployer, libraries: { LibSeigManager: libSeigManager.address  }
+  })
+    const seigManagerV2Logic = (await SeigManagerV2_.connect(deployer).deploy()) as SeigManagerV2
+
+    const SeigManagerV2Proxy_ = await ethers.getContractFactory('SeigManagerV2Proxy')
+    const seigManagerV2Proxy = (await SeigManagerV2Proxy_.connect(deployer).deploy()) as SeigManagerV2Proxy
     await seigManagerV2Proxy.connect(deployer).upgradeTo(seigManagerV2Logic.address);
 
     const seigManagerV2 = seigManagerV2Logic.attach(seigManagerV2Proxy.address) as SeigManagerV2

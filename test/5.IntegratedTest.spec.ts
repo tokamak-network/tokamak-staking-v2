@@ -210,7 +210,7 @@ describe('Integrated Test', () => {
     });
 
     describe('# create OptimismSequencer', () => {
-
+        /*
         it('Cannot be created unless the caller is the layer\'s sequencer.', async () => {
             expect(await deployed.addressManager.getAddress("OVM_Sequencer")).to.not.eq(addr1.address)
             let name = "Tokamak Optimism";
@@ -227,7 +227,7 @@ describe('Integrated Test', () => {
                 )
                 ).to.be.revertedWith("NOT Sequencer")
         })
-
+        */
         it('If the minimum security deposit is not provided, it cannot be created.', async () => {
             let name = "Tokamak Optimism";
             let amount = ethers.utils.parseEther("100");

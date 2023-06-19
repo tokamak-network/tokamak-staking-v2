@@ -7,8 +7,9 @@ import "./common/AccessibleCommon.sol";
 import "./libraries/SafeERC20.sol";
 import "./libraries/Layer2.sol";
 import "./libraries/LibArrays.sol";
+import "./libraries/LibSeigManager.sol";
 import "./interfaces/ISeigManagerV2.sol";
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 interface AutoRefactorCoinageI {
     function totalSupply() external view returns (uint256);
@@ -17,6 +18,11 @@ interface AutoRefactorCoinageI {
 interface Layer2ManagerI {
     function curTotalAmountsLayer2() external view returns (uint256 amount);
     function addSeigs(uint256 amount) external returns (bool);
+}
+
+interface SeigManagerI {
+    //400000000000000000000000000
+    function relativeSeigRate() external view returns (uint256 amount);
 }
 
 interface StakingI {
@@ -130,30 +136,25 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
             // calculate the increase amount of seig
             (
                 uint256 totalSupplyOfTon,
-                uint256 amountOfstaker,
-                uint256 amountOfsequencer,
-                uint256 amountOfDao,
-                uint256 amountOfStosHolders
+                uint256 amountOfStaker,
+                uint256 amountOfSequencer
             ) = _distribute(increaseSeig, totalLton);
 
             uint256 prevIndex = _indexLton;
 
             // 1. update indexLton
-            if (totalLton != 0 && amountOfstaker != 0){
-                _indexLton = calculateIndex(prevIndex, getLtonToTon(totalLton), amountOfstaker);
+            if (totalLton != 0 && amountOfStaker != 0){
+                _indexLton = calculateIndex(prevIndex, getLtonToTon(totalLton), amountOfStaker);
 
             }
 
             // 2. mint increaseSeig of ton in address(this)
-            if (increaseSeig != 0) ton.mint(address(this), increaseSeig);
+            // if (increaseSeig != 0) ton.mint(address(this), increaseSeig);
 
             // 3. give amountOfsequencer
-            if (amountOfsequencer != 0)
-                require(Layer2ManagerI(layer2Manager).addSeigs(amountOfsequencer),'FAIL addSeigs');
+            if (amountOfSequencer != 0)
+                require(Layer2ManagerI(layer2Manager).addSeigs(amountOfSequencer),'FAIL addSeigs');
 
-            // 3. transfer amountOfDao,amountOfStosHolders  (to dao, powerTON for tosHolders)
-            if (amountOfDao != 0 && dao != address(0)) ton.safeTransfer(dao, amountOfDao);
-            if (amountOfStosHolders != 0 && stosDistribute != address(0)) ton.safeTransfer(stosDistribute, amountOfStosHolders);
 
             lastSeigBlock = getCurrentBlockNumber();
 
@@ -161,7 +162,7 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
                 lastSeigBlock,
                 increaseSeig,
                 totalSupplyOfTon,
-                [amountOfstaker, amountOfsequencer, amountOfDao, amountOfStosHolders],
+                [amountOfStaker, amountOfSequencer],
                 prevIndex,
                 _indexLton
                 );
@@ -214,7 +215,7 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
     function totalSupplyTON() public view override returns (uint256 amount) {
         // 톤의 총공급량 = ton.totalSupply() - ton.balacneOf(wton)
         // + ((total staked amount in stakingV1)/1e-9)
-        amount = ton.totalSupply() + ton.balanceOf(wton) + AutoRefactorCoinageI(tot).totalSupply();
+        amount = ton.totalSupply() + AutoRefactorCoinageI(tot).totalSupply()/1e9 - ton.balanceOf(wton) ;
 
         // l2로 들어간것과 스테이킹 되는 것이 ton으로 이루어진다면 위의 총공급량으로만 집계 해도 된다.
     }
@@ -261,18 +262,32 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
     function _distribute(uint256 amount, uint256 totalLton) internal view returns (
         uint256 totalSupplyOfTon,
         uint256 amountOfstaker,
-        uint256 amountOfsequencer,
-        uint256 amountOfDao,
-        uint256 amountOfStosHolders
+        uint256 amountOfsequencer
     ){
-        totalSupplyOfTon = totalSupplyTON();
-        if (totalSupplyOfTon != 0) {
-            // console.log('amount %s', amount);
-            // console.log('getLtonToTon(totalLton) %s', getLtonToTon(totalLton));
 
-            // 1. (S/T) * TON seigniorage
-            //    TON stakers
-            if (totalLton != 0) amountOfstaker = amount *  getLtonToTon(totalLton) / totalSupplyOfTon  ;
+        totalSupplyOfTon = totalSupplyTON();
+        uint256 relativeSeigRate = SeigManagerI(seigManagerV1).relativeSeigRate();
+
+        uint256 totalStakedV1 = AutoRefactorCoinageI(tot).totalSupply()/1e9;
+        uint256 totalStakedV2 = getLtonToTon(totalLton);
+        uint256 totalStaked = totalStakedV1 + totalStakedV2;
+
+        console.log('totalSupplyOfTon %s', totalSupplyOfTon);
+        console.log('totalStakedV1 %s', totalStakedV1);
+        console.log('totalStakedV2 %s', totalStakedV2);
+        console.log('totalStaked %s', totalStaked);
+
+        if (totalSupplyOfTon != 0) {
+
+            (uint256 SeigRateForV1Stakers, uint256 SeigRateForV2Stakers) = LibSeigManager.calculateStakedSeig(
+                totalSupplyOfTon,
+                relativeSeigRate,
+                totalStakedV1,
+                totalStakedV2
+            );
+            console.log('SeigRateForV1Stakers %s', SeigRateForV1Stakers);
+            if (totalLton != 0 && SeigRateForV2Stakers != 0) amountOfstaker = amount *  SeigRateForV2Stakers / 1e18;
+            console.log('amountOfstaker %s', amountOfstaker);
 
             // 2. ((D+C)/T) * TON seigniorage
             //    to sequencer, D layer 2 reserve, C sequencer deposit
@@ -281,22 +296,7 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
             if (amountOfCD != 0){
                 amountOfsequencer = amount * amountOfCD / totalSupplyOfTon ;
             }
-
-            uint256 amount1 = amount - amountOfstaker - amountOfsequencer;
-
-            if (amount1 > 0 && ratesUnits != 0) {
-                // 3. 0.4 * ((T-S-D-C)/T) * TON seigniorage
-                //    TON stakers
-                if (ratesTonStakers != 0) amountOfstaker += amount1 * ratesTonStakers / ratesUnits;
-
-                // 4. 0.5 * ((T-S-D-C)/T) * TON seigniorage
-                //    TON DAO
-                if (ratesDao != 0) amountOfDao = amount1 * ratesDao / ratesUnits;
-
-                // 5. 0.1 * ((T-S-D-C)/T) * TON seigniorage
-                //    sTOS holders
-                if (ratesStosHolders != 0) amountOfStosHolders = amount1 * ratesStosHolders / ratesUnits;
-            }
+            console.log('amountOfsequencer %s', amountOfsequencer);
         }
     }
 
