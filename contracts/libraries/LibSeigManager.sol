@@ -15,6 +15,7 @@ library LibSeigManager
     {
         console.log('relativeSeigRate %s', relativeSeigRate);
 
+
         uint256 totalStaked = totalStakedV1 + totalStakedV2;
         uint256 stakeRate = totalStaked * 1e18 / totalSupplyOfTon ; // /1e8
         uint256 v1StakeRate = totalStakedV1 * 1e18 / totalSupplyOfTon; // / 1e18 ;
@@ -23,16 +24,19 @@ library LibSeigManager
         console.log('stakeRate %s', stakeRate);
         console.log('v1StakeRate %s', v1StakeRate);
         console.log('v2StakeRate %s', v2StakeRate);
+        //
+        //Seignorage rate for V1 stakers =
+        //(stake rate + 40% x v1 staked x (1 - stake rate)) / (total staked - v1 stake rate) / (1-v1 stake rate) //
 
         uint256 a = (stakeRate + v1StakeRate * (1e18 - stakeRate) * relativeSeigRate/1e27 / 1e18) ;
         console.log('a %s', a);
-        uint256 b = (stakeRate - v1StakeRate);
+        uint256 b = (totalStaked - v1StakeRate);
         console.log('b %s', b);
         uint256 c = (1e18 - v1StakeRate);
         console.log('c %s',  c);
 
         if (b == 0) SeigRateForV1Stakers = a / c;
-        else SeigRateForV1Stakers = a * 1e18/ b / c;
+        else SeigRateForV1Stakers = a / b / c;
 
         console.log('SeigRateForV1Stakers %s', SeigRateForV1Stakers);
 
