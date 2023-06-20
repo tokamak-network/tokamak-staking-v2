@@ -1,8 +1,27 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "Sequencer",
-  "sourceName": "contracts/Sequencer.sol",
+  "contractName": "OperatorI",
+  "sourceName": "contracts/Layer2Manager.sol",
   "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "addressManager",
+          "type": "address"
+        }
+      ],
+      "name": "L1StandardBridge",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
     {
       "inputs": [
         {
@@ -35,34 +54,37 @@
           "type": "uint32"
         }
       ],
-      "name": "existedIndex",
+      "name": "getLayerInfo",
       "outputs": [
         {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
+          "components": [
+            {
+              "internalType": "address",
+              "name": "addressManager",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "l1Bridge",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "l2Bridge",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "l2ton",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct LibOptimism.Info",
+          "name": "_layerInfo",
+          "type": "tuple"
         }
       ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint32",
-          "name": "_index",
-          "type": "uint32"
-        }
-      ],
-      "name": "getLayerKey",
-      "outputs": [
-        {
-          "internalType": "bytes32",
-          "name": "layerKey_",
-          "type": "bytes32"
-        }
-      ],
-      "stateMutability": "nonpayable",
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -81,41 +103,50 @@
           "type": "uint256"
         }
       ],
-      "stateMutability": "nonpayable",
+      "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
         {
           "internalType": "address",
-          "name": "sender",
+          "name": "l1Bridge",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "spender",
+          "name": "l2ton",
           "type": "address"
-        },
+        }
+      ],
+      "name": "getTvl",
+      "outputs": [
         {
           "internalType": "uint256",
           "name": "amount",
           "type": "uint256"
-        },
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_index",
+          "type": "uint32"
+        }
+      ],
+      "name": "layerInfo",
+      "outputs": [
         {
           "internalType": "bytes",
-          "name": "data",
+          "name": "",
           "type": "bytes"
         }
       ],
-      "name": "onApprove",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "nonpayable",
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -126,7 +157,7 @@
           "type": "uint32"
         }
       ],
-      "name": "sequencer",
+      "name": "operator",
       "outputs": [
         {
           "internalType": "address",
@@ -134,25 +165,26 @@
           "type": "address"
         }
       ],
-      "stateMutability": "nonpayable",
+      "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
         {
-          "internalType": "uint32",
-          "name": "_index",
-          "type": "uint32"
-        },
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
+          "internalType": "address",
+          "name": "addressManager",
+          "type": "address"
         }
       ],
-      "name": "stake",
-      "outputs": [],
-      "stateMutability": "nonpayable",
+      "name": "operator",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     }
   ],

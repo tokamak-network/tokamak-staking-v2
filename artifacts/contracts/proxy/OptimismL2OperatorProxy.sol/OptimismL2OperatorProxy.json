@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "OptimismSequencerProxy",
-  "sourceName": "contracts/proxy/OptimismSequencerProxy.sol",
+  "contractName": "OptimismL2OperatorProxy",
+  "sourceName": "contracts/proxy/OptimismL2OperatorProxy.sol",
   "abi": [
     {
       "anonymous": false,

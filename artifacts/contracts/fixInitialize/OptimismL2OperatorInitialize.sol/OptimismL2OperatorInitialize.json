@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "OptimismSequencerInitialize",
-  "sourceName": "contracts/fixInitialize/OptimismSequencerInitialize.sol",
+  "contractName": "OptimismL2OperatorInitialize",
+  "sourceName": "contracts/fixInitialize/OptimismL2OperatorInitialize.sol",
   "abi": [
     {
       "inputs": [],

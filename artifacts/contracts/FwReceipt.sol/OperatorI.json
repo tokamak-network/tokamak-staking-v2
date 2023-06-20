@@ -1,6 +1,6 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "SequencerI",
+  "contractName": "OperatorI",
   "sourceName": "contracts/FwReceipt.sol",
   "abi": [
     {

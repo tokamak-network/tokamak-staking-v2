@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "IOptimismSequencer",
-  "sourceName": "contracts/interfaces/IOptimismSequencer.sol",
+  "contractName": "IOptimismL2Operator",
+  "sourceName": "contracts/interfaces/IOptimismL2Operator.sol",
   "abi": [
     {
       "inputs": [
@@ -248,16 +248,16 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "addressManager",
-          "type": "address"
+          "internalType": "uint32",
+          "name": "_index",
+          "type": "uint32"
         }
       ],
-      "name": "sequencer",
+      "name": "operator",
       "outputs": [
         {
           "internalType": "address",
-          "name": "sequencer_",
+          "name": "operator_",
           "type": "address"
         }
       ],
@@ -267,16 +267,16 @@
     {
       "inputs": [
         {
-          "internalType": "uint32",
-          "name": "_index",
-          "type": "uint32"
+          "internalType": "address",
+          "name": "addressManager",
+          "type": "address"
         }
       ],
-      "name": "sequencer",
+      "name": "operator",
       "outputs": [
         {
           "internalType": "address",
-          "name": "sequencer_",
+          "name": "operator_",
           "type": "address"
         }
       ],

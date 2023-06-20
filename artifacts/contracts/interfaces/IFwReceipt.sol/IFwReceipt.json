@@ -400,11 +400,11 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "_optimismSequencer",
+          "name": "_optimismL2Operator",
           "type": "address"
         }
       ],
-      "name": "setOptimismSequencer",
+      "name": "setOptimismL2Operator",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

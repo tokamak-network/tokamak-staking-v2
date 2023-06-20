@@ -15,7 +15,7 @@
         {
           "indexed": false,
           "internalType": "address",
-          "name": "_sequencer",
+          "name": "_operator",
           "type": "address"
         },
         {
@@ -52,7 +52,7 @@
         {
           "indexed": false,
           "internalType": "uint32",
-          "name": "_sequencerIndex",
+          "name": "_operatorIndex",
           "type": "uint32"
         },
         {
@@ -83,7 +83,7 @@
         {
           "indexed": false,
           "internalType": "address",
-          "name": "_sequencer",
+          "name": "_operator",
           "type": "address"
         },
         {
@@ -123,7 +123,7 @@
           "type": "uint256"
         }
       ],
-      "name": "CreatedOptimismSequencer",
+      "name": "CreatedOptimismL2Operator",
       "type": "event"
     },
     {
@@ -138,7 +138,7 @@
         {
           "indexed": false,
           "internalType": "address",
-          "name": "_sequencer",
+          "name": "_operator",
           "type": "address"
         },
         {
@@ -250,7 +250,7 @@
       "inputs": [
         {
           "internalType": "uint32",
-          "name": "_sequencerIndex",
+          "name": "_operatorIndex",
           "type": "uint32"
         },
         {
@@ -313,7 +313,7 @@
           "type": "uint256"
         }
       ],
-      "name": "createOptimismSequencer",
+      "name": "createOptimismL2Operator",
       "outputs": [
         {
           "internalType": "uint32",
@@ -354,7 +354,7 @@
       "inputs": [
         {
           "internalType": "uint32",
-          "name": "_sequencerIndex",
+          "name": "_operatorIndex",
           "type": "uint32"
         },
         {
@@ -461,12 +461,12 @@
       "outputs": [
         {
           "internalType": "bytes32[]",
-          "name": "optimismSequencerNames_",
+          "name": "optimismL2OperatorNames_",
           "type": "bytes32[]"
         },
         {
           "internalType": "uint32[]",
-          "name": "optimismSequencerIndexes_",
+          "name": "optimismL2OperatorIndexes_",
           "type": "uint32[]"
         },
         {
@@ -499,7 +499,7 @@
       "inputs": [
         {
           "internalType": "uint32",
-          "name": "_sequencerIndex",
+          "name": "_operatorIndex",
           "type": "uint32"
         },
         {
@@ -576,11 +576,11 @@
           "type": "uint32"
         }
       ],
-      "name": "sequencer",
+      "name": "operator",
       "outputs": [
         {
           "internalType": "address",
-          "name": "sequencer_",
+          "name": "operator_",
           "type": "address"
         }
       ],
@@ -630,11 +630,11 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "_minimumDepositForSequencer",
+          "name": "_minimumDepositForOperator",
           "type": "uint256"
         }
       ],
-      "name": "setMinimumDepositForSequencer",
+      "name": "setMinimumDepositForL2Operator",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

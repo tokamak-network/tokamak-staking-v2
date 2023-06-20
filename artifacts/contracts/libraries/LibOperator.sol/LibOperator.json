@@ -12,7 +12,7 @@
         },
         {
           "internalType": "uint32",
-          "name": "sequencerIndex",
+          "name": "operatorIndex",
           "type": "uint32"
         }
       ],
@@ -46,7 +46,7 @@
             },
             {
               "internalType": "uint32",
-              "name": "sequencerIndex",
+              "name": "operatorIndex",
               "type": "uint32"
             },
             {

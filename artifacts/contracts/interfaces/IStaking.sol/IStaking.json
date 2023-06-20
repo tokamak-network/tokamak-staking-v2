@@ -83,7 +83,7 @@
         {
           "indexed": false,
           "internalType": "uint32",
-          "name": "sequencerIndex",
+          "name": "operatorIndex",
           "type": "uint32"
         },
         {
@@ -120,7 +120,7 @@
         {
           "indexed": false,
           "internalType": "uint32",
-          "name": "sequencerIndex",
+          "name": "operatorIndex",
           "type": "uint32"
         },
         {
@@ -155,9 +155,9 @@
         },
         {
           "indexed": false,
-          "internalType": "uint16",
-          "name": "commission",
-          "type": "uint16"
+          "internalType": "uint256",
+          "name": "commissionLton",
+          "type": "uint256"
         }
       ],
       "name": "Staked",
@@ -169,7 +169,7 @@
         {
           "indexed": false,
           "internalType": "uint32",
-          "name": "sequencerIndex",
+          "name": "operatorIndex",
           "type": "uint32"
         },
         {
@@ -206,7 +206,7 @@
         {
           "indexed": false,
           "internalType": "uint32",
-          "name": "sequencerIndex",
+          "name": "operatorIndex",
           "type": "uint32"
         },
         {

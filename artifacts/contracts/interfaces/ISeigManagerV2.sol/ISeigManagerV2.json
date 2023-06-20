@@ -70,9 +70,9 @@
         },
         {
           "indexed": false,
-          "internalType": "uint256[4]",
+          "internalType": "uint256[2]",
           "name": "amount_",
-          "type": "uint256[4]"
+          "type": "uint256[2]"
         },
         {
           "indexed": false,
