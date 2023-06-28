@@ -31,8 +31,8 @@ interface StakingI {
 }
 
 interface DaoI {
-    function claimStaker(address to, uint256 amount) external returns (uint256);
-    function claimOperator(address to, uint256 amount) external returns (uint256);
+    function claimStaker(address to, uint256 amount) external;
+    function claimOperator(address to, uint256 amount) external;
 }
 
 contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Storage, ISeigManagerV2 {

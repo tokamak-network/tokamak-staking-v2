@@ -21,6 +21,7 @@ import { MockL2Messenger } from '../../typechain-types/contracts/test/MockL2Mess
 import { MockL1Bridge } from '../../typechain-types/contracts/test/MockL1Bridge.sol'
 import { MockL2Bridge } from '../../typechain-types/contracts/test/MockL2Bridge'
 import { TestERC20 } from '../../typechain-types/contracts/test/TestERC20'
+import { TestDAO } from '../../typechain-types/contracts/test/TestDAO.sol'
 
 interface StakeSnapshotFixture  {
     id: BigNumber,
@@ -103,8 +104,7 @@ interface TonStakingV2Fixture  {
     l1Bridge: MockL1Bridge,
     l2Bridge: MockL2Bridge,
     l2ton: TestERC20,
-    dao: Signer,
-    stosDistribute: Signer
+    dao: TestDAO
 }
 
 

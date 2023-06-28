@@ -20,10 +20,7 @@ describe('SeigManagerV2', () => {
         layer2Manager: "",
         seigPerBlock: ethers.BigNumber.from("3920000000000000000"),
         minimumBlocksForUpdateSeig: 300,
-        ratesTonStakers: 4000,
-        ratesDao: 5000,
-        ratesStosHolders: 1000,
-        ratesUnits: 10000
+
     }
 
     before('create fixture loader', async () => {
@@ -50,13 +47,7 @@ describe('SeigManagerV2', () => {
                         deployed.candidateProxy.address
                     ],
                     seigManagerInfo.seigPerBlock,
-                    seigManagerInfo.minimumBlocksForUpdateSeig,
-                    [
-                        seigManagerInfo.ratesTonStakers,
-                        seigManagerInfo.ratesDao,
-                        seigManagerInfo.ratesStosHolders,
-                        seigManagerInfo.ratesUnits,
-                    ]
+                    seigManagerInfo.minimumBlocksForUpdateSeig
                 )
                 ).to.be.revertedWith("Accessible: Caller is not an admin")
         })
@@ -74,13 +65,7 @@ describe('SeigManagerV2', () => {
                         deployed.candidateProxy.address
                     ],
                     seigManagerInfo.seigPerBlock,
-                    seigManagerInfo.minimumBlocksForUpdateSeig,
-                    [
-                        seigManagerInfo.ratesTonStakers,
-                        seigManagerInfo.ratesDao,
-                        seigManagerInfo.ratesStosHolders,
-                        seigManagerInfo.ratesUnits,
-                    ]
+                    seigManagerInfo.minimumBlocksForUpdateSeig
                     )
             );
 
@@ -110,13 +95,7 @@ describe('SeigManagerV2', () => {
                         deployed.candidateProxy.address
                     ],
                     seigManagerInfo.seigPerBlock,
-                    seigManagerInfo.minimumBlocksForUpdateSeig,
-                    [
-                        seigManagerInfo.ratesTonStakers,
-                        seigManagerInfo.ratesDao,
-                        seigManagerInfo.ratesStosHolders,
-                        seigManagerInfo.ratesUnits,
-                    ]
+                    seigManagerInfo.minimumBlocksForUpdateSeig
                 )
                 ).to.be.revertedWith("already initialize")
         })
@@ -197,140 +176,37 @@ describe('SeigManagerV2', () => {
 
     });
 
-    describe('# setDividendRates', () => {
-
-        it('setDividendRates can not be executed by not owner', async () => {
-
-            let rates = {
-                ratesDao: 5000,           // 0.5 , 0.002 %
-                ratesStosHolders: 2000,  // 0.2
-                ratesTonStakers: 3000,   // 0.3
-                ratesUnits: 10000
-            }
+    describe('# setDao', () => {
+        it('setDao can not be executed by not owner', async () => {
             await expect(
-                deployed.seigManagerV2.connect(addr1).setDividendRates(
-                    rates.ratesDao,
-                    rates.ratesStosHolders,
-                    rates.ratesTonStakers,
-                    rates.ratesUnits
+                deployed.seigManagerV2.connect(addr1).setDao(
+                    deployed.dao.address
                 )
                 ).to.be.revertedWith("Accessible: Caller is not an admin")
         })
 
-        it('setDividendRates can be executed by only owner ', async () => {
-            let rates = {
-                ratesDao: 5000,           // 0.5 , 0.002 %
-                ratesStosHolders: 2000,  // 0.2
-                ratesTonStakers: 3000,   // 0.3
-                ratesUnits: 10000
-            }
+        it('setDao can be executed by only owner ', async () => {
 
             await snapshotGasCost(
-                deployed.seigManagerV2.connect(deployer).setDividendRates(
-                    rates.ratesDao,
-                    rates.ratesStosHolders,
-                    rates.ratesTonStakers,
-                    rates.ratesUnits
-                )
-            )
-            expect(await deployed.seigManagerV2.ratesDao()).to.eq(rates.ratesDao)
-            expect(await deployed.seigManagerV2.ratesStosHolders()).to.eq(rates.ratesStosHolders)
-            expect(await deployed.seigManagerV2.ratesTonStakers()).to.eq(rates.ratesTonStakers)
-            expect(await deployed.seigManagerV2.ratesUnits()).to.eq(rates.ratesUnits)
-        })
-
-        it('Values that are all the same as the existing set values are not processed.', async () => {
-            let rates = {
-                ratesDao: 5000,           // 0.5 , 0.002 %
-                ratesStosHolders: 2000,  // 0.2
-                ratesTonStakers: 3000,   // 0.3
-                ratesUnits: 10000
-            }
-
-            await expect(
-                deployed.seigManagerV2.connect(deployer).setDividendRates(
-                    rates.ratesDao,
-                    rates.ratesStosHolders,
-                    rates.ratesTonStakers,
-                    rates.ratesUnits
-                )
-                ).to.be.revertedWith("same")
-        })
-
-        it('The sum of the ratios must equal ratioUnit.', async () => {
-            let rates = {
-                ratesDao: 1000,
-                ratesStosHolders: 2000,
-                ratesTonStakers: 3000,
-                ratesUnits: 10000
-            }
-
-            await expect(
-                deployed.seigManagerV2.connect(deployer).setDividendRates(
-                    rates.ratesDao,
-                    rates.ratesStosHolders,
-                    rates.ratesTonStakers,
-                    rates.ratesUnits
-                )
-                ).to.be.revertedWith("sum of ratio is wrong")
-        })
-
-        it('ratioUnit cannot be zero.', async () => {
-            let rates = {
-                ratesDao: 1000,
-                ratesStosHolders: 2000,
-                ratesTonStakers: 3000,
-                ratesUnits: 0
-            }
-
-            await expect(
-                deployed.seigManagerV2.connect(deployer).setDividendRates(
-                    rates.ratesDao,
-                    rates.ratesStosHolders,
-                    rates.ratesTonStakers,
-                    rates.ratesUnits
-                )
-                ).to.be.revertedWith("wrong ratesUnits")
-        })
-    });
-
-    describe('# setAddress', () => {
-        it('setAddress can not be executed by not owner', async () => {
-            await expect(
-                deployed.seigManagerV2.connect(addr1).setAddress(
-                    deployed.dao.address,
-                    deployed.stosDistribute.address
-                )
-                ).to.be.revertedWith("Accessible: Caller is not an admin")
-        })
-
-        it('setAddress can be executed by only owner ', async () => {
-
-            await snapshotGasCost(
-                deployed.seigManagerV2.connect(deployer).setAddress(
-                    deployed.dao.address,
-                    deployed.stosDistribute.address
+                deployed.seigManagerV2.connect(deployer).setDao(
+                    deployed.dao.address
                 )
             )
             expect(await deployed.seigManagerV2.dao()).to.eq(deployed.dao.address)
-            expect(await deployed.seigManagerV2.stosDistribute()).to.eq(deployed.stosDistribute.address)
 
         })
 
         it('Addresses that are all the same as the existing set address are not processed.', async () => {
             await expect(
-                deployed.seigManagerV2.connect(deployer).setAddress(
-                    deployed.dao.address,
-                    deployed.stosDistribute.address
+                deployed.seigManagerV2.connect(deployer).setDao(
+                    deployed.dao.address
                 )
                 ).to.be.revertedWith("same")
 
-            await deployed.seigManagerV2.connect(deployer).setAddress(
-                ethers.constants.AddressZero,
+            await deployed.seigManagerV2.connect(deployer).setDao(
                 ethers.constants.AddressZero
             )
             expect(await deployed.seigManagerV2.dao()).to.eq(ethers.constants.AddressZero)
-            expect(await deployed.seigManagerV2.stosDistribute()).to.eq(ethers.constants.AddressZero)
 
         })
     });

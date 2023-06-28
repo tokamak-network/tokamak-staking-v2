@@ -19,6 +19,7 @@ import { MockL2Messenger } from '../../typechain-types/contracts/test/MockL2Mess
 import { MockL1Bridge } from '../../typechain-types/contracts/test/MockL1Bridge.sol'
 import { MockL2Bridge } from '../../typechain-types/contracts/test/MockL2Bridge'
 import { TestERC20 } from '../../typechain-types/contracts/test/TestERC20'
+import { TestDAO } from '../../typechain-types/contracts/test/TestDAO.sol'
 
 import { LibOperator } from '../../typechain-types/contracts/libraries/LibOperator'
 import { LibOptimism } from '../../typechain-types/contracts/libraries/LibOptimism'
@@ -145,7 +146,7 @@ const iL1CrossDomainMessengerAbi = [
     ] ;
 export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture> {
 
-    const [deployer, addr1, addr2, operator1, dao, stosDistribute ] = await ethers.getSigners();
+    const [deployer, addr1, addr2, operator1, dao ] = await ethers.getSigners();
 
     await ethers.provider.send("hardhat_impersonateAccount",[tonAdminAddress]);
     const tonAdmin = await ethers.getSigner(tonAdminAddress);
@@ -222,7 +223,6 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
     await fwReceiptProxy.connect(deployer).upgradeTo(FwReceiptLogic_.address);
     const fwReceipt = FwReceiptLogic_.attach(fwReceiptProxy.address) as FwReceipt
 
-
     //
     const ton = (await ethers.getContractAt(TON_ABI.abi, tonAddress, deployer)) as TON
 
@@ -231,7 +231,10 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
         tonAdmin.address,
         "0x8ac7230489e80000",
       ]);
-    await ton.connect(tonAdmin).addMinter(seigManagerV2Proxy.address);
+
+    await ton.connect(tonAdmin).mint(tonAdmin.address, ethers.utils.parseEther("1000"));
+
+    let balance = await ton.balanceOf(tonAdmin.address)
 
     //---------
 
@@ -259,6 +262,16 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
     const TestERC20 = await ethers.getContractFactory('TestERC20')
     const l2ton = (await TestERC20.connect(deployer).deploy()) as TestERC20
 
+    const TestDAO = await ethers.getContractFactory('TestDAO')
+    const testDAO = (await TestDAO.connect(deployer).deploy()) as TestDAO
+
+    await testDAO.connect(deployer).setAddress(
+      ton.address,
+      seigManagerV2Proxy.address
+    );
+
+    await ton.connect(tonAdmin).transfer(testDAO.address, balance);
+
     return  {
         seigManagerV2Proxy: seigManagerV2Proxy,
         seigManagerV2: seigManagerV2,
@@ -282,8 +295,7 @@ export const stakingV2Fixtures = async function (): Promise<TonStakingV2Fixture>
         l1Bridge: l1Bridge,
         l2Bridge: l2Bridge,
         l2ton: l2ton,
-        dao: dao,
-        stosDistribute: stosDistribute
+        dao: testDAO
     }
 }
 

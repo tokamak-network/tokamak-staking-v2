@@ -14,12 +14,12 @@ interface AddressManagerI {
     function getAddress(string memory _name) external view returns (address);
 }
 
-interface SeigManagerV2I {
-    function claim(address to, uint256 amount) external;
-}
-
 interface StakingLayer2I {
     function balanceOfLton(uint32 layerKey, address account) external view returns (uint256 amount);
+}
+
+interface SeigManagerV2I {
+    function claimOperator(address to, uint256 amount) external;
 }
 
 interface OperatorI {
@@ -48,6 +48,7 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
     }
 
     /* ========== onlyOwner ========== */
+
 
     /// @inheritdoc ILayer2Manager
     function setMaxLayer2Count(uint256 _maxLayer2Count)
@@ -276,7 +277,7 @@ contract  Layer2Manager is AccessibleCommon, BaseProxyStorage, Layer2ManagerStor
         address operator_ = operator(_layerIndex);
         require(operator_ != address(0), 'zero operator');
         holdings[_layerIndex].seigs = 0;
-        SeigManagerV2I(seigManagerV2).claim(operator_, amount);
+        SeigManagerV2I(seigManagerV2).claimOperator(operator_, amount);
         emit Claimed(_layerIndex, operator_, amount);
     }
 
