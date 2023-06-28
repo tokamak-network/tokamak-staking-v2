@@ -13,7 +13,6 @@ contract SeigManagerV2Storage {
     IERC20 public ton;
     address public wton;
     address public dao;
-    address public stosDistribute;
     address public seigManagerV1;
     address public tot;
     address public layer2Manager;
@@ -29,13 +28,12 @@ contract SeigManagerV2Storage {
     /// seigniorage issuance start block
     uint256 public startBlock;
 
-    ///  ratesTonStakers + ratesDao + ratesStosHolders = ratesUnits
-    uint16 public ratesTonStakers; // divided ratesUnits when using
-    uint16 public ratesDao;   // divided ratesUnits when using
-    uint16 public ratesStosHolders; // divided ratesUnits when using
-
-    uint16 public ratesUnits; // 10000
     uint32 public minimumBlocksForUpdateSeig; // the number of block
+    uint256 public cumulativeSeigsOfIndexLton; // the cumulative seigniorage given to Lton
+    uint256 public cumulativeSeigsOfOperators; // the cumulative seigniorage given to operators
+    uint256 public claimedSeigsOfIndexLton;
+    uint256 public claimedSeigsOfOperators;
+
     bool internal free = true;
 
     uint256 internal _currentSnapshotId;

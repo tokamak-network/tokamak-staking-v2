@@ -33,10 +33,7 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
         powerTon: "0x970298189050aBd4dc4F119ccae14ee145ad9371",
         seigPerBlock: hre.ethers.BigNumber.from("3920000000000000000"),
         minimumBlocksForUpdateSeig: 2400,
-        ratesTonStakers: 4000,
-        ratesDao: 5000,
-        ratesStosHolders: 1000,
-        ratesUnits: 10000
+
     }
 
     let layer2ManagerInfo_mainnet  = {
@@ -55,10 +52,7 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
         powerTon: "0x031B5b13Df847eB10c14451EB2a354EfEE23Cc94",
         seigPerBlock: hre.ethers.BigNumber.from("3920000000000000000"),
         minimumBlocksForUpdateSeig: 2400,
-        ratesTonStakers: 4000,
-        ratesDao: 5000,
-        ratesStosHolders: 1000,
-        ratesUnits: 10000
+
     }
 
     let layer2ManagerInfo_goerli  = {
@@ -244,13 +238,7 @@ const deployTonStakingV2: DeployFunction = async function (hre: HardhatRuntimeEn
             candidateProxy.address
         ],
         seigManagerInfo.seigPerBlock,
-        seigManagerInfo.minimumBlocksForUpdateSeig,
-        [
-            seigManagerInfo.ratesTonStakers,
-            seigManagerInfo.ratesDao,
-            seigManagerInfo.ratesStosHolders,
-            seigManagerInfo.ratesUnits,
-        ]
+        seigManagerInfo.minimumBlocksForUpdateSeig
     )).wait();
 
 

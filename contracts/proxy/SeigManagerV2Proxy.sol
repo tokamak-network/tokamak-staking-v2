@@ -16,8 +16,7 @@ contract SeigManagerV2Proxy is BaseProxy, SeigManagerV2Storage {
         address _tot,
         address[4] calldata addr, // _seigManagerV1, _layer2Manager, _optimismL2Operator, _candidate
         uint256 _seigPerBlock,
-        uint32 _minimumBlocksForUpdateSeig,
-        uint16[4] calldata _rates   // ratesTonStakers, ratesDao, ratesStosHolders,ratesUnits
+        uint32 _minimumBlocksForUpdateSeig
     )
         external onlyOwner
     {
@@ -34,14 +33,6 @@ contract SeigManagerV2Proxy is BaseProxy, SeigManagerV2Storage {
 
         require(address(ton) == address(0), "already initialize");
 
-        require(_rates[3] != 0, "wrong ratesUnits");
-        require((_rates[0] + _rates[1] + _rates[2]) ==  _rates[3], 'sum of ratio is wrong');
-
-        ratesUnits = _rates[3];
-        ratesTonStakers = _rates[0];
-        ratesDao = _rates[1];
-        ratesStosHolders = _rates[2];
-
         seigManagerV1 = addr[0];
         ton = IERC20(_ton);
         wton = _wton;
@@ -54,10 +45,6 @@ contract SeigManagerV2Proxy is BaseProxy, SeigManagerV2Storage {
         minimumBlocksForUpdateSeig = _minimumBlocksForUpdateSeig;
         _indexLton = 1 ether;
 
-        // _indexLtonSnapshots.ids.push(_currentSnapshotId);
-        // _indexLtonSnapshots.values.push(1 ether);
-
-        // _snapshot();
     }
 
     /* ========== internal ========== */

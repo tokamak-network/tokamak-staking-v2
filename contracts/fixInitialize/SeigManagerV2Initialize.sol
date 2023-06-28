@@ -24,17 +24,10 @@ contract SeigManagerV2Initialize is AccessibleCommon, BaseProxyStorage, SeigMana
         address _tot,
         address[4] calldata addr, // _seigManagerV1, _layer2Manager, _optimismSequencer, _candidate
         uint256 _seigPerBlock,
-        uint32 _minimumBlocksForUpdateSeig,
-        uint16[4] calldata _rates   // ratesTonStakers, ratesDao, ratesStosHolders,ratesUnits
+        uint32 _minimumBlocksForUpdateSeig
     )
         external onlyOwner
     {
-
-        ratesUnits = _rates[3];
-        ratesTonStakers = _rates[0];
-        ratesDao = _rates[1];
-        ratesStosHolders = _rates[2];
-
         seigManagerV1 = addr[0];
         ton = IERC20(_ton);
         wton = _wton;

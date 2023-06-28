@@ -36,12 +36,20 @@ interface ISeigManagerV2 {
                     );
 
     /**
-     * @dev                 an event that occurs when claim is executed by layer2Manager, optimismL2Operator, and candidate contracts.
+     * @dev                 an event that occurs when claim is executed by operatoe or candidate contracts.
      * @param caller        the caller address (layer2Manager, optimismL2Operator, or candidate contracts.)
      * @param to            the to address
      * @param amount        the amount sended
      */
-    event Claimed(address caller, address to, uint256 amount);
+    event ClaimedStaker(address caller, address to, uint256 amount);
+
+    /**
+     * @dev                 an event that occurs when claim is executed by layer2Managercontracts.
+     * @param caller        the caller address (layer2Manager, optimismL2Operator, or candidate contracts.)
+     * @param to            the to address
+     * @param amount        the amount sended
+     */
+    event ClaimedOperator(address caller, address to, uint256 amount);
 
     /* ========== onlyOwner ========== */
 
@@ -64,22 +72,10 @@ interface ISeigManagerV2 {
     function setLastSeigBlock(uint256 _lastSeigBlock) external;
 
     /**
-     * @dev                         Setting seigniorage distribution ratio used when issuing seignorage
-     *                              set _ratesDao, _ratesStosHolders, _ratesTonStakers
-     *                              must be (_ratesDao + _ratesStosHolders + _ratesTonStakers = _ratesUnits )
-     * @param _ratesDao             Rate given to Dao
-     * @param _ratesStosHolders     Rate given to StosHolder
-     * @param _ratesTonStakers      Rate given to TonStakers
-     * @param _ratesUnits           10000
-     */
-    function setDividendRates(uint16 _ratesDao, uint16 _ratesStosHolders, uint16 _ratesTonStakers, uint16 _ratesUnits) external;
-
-    /**
-     * @dev                     set _dao, _stosDistribute
+     * @dev                     set _dao
      * @param _dao              dao address
-     * @param _stosDistribute   stosDistributer address
      */
-    function setAddress(address _dao, address _stosDistribute) external;
+    function setDao(address _dao) external;
 
     /* ========== only Layer2Manager Or Optimism Or Candidate ========== */
 
@@ -89,7 +85,16 @@ interface ISeigManagerV2 {
      * @param _to       to address
      * @param _amount   amount of TON
      */
-    function claim(address _to, uint256 _amount) external;
+    function claimStaker(address _to, uint256 _amount) external;
+
+    /**
+     * @dev             Send {amount} TON to {to} address
+     *                  Can be executed by layer2Manager, optimismL2Operator, and candidate contracts.
+     * @param _to       to address
+     * @param _amount   amount of TON
+     */
+    function claimOperator(address _to, uint256 _amount) external;
+
 
     /* ========== Anyone can execute ========== */
 

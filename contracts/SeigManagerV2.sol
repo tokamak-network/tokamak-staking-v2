@@ -30,6 +30,11 @@ interface StakingI {
     function getTotalLtonAt(uint256 snapshotId) external view returns (uint256) ;
 }
 
+interface DaoI {
+    function claimStaker(address to, uint256 amount) external returns (uint256);
+    function claimOperator(address to, uint256 amount) external returns (uint256);
+}
+
 contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Storage, ISeigManagerV2 {
     /* ========== DEPENDENCIES ========== */
     using SafeERC20 for IERC20;
@@ -61,48 +66,45 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
     }
 
     /// @inheritdoc ISeigManagerV2
-    function setDividendRates(uint16 _ratesDao, uint16 _ratesStosHolders, uint16 _ratesTonStakers, uint16 _ratesUnits) external override onlyOwner {
-        require(
-            !(ratesDao == _ratesDao  &&
-            ratesStosHolders == _ratesStosHolders &&
-            ratesTonStakers == _ratesTonStakers &&
-            ratesUnits == _ratesUnits), "same");
-        require(_ratesUnits != 0, "wrong ratesUnits");
-        require((_ratesDao + _ratesStosHolders + _ratesTonStakers) ==  _ratesUnits, 'sum of ratio is wrong');
-
-        ratesDao = _ratesDao;
-        ratesStosHolders = _ratesStosHolders;
-        ratesTonStakers = _ratesTonStakers;
-        ratesUnits = _ratesUnits;
-    }
-
-    /// @inheritdoc ISeigManagerV2
-    function setAddress(address _dao, address _stosDistribute) external override onlyOwner {
-        require(!(dao == _dao && stosDistribute == _stosDistribute), "same");
+    function setDao(address _dao) external override onlyOwner {
+        require(dao != _dao, "same");
 
         dao = _dao;
-        stosDistribute = _stosDistribute;
     }
 
-    /* ========== only Layer2Manager Or Optimism ========== */
+    /* ========== only Layer2Manager Or L2Operatoe Or Candidate ========== */
 
     /// @inheritdoc ISeigManagerV2
-    function claim(address _to, uint256 _amount) external override {
+    function claimStaker(address _to, uint256 _amount) external override {
 
         require(
-            msg.sender != address(0) ||
-            msg.sender == layer2Manager ||
             msg.sender == optimismL2Operator ||
             msg.sender == candidate
-            , "SM_E1"
+            , "caller is not operator or candidate"
         );
 
-        require(_amount <= ton.balanceOf(address(this)), 'insufficient TON balance');
-        ton.safeTransfer(_to, _amount);
+        require(_amount <= (cumulativeSeigsOfIndexLton-claimedSeigsOfIndexLton), 'insufficient TON');
+        claimedSeigsOfIndexLton += _amount;
+        DaoI(dao).claimStaker(_to, _amount);
 
-        emit Claimed(msg.sender, _to, _amount);
+        emit ClaimedStaker(msg.sender, _to, _amount);
     }
 
+
+    /// @inheritdoc ISeigManagerV2
+    function claimOperator(address _to, uint256 _amount) external override {
+
+        require(
+            msg.sender == layer2Manager
+            , "caller not layer2Manager"
+        );
+
+        require(_amount <= (cumulativeSeigsOfOperators-claimedSeigsOfOperators), 'insufficient TON');
+        claimedSeigsOfOperators += _amount;
+        DaoI(dao).claimOperator(_to, _amount);
+
+        emit ClaimedOperator(msg.sender, _to, _amount);
+    }
     /* ========== Anyone can execute ========== */
 
     /// @inheritdoc ISeigManagerV2
@@ -144,17 +146,15 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
 
             // 1. update indexLton
             if (totalLton != 0 && amountOfStaker != 0){
+                cumulativeSeigsOfIndexLton += amountOfStaker;
                 _indexLton = calculateIndex(prevIndex, getLtonToTon(totalLton), amountOfStaker);
-
             }
 
-            // 2. mint increaseSeig of ton in address(this)
-            // if (increaseSeig != 0) ton.mint(address(this), increaseSeig);
-
-            // 3. give amountOfL2Operator
-            if (amountOfL2Operator != 0)
+            // 2. give amountOfL2Operator
+            if (amountOfL2Operator != 0){
+                cumulativeSeigsOfOperators += amountOfL2Operator;
                 require(Layer2ManagerI(layer2Manager).addSeigs(amountOfL2Operator),'FAIL addSeigs');
-
+            }
 
             lastSeigBlock = getCurrentBlockNumber();
 
@@ -286,9 +286,10 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
                 totalStakedV2
             );
             console.log('SeigRateForV1Stakers %s', SeigRateForV1Stakers);
+            console.log('SeigRateForV2Stakers %s', SeigRateForV2Stakers);
+
             if (totalLton != 0 && SeigRateForV2Stakers != 0) amountOfstaker = amount *  SeigRateForV2Stakers / 1e18;
             console.log('amountOfstaker %s', amountOfstaker);
-
 
             uint256 amountOfCD = Layer2ManagerI(layer2Manager).curTotalAmountsLayer2();
 

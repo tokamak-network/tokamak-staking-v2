@@ -27,7 +27,7 @@ interface SeigManagerV2I {
     function getTonToLton(uint256 amount) external view returns (uint256);
 
     function updateSeigniorage() external returns (bool);
-    function claim(address to, uint256 amount) external;
+    function claimStaker(address to, uint256 amount) external;
 
     function getCurrentSnapshotId() external view returns (uint256);
     function snapshot() external returns (uint256);
@@ -76,7 +76,7 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage, IStaking
 
         if (bal < amount) {
             if (bal > 0) IERC20(ton).safeTransfer(to, bal);
-            SeigManagerV2I(seigManagerV2).claim(to, (amount - bal));
+            SeigManagerV2I(seigManagerV2).claimStaker(to, (amount - bal));
         } else {
             IERC20(ton).safeTransfer(to, amount);
         }
@@ -148,7 +148,7 @@ contract Staking is AccessibleCommon, BaseProxyStorage, StakingStorage, IStaking
 
         if (bal < amount) {
             if (bal > 0) IERC20(ton).safeTransfer(sender, bal);
-            SeigManagerV2I(seigManagerV2).claim(sender, (amount - bal));
+            SeigManagerV2I(seigManagerV2).claimStaker(sender, (amount - bal));
         } else {
             IERC20(ton).safeTransfer(sender, amount);
         }

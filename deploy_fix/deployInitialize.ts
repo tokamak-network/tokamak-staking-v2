@@ -39,10 +39,7 @@ const deployInitialize: DeployFunction = async function (hre: HardhatRuntimeEnvi
         powerTon: "0x970298189050aBd4dc4F119ccae14ee145ad9371",
         seigPerBlock: hre.ethers.BigNumber.from("3920000000000000000"),
         minimumBlocksForUpdateSeig: 2400,
-        ratesTonStakers: 4000,
-        ratesDao: 5000,
-        ratesStosHolders: 1000,
-        ratesUnits: 10000
+
     }
 
     let layer2ManagerInfo_mainnet  = {
@@ -332,13 +329,7 @@ const deployInitialize: DeployFunction = async function (hre: HardhatRuntimeEnvi
             candidateProxy.address
         ],
         seigManagerInfo.seigPerBlock,
-        seigManagerInfo.minimumBlocksForUpdateSeig,
-        [
-            seigManagerInfo.ratesTonStakers,
-            seigManagerInfo.ratesDao,
-            seigManagerInfo.ratesStosHolders,
-            seigManagerInfo.ratesUnits,
-        ]
+        seigManagerInfo.minimumBlocksForUpdateSeig
     )).wait();
 
 
