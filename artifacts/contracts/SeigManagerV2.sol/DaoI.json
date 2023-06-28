@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "SeigManagerV2I",
-  "sourceName": "contracts/Layer2Manager.sol",
+  "contractName": "DaoI",
+  "sourceName": "contracts/SeigManagerV2.sol",
   "abi": [
     {
       "inputs": [
@@ -17,6 +17,24 @@
         }
       ],
       "name": "claimOperator",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "claimStaker",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

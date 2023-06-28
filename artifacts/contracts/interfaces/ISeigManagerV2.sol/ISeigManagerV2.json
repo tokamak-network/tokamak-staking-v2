@@ -25,7 +25,32 @@
           "type": "uint256"
         }
       ],
-      "name": "Claimed",
+      "name": "ClaimedOperator",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "caller",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "ClaimedStaker",
       "type": "event"
     },
     {
@@ -132,7 +157,25 @@
           "type": "uint256"
         }
       ],
-      "name": "claim",
+      "name": "claimOperator",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "claimStaker",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -382,42 +425,9 @@
           "internalType": "address",
           "name": "_dao",
           "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_stosDistribute",
-          "type": "address"
         }
       ],
-      "name": "setAddress",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint16",
-          "name": "_ratesDao",
-          "type": "uint16"
-        },
-        {
-          "internalType": "uint16",
-          "name": "_ratesStosHolders",
-          "type": "uint16"
-        },
-        {
-          "internalType": "uint16",
-          "name": "_ratesTonStakers",
-          "type": "uint16"
-        },
-        {
-          "internalType": "uint16",
-          "name": "_ratesUnits",
-          "type": "uint16"
-        }
-      ],
-      "name": "setDividendRates",
+      "name": "setDao",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
