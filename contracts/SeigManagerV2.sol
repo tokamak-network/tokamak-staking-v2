@@ -31,7 +31,7 @@ interface StakingI {
 }
 
 interface DaoI {
-    function claimStaker(address to, uint256 amount) external;
+    function claimStakerV2(address to, uint256 amount) external;
     function claimOperator(address to, uint256 amount) external;
 }
 
@@ -85,7 +85,7 @@ contract SeigManagerV2 is AccessibleCommon, BaseProxyStorage, SeigManagerV2Stora
 
         require(_amount <= (cumulativeSeigsOfIndexLton-claimedSeigsOfIndexLton), 'insufficient TON');
         claimedSeigsOfIndexLton += _amount;
-        DaoI(dao).claimStaker(_to, _amount);
+        DaoI(dao).claimStakerV2(_to, _amount);
 
         emit ClaimedStaker(msg.sender, _to, _amount);
     }

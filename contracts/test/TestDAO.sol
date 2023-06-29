@@ -18,7 +18,7 @@ contract TestDAO is Ownable {
         seigManagerV2 = _seigManagerV2;
     }
 
-    function claimStaker(address to, uint256 value) external {
+    function claimStakerV2(address to, uint256 value) external {
         require(msg.sender == seigManagerV2, "caller is not seigManagerV2");
         require(value <= IERC20(ton).balanceOf(address(this)), "insifficient TON in DAO");
 
