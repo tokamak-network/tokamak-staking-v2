@@ -58,10 +58,7 @@ const deployInitialize: DeployFunction = async function (hre: HardhatRuntimeEnvi
         powerTon: "0x031B5b13Df847eB10c14451EB2a354EfEE23Cc94",
         seigPerBlock: hre.ethers.BigNumber.from("3920000000000000000"),
         minimumBlocksForUpdateSeig: 2400,
-        ratesTonStakers: 4000,
-        ratesDao: 5000,
-        ratesStosHolders: 1000,
-        ratesUnits: 10000
+         
     }
 
     let layer2ManagerInfo_goerli  = {

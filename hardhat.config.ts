@@ -54,6 +54,7 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 625,
       },
+      // viaIR: true,
       metadata: {
         // do not include the metadata hash, since this is machine dependent
         // and we want all generated code to be deterministic
